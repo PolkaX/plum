@@ -1,6 +1,6 @@
 // Copyright 2019 chainnet.tech
 
-use crate::{Cid, BigInt};
+use crate::types::{Cid, BigInt};
 pub struct Actor {
     code: Cid,
     head: Cid,

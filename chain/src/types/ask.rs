@@ -1,6 +1,6 @@
 // Copright 2019 chainnet.tech
 
-use crate::{BigInt, Address, Signature};
+use crate::types::{BigInt, Address, Signature};
 
 pub struct StorageAsk {
     price: BigInt,

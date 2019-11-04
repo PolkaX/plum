@@ -1,6 +1,6 @@
 // Copyright 2019 杭州链网科技
 
-use crate::BigInt;
+use crate::types::BigInt;
 
 pub type FIL = BigInt;
 pub type Bytes = [u8; 16];

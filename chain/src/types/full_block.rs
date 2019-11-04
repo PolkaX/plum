@@ -1,6 +1,6 @@
 // Copright 2019 chainnet.tech
 
-use crate::{BlockHeader, Message, SignedMessage};
+use crate::types::{BlockHeader, Message, SignedMessage};
 
 pub struct FullBlock {
     header: BlockHeader,

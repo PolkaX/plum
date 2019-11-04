@@ -1,6 +1,6 @@
 // Copyright 2019 chainnet.tech
 
-use crate::{BigInt, Address, Cid, Signature};
+use crate::types::{BigInt, Address, Cid, Signature};
 
 pub struct Ticket {
     vrf_proof: Vec<u8>,

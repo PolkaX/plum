@@ -1,6 +1,6 @@
 // Copright 2019 chainnet.tech
 
-use crate::{BigInt, Address};
+use crate::types::{BigInt, Address};
 
 pub struct Message {
     to: Address,

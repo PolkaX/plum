@@ -1,6 +1,6 @@
 // Copyright 2019 chainnet.tech
 
-use crate::Error;
+use crate::types::Error;
 
 pub struct KeyInfo {
     type_: String,
