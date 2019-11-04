@@ -51,8 +51,15 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<FloodsubEv
                 String::from_utf8_lossy(&message.data),
                 message.source
             );
+           // To Do: handle messages, call back.
+           handle_message(message.data);
         }
     }
+}
+
+fn handle_message(_msg: Vec<u8>) {
+   // 1, decode msg
+   // 2, handle_event    
 }
 
 #[derive(Debug, Clone, Default)]
