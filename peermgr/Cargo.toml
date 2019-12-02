@@ -1,15 +1,12 @@
 [package]
-name = "plum"
-version = "0.1.0"
+name = "peermgr"
 license = "GPL-3.0"
+version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lp2p = { path = "./lp2p" }
 libp2p = { version = "0.12.0", default-features = false }
-futures = "0.1"
-tokio = "0.1.2"
-exit-future = "0.1"
+lp2p = { path = "../lp2p" }
 log = "0.4.8"

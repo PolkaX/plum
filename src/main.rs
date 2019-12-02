@@ -1,6 +1,4 @@
 // Copyright 2019 杭州链网科技 Team.
-
-mod lp2p;
 use tokio::runtime::Runtime;
 
 fn main() {

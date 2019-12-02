@@ -4,44 +4,24 @@ use futures::prelude::*;
 use libp2p::{
     floodsub::{self, Floodsub, FloodsubEvent},
     identity,
-    mdns::{Mdns, MdnsEvent},
+    kad::{record::store::MemoryStore, Kademlia, KademliaConfig, KademliaEvent},
     swarm::NetworkBehaviourEventProcess,
     tokio_io::{AsyncRead, AsyncWrite},
     NetworkBehaviour, PeerId, Swarm,
 };
+use std::time::Duration;
 use tokio::runtime::TaskExecutor;
 
-// We create a custom network behaviour that combines floodsub and mDNS.
+// We create a custom network behaviour that combines floodsub and kad.
 // In the future, we want to improve libp2p to make this easier to do.
 #[derive(NetworkBehaviour)]
-struct MyBehaviour<TSubstream: AsyncRead + AsyncWrite> {
+pub struct Behaviour<TSubstream: AsyncRead + AsyncWrite> {
     floodsub: Floodsub<TSubstream>,
-    mdns: Mdns<TSubstream>,
-}
-
-impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<MdnsEvent>
-    for MyBehaviour<TSubstream>
-{
-    fn inject_event(&mut self, event: MdnsEvent) {
-        match event {
-            MdnsEvent::Discovered(list) => {
-                for (peer, _) in list {
-                    self.floodsub.add_node_to_partial_view(peer);
-                }
-            }
-            MdnsEvent::Expired(list) => {
-                for (peer, _) in list {
-                    if !self.mdns.has_node(&peer) {
-                        self.floodsub.remove_node_from_partial_view(&peer);
-                    }
-                }
-            }
-        }
-    }
+    kad: Kademlia<TSubstream, MemoryStore>,
 }
 
 impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<FloodsubEvent>
-    for MyBehaviour<TSubstream>
+    for Behaviour<TSubstream>
 {
     // Called when `floodsub` produces an event.
     fn inject_event(&mut self, message: FloodsubEvent) {
@@ -51,15 +31,21 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<FloodsubEv
                 String::from_utf8_lossy(&message.data),
                 message.source
             );
-           // To Do: handle messages, call back.
-           handle_message(message.data);
+            // To Do: handle messages, call back.
+            handle_message(message.data);
         }
     }
 }
 
+impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<KademliaEvent>
+    for Behaviour<TSubstream>
+{
+    fn inject_event(&mut self, _event: KademliaEvent) {}
+}
+
 fn handle_message(_msg: Vec<u8>) {
-   // 1, decode msg
-   // 2, handle_event    
+    // 1, decode msg
+    // 2, handle_event
 }
 
 #[derive(Debug, Clone, Default)]
@@ -77,11 +63,14 @@ pub fn initialize(task_executor: TaskExecutor, mut network_state: NetworkState) 
     // Create a Floodsub topic
     let floodsub_topic = floodsub::TopicBuilder::new("/fil/messages").build();
 
+    let mut cfg = KademliaConfig::default();
+    cfg.set_query_timeout(Duration::from_secs(5 * 60));
+    let store = MemoryStore::new(local_peer_id.clone());
     // Create a Swarm to manage peers and events
     let mut swarm = {
-        let mut behaviour = MyBehaviour {
+        let mut behaviour = Behaviour {
             floodsub: Floodsub::new(local_peer_id.clone()),
-            mdns: Mdns::new().expect("Failed to create mDNS service"),
+            kad: Kademlia::with_config(local_peer_id.clone(), store, cfg),
         };
 
         behaviour.floodsub.subscribe(floodsub_topic.clone());
