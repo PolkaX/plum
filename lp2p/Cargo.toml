@@ -10,3 +10,7 @@ edition = "2018"
 libp2p = { version = "0.12.0", default-features = false }
 futures = "0.1"
 tokio = "0.1.2"
+chain = { path = "../chain" }
+void = "1.0"
+cid = "*"
+multihash = "~0.8.0"

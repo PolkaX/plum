@@ -1,5 +1,8 @@
 // Copyright 2019 杭州链网科技
 
+mod hello;
+
+use cid::{Cid, Codec, Version};
 use futures::prelude::*;
 use libp2p::{
     floodsub::{self, Floodsub, FloodsubEvent},
@@ -18,6 +21,7 @@ use tokio::runtime::TaskExecutor;
 pub struct Behaviour<TSubstream: AsyncRead + AsyncWrite> {
     floodsub: Floodsub<TSubstream>,
     kad: Kademlia<TSubstream, MemoryStore>,
+    hello: hello::Hello<TSubstream>,
 }
 
 impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<FloodsubEvent>
@@ -43,6 +47,12 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<KademliaEv
     fn inject_event(&mut self, _event: KademliaEvent) {}
 }
 
+impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<hello::HelloEvent>
+    for Behaviour<TSubstream>
+{
+    fn inject_event(&mut self, _event: hello::HelloEvent) {}
+}
+
 fn handle_message(_msg: Vec<u8>) {
     // 1, decode msg
     // 2, handle_event
@@ -66,11 +76,16 @@ pub fn initialize(task_executor: TaskExecutor, mut network_state: NetworkState) 
     let mut cfg = KademliaConfig::default();
     cfg.set_query_timeout(Duration::from_secs(5 * 60));
     let store = MemoryStore::new(local_peer_id.clone());
+
+    let h = multihash::encode(multihash::Hash::SHA2256, b"filecoin plum").unwrap();
+    let cid = Cid::new(Codec::DagProtobuf, Version::V1, &h);
+
     // Create a Swarm to manage peers and events
     let mut swarm = {
         let mut behaviour = Behaviour {
             floodsub: Floodsub::new(local_peer_id.clone()),
             kad: Kademlia::with_config(local_peer_id.clone(), store, cfg),
+            hello: hello::Hello::new(cid),
         };
 
         behaviour.floodsub.subscribe(floodsub_topic.clone());
