@@ -13,7 +13,8 @@ pub struct NetworkState {
     listenning: bool,
 }
 
-pub fn initialize(task_executor: TaskExecutor, mut network_state: NetworkState) {
+pub fn initialize(task_executor: TaskExecutor,
+          mut network_state: NetworkState, peer_ip: Option<String>) {
     let (local_key, local_peer_id) = config::configure_key();
     // Set up a an encrypted DNS-enabled TCP Transport over the Mplex and Yamux protocols
     let transport = libp2p::build_development_transport(local_key);
@@ -29,6 +30,9 @@ pub fn initialize(task_executor: TaskExecutor, mut network_state: NetworkState) 
 
     // Listen on all interfaces and whatever port the OS assigns
     Swarm::listen_on(&mut swarm, "/ip4/0.0.0.0/tcp/0".parse().unwrap()).unwrap();
+    if let Some(peer_ip) = peer_ip {
+        Swarm::dial_addr(&mut swarm, peer_ip.parse().unwrap());
+    }
     task_executor.spawn(futures::future::poll_fn(move || -> Result<_, ()> {
         loop {
             match swarm.poll().expect("Error while polling swarm") {
