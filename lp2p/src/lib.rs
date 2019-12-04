@@ -1,18 +1,16 @@
 // Copyright 2019 杭州链网科技
 
 mod hello;
+mod config;
 
-use cid::{Cid, Codec, Version};
 use futures::prelude::*;
 use libp2p::{
     floodsub::{self, Floodsub, FloodsubEvent},
-    identity,
-    kad::{record::store::MemoryStore, Kademlia, KademliaConfig, KademliaEvent},
+    kad::{record::store::MemoryStore, Kademlia, KademliaEvent},
     swarm::NetworkBehaviourEventProcess,
     tokio_io::{AsyncRead, AsyncWrite},
-    NetworkBehaviour, PeerId, Swarm,
+    NetworkBehaviour, Swarm,
 };
-use std::time::Duration;
 use tokio::runtime::TaskExecutor;
 
 // We create a custom network behaviour that combines floodsub and kad.
@@ -64,22 +62,12 @@ pub struct NetworkState {
 }
 
 pub fn initialize(task_executor: TaskExecutor, mut network_state: NetworkState) {
-    // Create a random PeerId
-    let local_key = identity::Keypair::generate_secp256k1();
-    let local_peer_id = PeerId::from(local_key.public());
+    let (local_key, local_peer_id) = config::configure_key();
     // Set up a an encrypted DNS-enabled TCP Transport over the Mplex and Yamux protocols
     let transport = libp2p::build_development_transport(local_key);
 
-    // Create a Floodsub topic
-    let floodsub_topic = floodsub::TopicBuilder::new("/fil/messages").build();
-
-    let mut cfg = KademliaConfig::default();
-    cfg.set_query_timeout(Duration::from_secs(5 * 60));
-    let store = MemoryStore::new(local_peer_id.clone());
-
-    let h = multihash::encode(multihash::Hash::SHA2256, b"filecoin plum").unwrap();
-    let cid = Cid::new(Codec::DagProtobuf, Version::V1, &h);
-
+    let (cfg, store) = config::configure_kad(&local_peer_id);
+    let cid = config::configure_genesis_hash();
     // Create a Swarm to manage peers and events
     let mut swarm = {
         let mut behaviour = Behaviour {
@@ -88,7 +76,8 @@ pub fn initialize(task_executor: TaskExecutor, mut network_state: NetworkState) 
             hello: hello::Hello::new(cid),
         };
 
-        behaviour.floodsub.subscribe(floodsub_topic.clone());
+        config::configure_topic().iter().map( |topic|
+            behaviour.floodsub.subscribe(topic.clone()));
         Swarm::new(transport, behaviour, local_peer_id)
     };
 
