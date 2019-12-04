@@ -1,9 +1,12 @@
 // Copyright 2019 PolkaX
 
-use libp2p::{identity, PeerId,
-    floodsub::{Topic, TopicBuilder},
-    kad::{KademliaConfig, record::store::MemoryStore,}};
 use cid::{Cid, Codec, Version};
+use libp2p::{
+    floodsub::{Topic, TopicBuilder},
+    identity,
+    kad::{record::store::MemoryStore, KademliaConfig},
+    PeerId,
+};
 
 pub fn configure_key() -> (identity::Keypair, PeerId) {
     // Create a random PeerId
@@ -30,5 +33,3 @@ pub fn configure_genesis_hash() -> Cid {
     let h = multihash::encode(multihash::Hash::SHA2256, b"filecoin plum").unwrap();
     Cid::new(Codec::DagProtobuf, Version::V1, &h)
 }
-
-

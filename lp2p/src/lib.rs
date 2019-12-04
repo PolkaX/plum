@@ -1,60 +1,12 @@
-// Copyright 2019 杭州链网科技
+// Copyright 2019 PolkaX
 
-mod hello;
+mod behaviour;
 mod config;
+mod hello;
 
 use futures::prelude::*;
-use libp2p::{
-    floodsub::{self, Floodsub, FloodsubEvent},
-    kad::{record::store::MemoryStore, Kademlia, KademliaEvent},
-    swarm::NetworkBehaviourEventProcess,
-    tokio_io::{AsyncRead, AsyncWrite},
-    NetworkBehaviour, Swarm,
-};
+use libp2p::Swarm;
 use tokio::runtime::TaskExecutor;
-
-// We create a custom network behaviour that combines floodsub and kad.
-// In the future, we want to improve libp2p to make this easier to do.
-#[derive(NetworkBehaviour)]
-pub struct Behaviour<TSubstream: AsyncRead + AsyncWrite> {
-    floodsub: Floodsub<TSubstream>,
-    kad: Kademlia<TSubstream, MemoryStore>,
-    hello: hello::Hello<TSubstream>,
-}
-
-impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<FloodsubEvent>
-    for Behaviour<TSubstream>
-{
-    // Called when `floodsub` produces an event.
-    fn inject_event(&mut self, message: FloodsubEvent) {
-        if let FloodsubEvent::Message(message) = message {
-            println!(
-                "Received: '{:?}' from {:?}",
-                String::from_utf8_lossy(&message.data),
-                message.source
-            );
-            // To Do: handle messages, call back.
-            handle_message(message.data);
-        }
-    }
-}
-
-impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<KademliaEvent>
-    for Behaviour<TSubstream>
-{
-    fn inject_event(&mut self, _event: KademliaEvent) {}
-}
-
-impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<hello::HelloEvent>
-    for Behaviour<TSubstream>
-{
-    fn inject_event(&mut self, _event: hello::HelloEvent) {}
-}
-
-fn handle_message(_msg: Vec<u8>) {
-    // 1, decode msg
-    // 2, handle_event
-}
 
 #[derive(Debug, Clone, Default)]
 pub struct NetworkState {
@@ -66,19 +18,13 @@ pub fn initialize(task_executor: TaskExecutor, mut network_state: NetworkState) 
     // Set up a an encrypted DNS-enabled TCP Transport over the Mplex and Yamux protocols
     let transport = libp2p::build_development_transport(local_key);
 
-    let (cfg, store) = config::configure_kad(&local_peer_id);
-    let cid = config::configure_genesis_hash();
     // Create a Swarm to manage peers and events
     let mut swarm = {
-        let mut behaviour = Behaviour {
-            floodsub: Floodsub::new(local_peer_id.clone()),
-            kad: Kademlia::with_config(local_peer_id.clone(), store, cfg),
-            hello: hello::Hello::new(cid),
-        };
-
-        config::configure_topic().iter().map( |topic|
-            behaviour.floodsub.subscribe(topic.clone()));
-        Swarm::new(transport, behaviour, local_peer_id)
+        let mut bh = behaviour::Behaviour::new(&local_peer_id);
+        config::configure_topic()
+            .iter()
+            .map(|topic| bh.floodsub.subscribe(topic.clone()));
+        Swarm::new(transport, bh, local_peer_id)
     };
 
     // Listen on all interfaces and whatever port the OS assigns
