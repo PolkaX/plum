@@ -2,6 +2,7 @@
 use tokio::runtime::Runtime;
 
 fn main() {
+    env_logger::init();
     let peer_ip = cli::get_terminal();
     let (exit_send, exit) = exit_future::signal();
     let mut runtime = Runtime::new().expect("failed to start runtime on current thread");

@@ -12,7 +12,9 @@ use libp2p::swarm::{
     ProtocolsHandlerEvent, ProtocolsHandlerUpgrErr, SubstreamProtocol,
 };
 use libp2p::tokio_io::{AsyncRead, AsyncWrite};
+use std::collections::VecDeque;
 use std::marker::PhantomData;
+use log::info;
 
 #[derive(Debug, Clone)]
 struct HelloMsg {
@@ -23,6 +25,7 @@ struct HelloMsg {
 
 pub struct Hello<TSubstream> {
     GenesisHash: Cid,
+    events: VecDeque<HelloEvent>,
     _marker: PhantomData<TSubstream>,
 }
 
@@ -30,6 +33,7 @@ impl<TSubstream> Hello<TSubstream> {
     pub fn new(genesis_hash: Cid) -> Self {
         Hello {
             GenesisHash: genesis_hash,
+            events: VecDeque::new(), 
             _marker: std::marker::PhantomData,
         }
     }
@@ -47,20 +51,26 @@ where
     }
 
     fn addresses_of_peer(&mut self, _: &PeerId) -> Vec<Multiaddr> {
+        info!("hello addresses_of_peer");
         Vec::new()
     }
 
     fn inject_connected(&mut self, peer_id: PeerId, endpoint: ConnectedPoint) {
         // Say hello
+        info!("hello inject_connectd");
     }
 
-    fn inject_disconnected(&mut self, _: &PeerId, _: ConnectedPoint) {}
+    fn inject_disconnected(&mut self, _: &PeerId, _: ConnectedPoint) {
+        info!("hello inject_disconnected");
+    }
 
     fn inject_node_event(
         &mut self,
         _: PeerId,
-        _: <Self::ProtocolsHandler as ProtocolsHandler>::OutEvent,
+        event: <Self::ProtocolsHandler as ProtocolsHandler>::OutEvent,
     ) {
+        info!("hello inject_node_event");
+        self.events.push_front(HelloEvent{});
     }
 
     fn poll(
@@ -72,7 +82,11 @@ where
             Self::OutEvent,
         >,
     > {
-        Async::NotReady
+        if let Some(e) = self.events.pop_back() {
+            Async::Ready(NetworkBehaviourAction::GenerateEvent(e))
+        } else {
+            Async::NotReady
+        }
     }
 }
 
@@ -117,12 +131,13 @@ where
     }
 
     fn poll(&mut self) -> Poll<ProtocolsHandlerEvent<HelloProtocol, (), ()>, Self::Error> {
+        info!("hello handler poll");
         Ok(Async::NotReady)
     }
 }
 
 #[derive(Debug)]
-pub enum HelloEvent {}
+pub struct HelloEvent {}
 
 #[derive(Default, Debug, Copy, Clone)]
 pub struct HelloProtocol;
