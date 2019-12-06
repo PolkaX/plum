@@ -1,24 +1,42 @@
 // Copyright 2019 PolkaX
 
-use clap::{App, Arg};
+pub mod cmd;
 
-pub fn get_terminal() -> Option<String> {
-    let matches = App::new("plum")
-                      .version("0.1")
-                      .author("PolkaX")
-                      .arg(Arg::with_name("peer")
-                            .short("p")
-                            .long("peer")
-                            .help("Sets a peer ipfs ip")
-                            .takes_value(true))
-                      .get_matches();
-     if let Some(v) = matches.value_of("peer") {
-         Some(v.to_string())
-     } else {
-         None
-     }
+use structopt::clap::AppSettings;
+use structopt::StructOpt;
+use tokio::runtime::Runtime;
+
+use cmd::Command;
+
+#[derive(StructOpt, Debug, Clone)]
+#[structopt(name = "plum")]
+#[structopt(setting = AppSettings::ArgRequiredElseHelp)]
+pub struct Plum {
+    #[structopt(subcommand)]
+    pub cmd: Command,
+
+    #[structopt(short = "p", long = "peer")]
+    peer: Option<String>,
 }
 
-#[cfg(test)]
-mod tests {
+impl Plum {
+    pub fn parse_and_prepare(&self) {
+        println!("args: {:?}", self);
+    }
+}
+
+pub fn run() {
+    let opt = Plum::from_args();
+    // opt.unset_setting(AppSettings::SubcommandRequiredElseHelp);
+
+    opt.parse_and_prepare();
+
+    let peer_ip = opt.peer;
+    let (exit_send, exit) = exit_future::signal();
+    let mut runtime = Runtime::new().expect("failed to start runtime on current thread");
+    let task_executor = runtime.executor();
+    let network_state = lp2p::NetworkState::default();
+    lp2p::initialize(task_executor, network_state, peer_ip);
+    let _ = runtime.block_on(exit);
+    exit_send.fire();
 }
