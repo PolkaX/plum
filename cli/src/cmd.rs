@@ -1,6 +1,8 @@
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
 
+use crate::run_lp2p;
+
 #[derive(StructOpt, Debug, Clone)]
 pub enum Auth {
     /// Create token
@@ -75,10 +77,23 @@ pub enum Network {
     Listen,
     /// Connect to a peer
     #[structopt(name = "connect")]
-    Connect,
+    Connect {
+        /// Specify an IPFS peer ip to connect
+        #[structopt(short = "p", long = "peer")]
+        peer: String,
+    },
     /// Get node identity
     #[structopt(name = "id")]
     Id,
+}
+
+impl Network {
+    pub fn execute(&self) {
+        match self {
+            Network::Connect { peer } => run_lp2p(Some(peer.to_owned())),
+            _ => unimplemented!(),
+        }
+    }
 }
 
 #[derive(StructOpt, Debug, Clone)]
