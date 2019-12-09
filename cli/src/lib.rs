@@ -12,6 +12,7 @@ use cmd::Command;
 #[structopt(name = "plum")]
 #[structopt(setting = AppSettings::ArgRequiredElseHelp)]
 pub struct Plum {
+    /// Specify an IPFS peer ip to connect
     #[structopt(short = "p", long = "peer")]
     peer: Option<String>,
 
@@ -19,20 +20,16 @@ pub struct Plum {
     pub cmd: Command,
 }
 
-impl Plum {
-    pub fn parse_and_prepare(&self) {
-        println!("args: {:?}", self);
-    }
-}
-
 pub fn run() {
-    let opt = Plum::from_args();
-    // opt.unset_setting(AppSettings::SubcommandRequiredElseHelp);
-
-    opt.parse_and_prepare();
+    let args = std::env::args().collect::<Vec<String>>();
+    let peer_ip = if args.len() == 1 {
+        None
+    } else {
+        let opt = Plum::from_iter(args.iter());
+        opt.peer
+    };
 
     env_logger::init();
-    let peer_ip = opt.peer;
     let (exit_send, exit) = exit_future::signal();
     let mut runtime = Runtime::new().expect("failed to start runtime on current thread");
     let task_executor = runtime.executor();
