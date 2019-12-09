@@ -5,8 +5,9 @@ mod config;
 mod hello;
 
 use futures::prelude::*;
-use libp2p::Swarm;
+use libp2p::{Swarm, core::Multiaddr};
 use tokio::runtime::TaskExecutor;
+use log::info;
 
 #[derive(Debug, Clone, Default)]
 pub struct NetworkState {
@@ -25,25 +26,30 @@ pub fn initialize(task_executor: TaskExecutor,
         config::configure_topic()
             .iter()
             .map(|topic| bh.floodsub.subscribe(topic.clone()));
-        Swarm::new(transport, bh, local_peer_id)
+        Swarm::new(transport, bh, local_peer_id.clone())
     };
 
+    let listen_address: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
     // Listen on all interfaces and whatever port the OS assigns
-    Swarm::listen_on(&mut swarm, "/ip4/0.0.0.0/tcp/0".parse().unwrap()).unwrap();
+    Swarm::listen_on(&mut swarm, listen_address.clone()).unwrap();
+    swarm.kad.add_address(&local_peer_id, listen_address);
     if let Some(peer_ip) = peer_ip {
         Swarm::dial_addr(&mut swarm, peer_ip.parse().unwrap());
     }
     task_executor.spawn(futures::future::poll_fn(move || -> Result<_, ()> {
         loop {
             match swarm.poll().expect("Error while polling swarm") {
-                Async::Ready(Some(_)) => {}
+                Async::Ready(Some(e)) => {
+                    info!("rcv event:{:?}", e);
+                }
                 Async::Ready(None) | Async::NotReady => {
                     if !network_state.listenning {
                         if let Some(a) = Swarm::listeners(&swarm).next() {
-                            println!("Listening on {:?}", a);
+                            info!("Listening on {:?}", a);
                         }
                         network_state.listenning = true;
                     }
+                    return Ok(Async::NotReady)
                 }
             }
         }

@@ -4,18 +4,21 @@ use crate::config;
 use crate::hello;
 use libp2p::{
     floodsub::{Floodsub, FloodsubEvent},
+    ping::{Ping, PingEvent, PingConfig},
     kad::{record::store::MemoryStore, Kademlia, KademliaEvent},
     swarm::NetworkBehaviourEventProcess,
     tokio_io::{AsyncRead, AsyncWrite},
     NetworkBehaviour, PeerId,
 };
+use log::info;
 
 // We create a custom network behaviour that combines floodsub and kad.
 // In the future, we want to improve libp2p to make this easier to do.
 #[derive(NetworkBehaviour)]
 pub struct Behaviour<TSubstream: AsyncRead + AsyncWrite> {
     pub floodsub: Floodsub<TSubstream>,
-    kad: Kademlia<TSubstream, MemoryStore>,
+    pub kad: Kademlia<TSubstream, MemoryStore>,
+    ping: Ping<TSubstream>,
     hello: hello::Hello<TSubstream>,
 }
 
@@ -27,8 +30,17 @@ impl<TSubstream: AsyncRead + AsyncWrite> Behaviour<TSubstream> {
         Behaviour {
             floodsub: Floodsub::new(local_peer_id.clone()),
             kad: Kademlia::with_config(local_peer_id.clone(), store, cfg),
+            ping: Ping::new(PingConfig::new().with_keep_alive(true)),
             hello: hello::Hello::new(cid),
         }
+    }
+}
+
+impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<PingEvent> 
+    for Behaviour<TSubstream>
+{
+    fn inject_event(&mut self, e: PingEvent) {
+        info!("rcv ping event: {:?}", e);
     }
 }
 
@@ -37,8 +49,9 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<FloodsubEv
 {
     // Called when `floodsub` produces an event.
     fn inject_event(&mut self, message: FloodsubEvent) {
+        info!("rcv floodsub msg:{:?}", message);
         if let FloodsubEvent::Message(message) = message {
-            println!(
+            info!(
                 "Received: '{:?}' from {:?}",
                 String::from_utf8_lossy(&message.data),
                 message.source
@@ -52,13 +65,17 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<FloodsubEv
 impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<KademliaEvent>
     for Behaviour<TSubstream>
 {
-    fn inject_event(&mut self, _event: KademliaEvent) {}
+    fn inject_event(&mut self, event: KademliaEvent) {
+        info!("rcv kad event: {:?}", event);
+    }
 }
 
 impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<hello::HelloEvent>
     for Behaviour<TSubstream>
 {
-    fn inject_event(&mut self, _event: hello::HelloEvent) {}
+    fn inject_event(&mut self, event: hello::HelloEvent) {
+        info!("rcv hello event: {:?}", event);
+    }
 }
 
 fn handle_message(_msg: Vec<u8>) {

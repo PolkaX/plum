@@ -14,3 +14,4 @@ chain = { path = "../chain" }
 void = "1.0"
 cid = "*"
 multihash = "~0.8.0"
+log = "0.4.8"
