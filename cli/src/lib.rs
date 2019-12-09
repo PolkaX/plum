@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX
+// Copyright 2019 PolkaX.
 
 pub mod cmd;
 

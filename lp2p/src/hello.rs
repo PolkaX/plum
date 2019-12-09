@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX
+// Copyright 2019 PolkaX.
 
 use chain::types::{BigInt, Cid};
 use futures::future::{self, FutureResult};
@@ -12,9 +12,9 @@ use libp2p::swarm::{
     ProtocolsHandlerEvent, ProtocolsHandlerUpgrErr, SubstreamProtocol,
 };
 use libp2p::tokio_io::{AsyncRead, AsyncWrite};
+use log::info;
 use std::collections::VecDeque;
 use std::marker::PhantomData;
-use log::info;
 
 #[derive(Debug, Clone)]
 struct HelloMsg {
@@ -33,7 +33,7 @@ impl<TSubstream> Hello<TSubstream> {
     pub fn new(genesis_hash: Cid) -> Self {
         Hello {
             GenesisHash: genesis_hash,
-            events: VecDeque::new(), 
+            events: VecDeque::new(),
             _marker: std::marker::PhantomData,
         }
     }
@@ -70,7 +70,7 @@ where
         event: <Self::ProtocolsHandler as ProtocolsHandler>::OutEvent,
     ) {
         info!("hello inject_node_event");
-        self.events.push_front(HelloEvent{});
+        self.events.push_front(HelloEvent {});
     }
 
     fn poll(

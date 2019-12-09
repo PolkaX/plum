@@ -1,4 +1,6 @@
-// Copyright 2019 杭州链网科技 Team.
+// Copyright 2019 PolkaX.
+
+//! Plum Node CLI.
 
 fn main() {
     cli::run();

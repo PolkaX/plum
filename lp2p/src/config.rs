@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX
+// Copyright 2019 PolkaX.
 
 use cid::{Cid, Codec, Version};
 use libp2p::{

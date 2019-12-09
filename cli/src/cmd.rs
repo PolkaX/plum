@@ -1,3 +1,5 @@
+// Copyright 2019 PolkaX.
+
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
 

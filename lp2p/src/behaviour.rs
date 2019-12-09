@@ -1,11 +1,11 @@
-// Copyright 2019 PolkaX
+// Copyright 2019 PolkaX.
 
 use crate::config;
 use crate::hello;
 use libp2p::{
     floodsub::{Floodsub, FloodsubEvent},
-    ping::{Ping, PingEvent, PingConfig},
     kad::{record::store::MemoryStore, Kademlia, KademliaEvent},
+    ping::{Ping, PingConfig, PingEvent},
     swarm::NetworkBehaviourEventProcess,
     tokio_io::{AsyncRead, AsyncWrite},
     NetworkBehaviour, PeerId,
@@ -36,7 +36,7 @@ impl<TSubstream: AsyncRead + AsyncWrite> Behaviour<TSubstream> {
     }
 }
 
-impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<PingEvent> 
+impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<PingEvent>
     for Behaviour<TSubstream>
 {
     fn inject_event(&mut self, e: PingEvent) {

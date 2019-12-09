@@ -1,21 +1,24 @@
-// Copyright 2019 PolkaX
+// Copyright 2019 PolkaX.
 
 mod behaviour;
 mod config;
 mod hello;
 
 use futures::prelude::*;
-use libp2p::{Swarm, core::Multiaddr};
-use tokio::runtime::TaskExecutor;
+use libp2p::{core::Multiaddr, Swarm};
 use log::info;
+use tokio::runtime::TaskExecutor;
 
 #[derive(Debug, Clone, Default)]
 pub struct NetworkState {
     listenning: bool,
 }
 
-pub fn initialize(task_executor: TaskExecutor,
-          mut network_state: NetworkState, peer_ip: Option<String>) {
+pub fn initialize(
+    task_executor: TaskExecutor,
+    mut network_state: NetworkState,
+    peer_ip: Option<String>,
+) {
     let (local_key, local_peer_id) = config::configure_key();
     // Set up a an encrypted DNS-enabled TCP Transport over the Mplex and Yamux protocols
     let transport = libp2p::build_development_transport(local_key);
@@ -49,7 +52,7 @@ pub fn initialize(task_executor: TaskExecutor,
                         }
                         network_state.listenning = true;
                     }
-                    return Ok(Async::NotReady)
+                    return Ok(Async::NotReady);
                 }
             }
         }
