@@ -2,7 +2,6 @@
 
 mod behaviour;
 mod config;
-mod hello;
 
 use futures::prelude::*;
 use libp2p::{Swarm, core::Multiaddr};
@@ -23,9 +22,7 @@ pub fn initialize(task_executor: TaskExecutor,
     // Create a Swarm to manage peers and events
     let mut swarm = {
         let mut bh = behaviour::Behaviour::new(&local_peer_id);
-        config::configure_topic()
-            .iter()
-            .map(|topic| bh.floodsub.subscribe(topic.clone()));
+        bh.floodsub.subscribe(config::hello_topic());
         Swarm::new(transport, bh, local_peer_id.clone())
     };
 
