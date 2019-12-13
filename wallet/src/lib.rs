@@ -1,17 +1,9 @@
+use blake2_rfc::blake2b::{blake2b, Blake2b};
 use data_encoding::{Specification, BASE32};
 
-// #[derive(PartialEq, Eq, Clone)]
-// pub enum Address<AddressId, Secp256k1, Actor, Bls> {
-// /// Id represents the address ID protocol.
-// Id(AddressId),
-// /// Secp256k1 represents the address Secp256k1 protocol.
-// Secp256k1(Secp256k1),
-// /// Actor represents the address Actor protocl.
-// Actor(Actor),
-// /// BLS represents the address BLS protocol.
-// Bls(Bls),
-// Unknown,
-// }
+use std::convert::TryFrom;
+
+pub mod secp256k1;
 
 #[derive(Debug, derive_more::Display, derive_more::From)]
 pub enum Error {
@@ -30,12 +22,6 @@ pub enum Error {
 // UndefAddressString is the string used to represent an empty address when encoded to a string.
 // const UndefAddressString: '&static str = "<empty>";
 
-// PayloadHashLength defines the hash length taken over addresses using the Actor and SECP256K1 protocols.
-const PayloadHashLength: u8 = 20;
-
-// ChecksumHashLength defines the hash length used for calculating address checksums.
-const ChecksumHashLength: u8 = 4;
-
 // MaxAddressStringLength is the max length of an address encoded as a string
 // it include the network prefx, protocol, and bls publickey
 const MaxAddressStringLength: u8 = 2 + 84;
@@ -45,98 +31,55 @@ const encodeStd: &'static str = "abcdefghijklmnopqrstuvwxyz234567";
 // AddressEncoding defines the base32 config used for address encoding and decoding.
 // var AddressEncoding = base32.NewEncoding(encodeStd)
 
-use blake2_rfc::blake2b::{blake2b, Blake2b};
-
-pub type NetworkPrefix = String;
 #[derive(PartialEq, Eq, Clone)]
 pub enum Network {
     Mainnet,
     Testnet,
 }
 
-// #[derive(PartialEq, Eq, Clone)]
-// pub enum Protocol {
-// /// Id represents the address ID protocol.
-// Id(&[u8]),
-// /// Secp256k1 represents the address Secp256k1 protocol.
-// Secp256k1(&[u8]),
-// /// Actor represents the address Actor protocl.
-// Actor(&[u8]),
-// /// BLS represents the address BLS protocol.
-// Bls(&[u8]),
-// }
+// PayloadHashLength defines the hash length taken over addresses using the Actor and SECP256K1 protocols.
+pub const PAYLOAD_HASH_LENGTH: usize = 20;
 
-#[derive(Default)]
-pub struct Address(pub Vec<u8>);
+// ChecksumHashLength defines the hash length used for calculating address checksums.
+pub const CHECKSUM_HASH_LENGTH: usize = 4;
 
-impl From<[u8; 32]> for Address {
-    fn from(_addr: [u8; 32]) -> Self {
-        Address("".into())
+#[derive(Debug)]
+pub enum Address {
+    Secp256k1([u8; PAYLOAD_HASH_LENGTH + 1]),
+}
+
+impl Address {
+    pub fn protocol(&self) -> u8 {
+        match *self {
+            Self::Secp256k1(_) => 1u8,
+        }
+    }
+
+    pub fn checksum(&self) -> Vec<u8> {
+        match *self {
+            Self::Secp256k1(addr) => checksum(&addr[..]),
+        }
     }
 }
 
-// switch protocol {
-// case ID:
-// _, n, err := varint.FromUvarint(payload)
-// if err != nil {
-// return Undef, xerrors.Errorf("could not decode: %v: %w", err, ErrInvalidPayload)
-// }
-// if n != len(payload) {
-// return Undef, xerrors.Errorf("different varint length (v:%d != p:%d): %w",
-// n, len(payload), ErrInvalidPayload)
-// }
-// case SECP256K1, Actor:
-// if len(payload) != PayloadHashLength {
-// return Undef, ErrInvalidPayload
-// }
-// case BLS:
-// if len(payload) != bls.PublicKeyBytes {
-// return Undef, ErrInvalidPayload
-// }
-// default:
-// return Undef, ErrUnknownProtocol
-// }
-// explen := 1 + len(payload)
-// buf := make([]byte, explen)
+impl ToString for Address {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Secp256k1(addr) => {
+                let chsm = self.checksum();
+                let protocol = self.protocol();
+                let payload = &addr[1..];
 
-// buf[0] = protocol
-// copy(buf[1:], payload)
+                let mut t = Vec::new();
+                t.extend_from_slice(payload);
+                t.extend_from_slice(&chsm);
 
-// return Address{string(buf)}, nil
-
-// pub fn new_address(protocol: Protocol, payload &[u8]) -> std::result::Result<Address, Error> {
-// match protocol {
-// Protocol::Id => Ok(Default::default()),
-// Protocol::Secp256k1 | Protocol::Actor => Ok(Default::default()),
-// Protocol::Bls => Ok(Default::default()),
-// Protocol::Unknown => Ok(Default::default()),
-// }
-// Ok(Default::default())
-// }
-
-// impl Address {
-// pub fn new(addr_ty: AddressType) -> Self {
-// match addr_ty {
-// AddressType::Id => Address("id".into()),
-// AddressType::Secp256k1 => Address("secp256k1".into()),
-// AddressType::Actor => Address("actor".into()),
-// AddressType::Bls => Address("bls".into()),
-// AddressType::Unknown => Address("uknown".into()),
-// }
-// }
-// pub fn payload(&self) {}
-// }
-
-pub const PAYLOAD_HASH_LENGTH: usize = 20;
-pub const CHECKSUM_HASH_LENGTH: usize = 4;
-
-pub fn new_secp256k1(pubkey: &[u8]) -> Vec<u8> {
-    let hash = address_hash(pubkey);
-
-    let mut v = Vec::new();
-    v.push(1u8);
-    v.extend_from_slice(&hash);
-    v
+                let ntwk = "t";
+                let addr = format!("{}{}{}", ntwk, protocol, base32_encode(&t));
+                addr
+            }
+        }
+    }
 }
 
 pub fn hash(ingest: &[u8], hash_config: usize) -> Vec<u8> {
@@ -163,29 +106,6 @@ pub fn base32_encode(input: &[u8]) -> String {
     encoder.encode(&input)
 }
 
-pub fn encode(network: Network, addr: Address) -> String {
-    let ntwk = match network {
-        Network::Mainnet => "f",
-        Network::Testnet => "t",
-    };
-
-    let raw_b: Vec<u8> = addr.0;
-    let chsm = checksum(&raw_b);
-    let protocol = raw_b[0];
-    let payload = &raw_b[1..];
-    let mut t = Vec::new();
-    t.push(protocol);
-    t.extend_from_slice(payload);
-    let protocol = 1;
-    let addr = format!("{}{}{}", ntwk, protocol, base32_encode(&t));
-
-    // SECP256K1
-    // cksm := Checksum(append([]byte{addr.Protocol()}, addr.Payload()...));
-    // strAddr = ntwk + fmt.Sprintf("%d", addr.Protocol()) + AddressEncoding.WithPadding(-1).EncodeToString(append(addr.Payload(), cksm[:]...));
-
-    addr
-}
-
 // cbor decode
 
 // cbor encode
@@ -195,6 +115,7 @@ mod tests {
     use super::*;
 
     use data_encoding::HEXUPPER;
+    use std::convert::TryInto;
 
     #[test]
     fn address_hash_should_work() {
@@ -212,9 +133,8 @@ mod tests {
             253, 29, 15, 77, 252, 215, 233, 154, 252, 185, 154, 131, 38, 183, 220, 69, 157, 50,
             198, 40, 148, 236, 248, 227,
         ];
-        let encoded = "7uoq6tp427uzv7fztkbsnn64iwotfrristwpryy";
-
-        assert_eq!(encoded.to_string(), base32_encode(&input));
+        let base32_encoded = "7uoq6tp427uzv7fztkbsnn64iwotfrristwpryy";
+        assert_eq!(base32_encoded.to_string(), base32_encode(&input));
     }
 
     #[test]
@@ -227,7 +147,7 @@ mod tests {
                     17, 224, 210, 36, 84, 33, 248, 97, 59, 193, 13, 114, 250, 33, 102, 102, 169,
                     108, 59, 193, 57, 32, 211, 255, 35, 63, 208, 188, 5,
                 ],
-                b"t15ihq5ibzwki2b4ep2f46avlkrqzhpqgtga7pdrq",
+                "t15ihq5ibzwki2b4ep2f46avlkrqzhpqgtga7pdrq",
             ),
             (
                 [
@@ -236,7 +156,7 @@ mod tests {
                     92, 118, 242, 28, 165, 93, 54, 149, 145, 82, 176, 225, 232, 135, 145, 124, 57,
                     53, 118, 238, 240, 147, 246, 30, 189, 58, 208, 111, 127, 218,
                 ],
-                b"t12fiakbhe2gwd5cnmrenekasyn6v5tnaxaqizq6a",
+                "t12fiakbhe2gwd5cnmrenekasyn6v5tnaxaqizq6a",
             ),
             (
                 [
@@ -245,7 +165,7 @@ mod tests {
                     41, 133, 248, 209, 37, 129, 45, 172, 65, 99, 163, 150, 52, 155, 35, 193, 28,
                     194, 255, 53, 157, 229, 75, 226, 135, 234, 98, 49, 155,
                 ],
-                b"t1wbxhu3ypkuo6eyp6hjx6davuelxaxrvwb2kuwva",
+                "t1wbxhu3ypkuo6eyp6hjx6davuelxaxrvwb2kuwva",
             ),
             (
                 [
@@ -254,7 +174,7 @@ mod tests {
                     121, 216, 239, 145, 57, 233, 18, 73, 202, 189, 57, 50, 145, 207, 229, 210, 119,
                     186, 118, 222, 69, 227, 224, 133, 163, 118, 129, 191, 54, 69, 210,
                 ],
-                b"t1xtwapqc6nh4si2hcwpr3656iotzmlwumogqbuaa",
+                "t1xtwapqc6nh4si2hcwpr3656iotzmlwumogqbuaa",
             ),
             (
                 [
@@ -263,7 +183,7 @@ mod tests {
                     97, 169, 30, 208, 180, 236, 137, 8, 0, 37, 63, 166, 252, 32, 172, 144, 251,
                     241, 251, 242, 113, 48, 164, 236, 195, 228, 3, 183, 5, 118,
                 ],
-                b"t1xcbgdhkgkwht3hrrnui3jdopeejsoatkzmoltqy",
+                "t1xcbgdhkgkwht3hrrnui3jdopeejsoatkzmoltqy",
             ),
             (
                 [
@@ -272,69 +192,13 @@ mod tests {
                     186, 188, 95, 200, 98, 104, 207, 234, 235, 167, 174, 5, 191, 184, 214, 142,
                     183, 90, 82, 104, 120, 44, 248, 111, 200, 112, 43, 239, 138, 31, 224,
                 ],
-                b"t17uoq6tp427uzv7fztkbsnn64iwotfrristwpryy",
+                "t17uoq6tp427uzv7fztkbsnn64iwotfrristwpryy",
             ),
         ];
 
         for (b, s) in test_cases.into_iter() {
-            let addr = new_secp256k1(b);
-
-            println!("new_secp256k1: {:?}", addr);
-
-            let chsm = checksum(&addr[..]);
-            println!("chsm: {:?}", chsm);
-            let payload = &addr[1..];
-            println!("payload: {:?}", payload);
-
-            let protocol = 1u8;
-
-            let mut t = Vec::new();
-            t.extend_from_slice(payload);
-            t.extend_from_slice(&chsm);
-
-            let protocol = 1;
-            let ntwk = "t";
-            println!("network: t");
-            println!("protocol: {:?}", protocol);
-            println!("base32_encode(payload): {:?}", base32_encode(&t));
-            let addr = format!("{}{}{}", ntwk, protocol, base32_encode(&t));
-            println!("========== addr: {:?}", addr);
-
-            // let addr = new_secp256k1(b);
-            // let decoded = HEXUPPER.decode(&s.to_vec());
-            // println!("decoded: {:?}", decoded);
-            // println!("b: {:?}, s: {:?}", &b[..], &s[..]);
+            let addr: crate::Address = crate::secp256k1::Public(b.to_vec()).try_into().unwrap();
+            assert_eq!(s.to_string(), addr.to_string());
         }
-
-        // for _, tc := range testCases {
-        // tc := tc
-        // t.Run(fmt.Sprintf("testing secp256k1 address: %s", tc.expected), func(t *testing.T) {
-        // assert := assert.New(t)
-
-        // // Round trip encoding and decoding from string
-        // addr, err := NewSecp256k1Address(tc.input)
-        // assert.NoError(err)
-        // assert.Equal(tc.expected, addr.String())
-
-        // maybeAddr, err := NewFromString(tc.expected)
-        // assert.NoError(err)
-        // assert.Equal(SECP256K1, maybeAddr.Protocol())
-        // assert.Equal(addressHash(tc.input), maybeAddr.Payload())
-
-        // // Round trip to and from bytes
-        // maybeAddrBytes, err := NewFromBytes(maybeAddr.Bytes())
-        // assert.NoError(err)
-        // assert.Equal(maybeAddr, maybeAddrBytes)
-
-        // // Round trip encoding and decoding json
-        // b, err := addr.MarshalJSON()
-        // assert.NoError(err)
-
-        // var newAddr Address
-        // err = newAddr.UnmarshalJSON(b)
-        // assert.NoError(err)
-        // assert.Equal(addr, newAddr)
-        // })
-        // }
     }
 }
