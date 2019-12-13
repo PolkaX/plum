@@ -1,3 +1,5 @@
+use data_encoding::{Specification, BASE32};
+
 // #[derive(PartialEq, Eq, Clone)]
 // pub enum Address<AddressId, Secp256k1, Actor, Bls> {
 // /// Id represents the address ID protocol.
@@ -24,6 +26,7 @@ pub enum Error {
     // Invalid address checksum
     InvalidChecksum,
 }
+
 // UndefAddressString is the string used to represent an empty address when encoded to a string.
 // const UndefAddressString: '&static str = "<empty>";
 
@@ -129,12 +132,11 @@ pub const CHECKSUM_HASH_LENGTH: usize = 4;
 
 pub fn new_secp256k1(pubkey: &[u8]) -> Vec<u8> {
     let hash = address_hash(pubkey);
+
     let mut v = Vec::new();
     v.push(1u8);
     v.extend_from_slice(&hash);
     v
-    // println!("hash: {:?}", hash.clone());
-    // println!("hash bytes: {:?}", hash.as_bytes());
 }
 
 pub fn hash(ingest: &[u8], hash_config: usize) -> Vec<u8> {
@@ -150,6 +152,17 @@ pub fn checksum(ingest: &[u8]) -> Vec<u8> {
     hash(ingest, CHECKSUM_HASH_LENGTH)
 }
 
+const ENCODE_STD: &str = "abcdefghijklmnopqrstuvwxyz234567";
+
+pub fn base32_encode(input: &[u8]) -> String {
+    let mut spec = Specification::new();
+    spec.symbols.push_str(ENCODE_STD);
+    spec.padding = None;
+    let encoder = spec.encoding().unwrap();
+
+    encoder.encode(&input)
+}
+
 pub fn encode(network: Network, addr: Address) -> String {
     let ntwk = match network {
         Network::Mainnet => "f",
@@ -159,11 +172,14 @@ pub fn encode(network: Network, addr: Address) -> String {
     let raw_b: Vec<u8> = addr.0;
     let chsm = checksum(&raw_b);
     let protocol = raw_b[0];
-    // let payload = raw_b[1:];
-    let addr = format!("{}{}{}", ntwk, protocol, "hello");
+    let payload = &raw_b[1..];
+    let mut t = Vec::new();
+    t.push(protocol);
+    t.extend_from_slice(payload);
+    let protocol = 1;
+    let addr = format!("{}{}{}", ntwk, protocol, base32_encode(&t));
 
     // SECP256K1
-
     // cksm := Checksum(append([]byte{addr.Protocol()}, addr.Payload()...));
     // strAddr = ntwk + fmt.Sprintf("%d", addr.Protocol()) + AddressEncoding.WithPadding(-1).EncodeToString(append(addr.Payload(), cksm[:]...));
 
@@ -188,6 +204,17 @@ mod tests {
             252,
         ];
         assert_eq!(address_hash(&ingest[..]), hashed.to_vec());
+    }
+
+    #[test]
+    fn base32_encoding_should_work() {
+        let input = [
+            253, 29, 15, 77, 252, 215, 233, 154, 252, 185, 154, 131, 38, 183, 220, 69, 157, 50,
+            198, 40, 148, 236, 248, 227,
+        ];
+        let encoded = "7uoq6tp427uzv7fztkbsnn64iwotfrristwpryy";
+
+        assert_eq!(encoded.to_string(), base32_encode(&input));
     }
 
     #[test]
@@ -251,9 +278,32 @@ mod tests {
 
         for (b, s) in test_cases.into_iter() {
             let addr = new_secp256k1(b);
-            let decoded = HEXUPPER.decode(&s.to_vec());
-            println!("decoded: {:?}", decoded);
-            println!("b: {:?}, s: {:?}", &b[..], &s[..]);
+
+            println!("new_secp256k1: {:?}", addr);
+
+            let chsm = checksum(&addr[..]);
+            println!("chsm: {:?}", chsm);
+            let payload = &addr[1..];
+            println!("payload: {:?}", payload);
+
+            let protocol = 1u8;
+
+            let mut t = Vec::new();
+            t.extend_from_slice(payload);
+            t.extend_from_slice(&chsm);
+
+            let protocol = 1;
+            let ntwk = "t";
+            println!("network: t");
+            println!("protocol: {:?}", protocol);
+            println!("base32_encode(payload): {:?}", base32_encode(&t));
+            let addr = format!("{}{}{}", ntwk, protocol, base32_encode(&t));
+            println!("========== addr: {:?}", addr);
+
+            // let addr = new_secp256k1(b);
+            // let decoded = HEXUPPER.decode(&s.to_vec());
+            // println!("decoded: {:?}", decoded);
+            // println!("b: {:?}, s: {:?}", &b[..], &s[..]);
         }
 
         // for _, tc := range testCases {
