@@ -43,41 +43,61 @@ pub const PAYLOAD_HASH_LENGTH: usize = 20;
 // ChecksumHashLength defines the hash length used for calculating address checksums.
 pub const CHECKSUM_HASH_LENGTH: usize = 4;
 
-#[derive(Debug)]
+pub const BLS_PUBLICKEY_BYTES: usize = 48;
+
+#[derive(Debug, Clone)]
 pub enum Address {
+    Id(Vec<u8>),
     Secp256k1([u8; PAYLOAD_HASH_LENGTH + 1]),
+    Actor([u8; PAYLOAD_HASH_LENGTH + 1]),
+    Bls(Vec<u8>),
 }
 
 impl Address {
     pub fn protocol(&self) -> u8 {
         match *self {
+            Self::Id(_) => 0u8,
             Self::Secp256k1(_) => 1u8,
+            Self::Actor(_) => 2u8,
+            Self::Bls(_) => 3u8,
+        }
+    }
+
+    pub fn payload(&self) -> Vec<u8> {
+        let c = self.clone();
+        match c {
+            Self::Id(x) => x[1..].to_vec(),
+            Self::Secp256k1(x) => x[1..].to_vec(),
+            Self::Actor(x) => x[1..].to_vec(),
+            Self::Bls(x) => x[1..].to_vec(),
         }
     }
 
     pub fn checksum(&self) -> Vec<u8> {
         match *self {
             Self::Secp256k1(addr) => checksum(&addr[..]),
+            _ => Vec::new(),
         }
     }
 }
 
 impl ToString for Address {
     fn to_string(&self) -> String {
+        let network = "t";
         match self {
-            Self::Secp256k1(addr) => {
+            Self::Secp256k1(_) | Self::Actor(_) | Self::Bls(_) => {
+                let payload = self.payload();
                 let chsm = self.checksum();
-                let protocol = self.protocol();
-                let payload = &addr[1..];
 
                 let mut t = Vec::new();
-                t.extend_from_slice(payload);
+                t.extend_from_slice(&payload);
                 t.extend_from_slice(&chsm);
 
-                let ntwk = "t";
-                let addr = format!("{}{}{}", ntwk, protocol, base32_encode(&t));
-                addr
+                let protocol = self.protocol();
+
+                format!("{}{}{}", network, protocol, base32_encode(&t))
             }
+            Self::Id(_) => "".into(),
         }
     }
 }
