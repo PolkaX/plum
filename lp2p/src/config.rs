@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX.
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 use cid::{Cid, Codec, Version};
 use libp2p::{
@@ -26,7 +26,6 @@ pub fn msg_topic() -> Topic {
 pub fn blocks_topic() -> Topic {
     TopicBuilder::new("/fil/blocks").build()
 }
-
 
 pub fn configure_kad(peer_id: &PeerId) -> (KademliaConfig, MemoryStore) {
     let mut cfg = KademliaConfig::default();

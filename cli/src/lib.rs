@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX.
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 pub mod cmd;
 
@@ -6,7 +6,7 @@ use structopt::clap::AppSettings;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use cmd::Command;
+use self::cmd::Command;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(name = "plum")]

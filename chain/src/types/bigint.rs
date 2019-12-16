@@ -1,3 +1,3 @@
-// Copyright 2019 杭州链网科技
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 pub type BigInt = u128;

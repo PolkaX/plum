@@ -1,17 +1,16 @@
 [package]
 name = "lp2p"
 version = "0.1.0"
-authors = ["gguoss <guanghuaguo.oss@gmail.com>"]
+authors = ["The PolkaX Authors"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "GPL-3.0"
 
 [dependencies]
-libp2p = { version = "0.12.0", default-features = false }
+libp2p = { version = "0.13", default-features = false }
 futures = "0.1"
-tokio = "0.1.2"
+tokio = "0.1"
 chain = { path = "../chain" }
 void = "1.0"
-cid = "*"
+cid = "0.3"
 multihash = "~0.8.0"
-log = "0.4.8"
+log = "0.4"

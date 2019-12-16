@@ -1,16 +1,18 @@
-// Copyright 2019 PolkaX.
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
+
+#[macro_use]
+extern crate log;
 
 mod behaviour;
 mod config;
 
 use futures::prelude::*;
 use libp2p::{core::Multiaddr, Swarm};
-use log::info;
 use tokio::runtime::TaskExecutor;
 
 #[derive(Debug, Clone, Default)]
 pub struct NetworkState {
-    listenning: bool,
+    listening: bool,
 }
 
 pub fn initialize(
@@ -43,11 +45,11 @@ pub fn initialize(
                     info!("rcv event:{:?}", e);
                 }
                 Async::Ready(None) | Async::NotReady => {
-                    if !network_state.listenning {
+                    if !network_state.listening {
                         if let Some(a) = Swarm::listeners(&swarm).next() {
                             info!("Listening on {:?}", a);
                         }
-                        network_state.listenning = true;
+                        network_state.listening = true;
                     }
                     return Ok(Async::NotReady);
                 }

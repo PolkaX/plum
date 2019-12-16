@@ -1,6 +1,8 @@
-// Copyright 2019 PolkaX.
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-use chain::types::{BigInt, Cid};
+use std::collections::VecDeque;
+use std::marker::PhantomData;
+
 use futures::future::{self, FutureResult};
 use futures::prelude::*;
 use libp2p::core::{
@@ -12,9 +14,8 @@ use libp2p::swarm::{
     ProtocolsHandlerEvent, ProtocolsHandlerUpgrErr, SubstreamProtocol,
 };
 use libp2p::tokio_io::{AsyncRead, AsyncWrite};
-use log::info;
-use std::collections::VecDeque;
-use std::marker::PhantomData;
+
+use chain::types::{BigInt, Cid};
 
 #[derive(Debug, Clone)]
 struct HelloMsg {

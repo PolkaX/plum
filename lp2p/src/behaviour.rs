@@ -1,17 +1,17 @@
-// Copyright 2019 PolkaX.
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::config;
 use libp2p::core::{either::EitherOutput, ConnectedPoint};
 use libp2p::swarm::{IntoProtocolsHandler, IntoProtocolsHandlerSelect, ProtocolsHandler};
 use libp2p::swarm::{NetworkBehaviour, NetworkBehaviourAction, PollParameters};
 use libp2p::{
     floodsub::{Floodsub, FloodsubEvent, Topic},
-    kad::{record::store::MemoryStore, Kademlia, KademliaEvent},
+    kad::{record::store::MemoryStore, Kademlia},
     tokio_io::{AsyncRead, AsyncWrite},
     Multiaddr, PeerId,
 };
-use log::info;
 use tokio::prelude::Async;
+
+use crate::config;
 
 pub struct Fil {}
 // We create a custom network behaviour that combines floodsub and kad.
@@ -42,7 +42,7 @@ pub struct HelloMsg {
 impl<TSubstream> Behaviour<TSubstream> {
     pub fn new(local_peer_id: &PeerId) -> Self {
         let (cfg, store) = config::configure_kad(local_peer_id);
-        let cid = config::configure_genesis_hash();
+        let _cid = config::configure_genesis_hash();
 
         Behaviour {
             floodsub: Floodsub::new(local_peer_id.clone()),
@@ -52,7 +52,7 @@ impl<TSubstream> Behaviour<TSubstream> {
         }
     }
 
-    pub fn send(&mut self, topic: Topic, msg: &Msg) {
+    pub fn send(&mut self, topic: Topic, _msg: &Msg) {
         // encode msg to Vec<u8>
         let mut data = Vec::<u8>::new();
         data.push(2);
@@ -73,7 +73,7 @@ where
         IntoProtocolsHandler::select(self.floodsub.new_handler(), self.kad.new_handler())
     }
 
-    fn addresses_of_peer(&mut self, peer_id: &PeerId) -> Vec<Multiaddr> {
+    fn addresses_of_peer(&mut self, _peer_id: &PeerId) -> Vec<Multiaddr> {
         Vec::new()
     }
 
@@ -88,20 +88,6 @@ where
     fn inject_disconnected(&mut self, peer_id: &PeerId, endpoint: ConnectedPoint) {
         self.floodsub.inject_disconnected(peer_id, endpoint.clone());
         self.kad.inject_disconnected(peer_id, endpoint.clone());
-    }
-
-    fn inject_node_event(
-        &mut self,
-        peer_id: PeerId,
-        event: <<Self::ProtocolsHandler as IntoProtocolsHandler>::Handler as ProtocolsHandler>::OutEvent,
-    ) {
-        info!("inject_node_event");
-        match event {
-            EitherOutput::First(event) => {
-                self.floodsub.inject_node_event(peer_id, event);
-            }
-            EitherOutput::Second(event) => self.kad.inject_node_event(peer_id, event),
-        }
     }
 
     fn inject_replaced(
@@ -120,6 +106,20 @@ where
             closed_endpoint.clone(),
             new_endpoint.clone(),
         );
+    }
+
+    fn inject_node_event(
+        &mut self,
+        peer_id: PeerId,
+        event: <<Self::ProtocolsHandler as IntoProtocolsHandler>::Handler as ProtocolsHandler>::OutEvent,
+    ) {
+        info!("inject_node_event");
+        match event {
+            EitherOutput::First(event) => {
+                self.floodsub.inject_node_event(peer_id, event);
+            }
+            EitherOutput::Second(event) => self.kad.inject_node_event(peer_id, event),
+        }
     }
 
     fn inject_addr_reach_failure(
@@ -172,11 +172,11 @@ where
                         FloodsubEvent::Message(msg) => {
                             info!("recv floodsub msg, msg:{:?}", msg);
                         }
-                        FloodsubEvent::Subscribed { peer_id, topic } => {
+                        FloodsubEvent::Subscribed { peer_id, .. } => {
                             info!("rcv subscribed msg, peer_id:{:?}", peer_id.clone());
                             self.events.push(Event::Connecting(peer_id.clone()));
                         }
-                        FloodsubEvent::Unsubscribed { peer_id, topic } => {}
+                        FloodsubEvent::Unsubscribed { .. } => {}
                     }
                 }
                 Async::Ready(NetworkBehaviourAction::DialAddress { address }) => {
@@ -200,7 +200,7 @@ where
         loop {
             match self.kad.poll(params) {
                 Async::NotReady => break,
-                Async::Ready(NetworkBehaviourAction::GenerateEvent(ev)) => {
+                Async::Ready(NetworkBehaviourAction::GenerateEvent(_ev)) => {
                     info!("kad poll");
                     //return NetworkBehaviourAction::GenerateEvent(ev);
                 }

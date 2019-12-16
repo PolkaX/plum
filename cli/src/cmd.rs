@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX.
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
