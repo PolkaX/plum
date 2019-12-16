@@ -1,107 +1,105 @@
-use blake2_rfc::blake2b::{blake2b, Blake2b};
-use data_encoding::{Specification, BASE32};
 use std::convert::TryInto;
 
-use std::convert::TryFrom;
+use crate::crypto::*;
 
-#[derive(Debug, Clone)]
-pub struct Secp256k1Public(pub Vec<u8>);
+pub trait Protocol {
+    fn protocol(&self) -> u8;
+}
 
-#[derive(Debug, Clone)]
-pub struct ActorPublic(pub Vec<u8>);
+pub enum Varint {
+    U64(u64),
+}
 
-#[derive(Debug, Clone)]
-pub struct BlsPublic(pub Vec<u8>);
+impl Into<Vec<u8>> for Varint {
+    fn into(self) -> Vec<u8> {
+        match self {
+            Self::U64(x) => {
+                let mut buf = varint::encode::u64_buffer();
+                varint::encode::u64(x, &mut buf).to_vec()
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum Account {
+    ID(u64),
+    SECP256K1(Vec<u8>),
+    Actor(Vec<u8>),
+    BLS(Vec<u8>),
+}
+
+impl TryInto<Address> for Account {
+    type Error = ();
+    fn try_into(self) -> Result<Address, Self::Error> {
+        match self {
+            Self::ID(id) => {
+                // TODO check
+
+                let mut v = Vec::new();
+                v.push(0u8);
+                v.extend_from_slice(&Into::<Vec<u8>>::into(Varint::U64(id)));
+
+                Ok(Address::ID(v))
+            }
+            Self::Actor(data) => {
+                let hash = address_hash(&data);
+
+                if hash.len() != PAYLOAD_HASH_LENGTH {
+                    return Err(());
+                }
+
+                let mut v = Vec::new();
+                v.push(2u8);
+                v.extend_from_slice(&hash);
+
+                let mut x = [0u8; PAYLOAD_HASH_LENGTH + 1];
+                x.copy_from_slice(&v);
+
+                Ok(Address::Actor(x))
+            }
+            Self::SECP256K1(pubkey) => {
+                let hash = address_hash(&pubkey);
+
+                if hash.len() != PAYLOAD_HASH_LENGTH {
+                    return Err(());
+                }
+
+                let mut v = Vec::new();
+                v.push(1u8);
+                v.extend_from_slice(&hash);
+
+                let mut x = [0u8; PAYLOAD_HASH_LENGTH + 1];
+                x.copy_from_slice(&v);
+
+                Ok(Address::SECP256K1(x))
+            }
+            Self::BLS(pubkey) => {
+                if pubkey.len() != BLS_PUBLICKEY_LEN as usize {
+                    return Err(());
+                }
+
+                let mut v = Vec::new();
+                v.push(3u8);
+                v.extend_from_slice(&pubkey);
+
+                Ok(Address::BLS(v))
+            }
+        }
+    }
+}
 
 // SignatureBytes is the length of a BLS signature
-const BlsSignatureBytes: u8 = 96;
+pub const BLS_SIGNATURE_LEN: u8 = 96;
 
 // PrivateKeyBytes is the length of a BLS private key
-const BlsPrivateKeyBytes: u8 = 32;
+pub const BLS_PRIVATEKEY_LEN: u8 = 32;
 
 // PublicKeyBytes is the length of a BLS public key
-const BlsPublicKeyBytes: u8 = 48;
+pub const BLS_PUBLICKEY_LEN: u8 = 48;
 
 // DigestBytes is the length of a BLS message hash/digest
-const BlsDigestBytes: u8 = 96;
-
-#[derive(Debug, Clone)]
-pub struct Id(u64);
-
-impl TryInto<Address> for Id {
-    type Error = ();
-    fn try_into(self) -> Result<Address, Self::Error> {
-        // TODO check
-
-        let mut v = Vec::new();
-        v.push(0u8);
-        v.extend_from_slice(&to_varint(self.0));
-
-        Ok(Address::Id(v))
-    }
-}
-
-impl TryInto<Address> for BlsPublic {
-    type Error = ();
-
-    fn try_into(self) -> Result<Address, Self::Error> {
-        if self.0.len() != BlsPublicKeyBytes as usize {
-            return Err(());
-        }
-
-        let mut v = Vec::new();
-        v.push(3u8);
-        v.extend_from_slice(&self.0);
-
-        Ok(Address::Bls(v))
-    }
-}
-
-impl TryInto<Address> for ActorPublic {
-    type Error = ();
-    fn try_into(self) -> Result<Address, Self::Error> {
-        let hash = address_hash(&self.0);
-
-        if hash.len() != PAYLOAD_HASH_LENGTH {
-            return Err(());
-        }
-
-        let mut v = Vec::new();
-        v.push(2u8);
-        v.extend_from_slice(&hash);
-
-        let mut x = [0u8; PAYLOAD_HASH_LENGTH + 1];
-        x.copy_from_slice(&v);
-
-        Ok(Address::Actor(x))
-    }
-}
-
-impl TryInto<Address> for Secp256k1Public {
-    type Error = ();
-    fn try_into(self) -> Result<Address, Self::Error> {
-        let hash = address_hash(&self.0);
-
-        if hash.len() != PAYLOAD_HASH_LENGTH {
-            return Err(());
-        }
-
-        let mut v = Vec::new();
-        v.push(1u8);
-        v.extend_from_slice(&hash);
-
-        let mut x = [0u8; PAYLOAD_HASH_LENGTH + 1];
-        x.copy_from_slice(&v);
-
-        Ok(Address::Secp256k1(x))
-    }
-}
-
-fn to_varint(x: u64) -> Vec<u8> {
-    let mut buf = varint::encode::u64_buffer();
-    let bytes = varint::encode::u64(x, &mut buf);
-    bytes.to_vec()
-}
+pub const BLS_DIGEST_LEN: u8 = 96;
 
 #[derive(Debug, derive_more::Display, derive_more::From)]
 pub enum Error {
@@ -117,66 +115,54 @@ pub enum Error {
     InvalidChecksum,
 }
 
-// UndefAddressString is the string used to represent an empty address when encoded to a string.
-// const UndefAddressString: '&static str = "<empty>";
-
 // MaxAddressStringLength is the max length of an address encoded as a string
 // it include the network prefx, protocol, and bls publickey
-const MaxAddressStringLength: u8 = 2 + 84;
+pub const MAX_ADDRESS_STRING_LEN: u8 = 2 + 84;
 
-const encodeStd: &'static str = "abcdefghijklmnopqrstuvwxyz234567";
-
-// AddressEncoding defines the base32 config used for address encoding and decoding.
-// var AddressEncoding = base32.NewEncoding(encodeStd)
-
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Network {
     Mainnet,
     Testnet,
 }
 
-// PayloadHashLength defines the hash length taken over addresses using the Actor and SECP256K1 protocols.
-pub const PAYLOAD_HASH_LENGTH: usize = 20;
-
-// ChecksumHashLength defines the hash length used for calculating address checksums.
-pub const CHECKSUM_HASH_LENGTH: usize = 4;
-
-pub const BLS_PUBLICKEY_BYTES: usize = 48;
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Address {
-    Id(Vec<u8>),
-    Secp256k1([u8; PAYLOAD_HASH_LENGTH + 1]),
+    ID(Vec<u8>),
+    SECP256K1([u8; PAYLOAD_HASH_LENGTH + 1]),
     Actor([u8; PAYLOAD_HASH_LENGTH + 1]),
-    Bls(Vec<u8>),
+    BLS(Vec<u8>),
+}
+
+impl Protocol for Address {
+    fn protocol(&self) -> u8 {
+        match *self {
+            Self::ID(_) => 0u8,
+            Self::SECP256K1(_) => 1u8,
+            Self::Actor(_) => 2u8,
+            Self::BLS(_) => 3u8,
+        }
+    }
 }
 
 impl Address {
-    pub fn protocol(&self) -> u8 {
-        match *self {
-            Self::Id(_) => 0u8,
-            Self::Secp256k1(_) => 1u8,
-            Self::Actor(_) => 2u8,
-            Self::Bls(_) => 3u8,
-        }
-    }
-
     pub fn payload(&self) -> Vec<u8> {
         let c = self.clone();
         match c {
-            Self::Id(x) => x[1..].to_vec(),
-            Self::Secp256k1(x) => x[1..].to_vec(),
+            Self::ID(x) => x[1..].to_vec(),
+            Self::SECP256K1(x) => x[1..].to_vec(),
             Self::Actor(x) => x[1..].to_vec(),
-            Self::Bls(x) => x[1..].to_vec(),
+            Self::BLS(x) => x[1..].to_vec(),
         }
     }
 
     pub fn checksum(&self) -> Vec<u8> {
         match self.clone() {
-            Self::Secp256k1(addr) => checksum(&addr[..]),
+            Self::SECP256K1(addr) => checksum(&addr[..]),
             Self::Actor(addr) => checksum(&addr[..]),
-            Self::Bls(addr) => checksum(&addr[..]),
-            _ => Vec::new(),
+            Self::BLS(addr) => checksum(&addr[..]),
+            _ => unreachable!(
+                "Only secp256k1, actor and bls address has to perform the checksum function"
+            ),
         }
     }
 }
@@ -185,7 +171,7 @@ impl ToString for Address {
     fn to_string(&self) -> String {
         let network = "t";
         match self {
-            Self::Secp256k1(_) | Self::Actor(_) | Self::Bls(_) => {
+            Self::SECP256K1(_) | Self::Actor(_) | Self::BLS(_) => {
                 let payload = self.payload();
                 let chsm = self.checksum();
 
@@ -193,40 +179,15 @@ impl ToString for Address {
                 t.extend_from_slice(&payload);
                 t.extend_from_slice(&chsm);
 
-                let protocol = self.protocol();
-
-                format!("{}{}{}", network, protocol, base32_encode(&t))
+                format!("{}{}{}", network, self.protocol(), base32_encode(&t))
             }
-            Self::Id(_) => {
-                let (i, _) = varint::decode::u64(&self.payload()).unwrap();
-                format!("{}{}{}", network, self.protocol(), i)
+            Self::ID(_) => {
+                let (id, _) =
+                    varint::decode::u64(&self.payload()).expect("TODO: Ensure it won't panic");
+                format!("{}{}{}", network, self.protocol(), id)
             }
         }
     }
-}
-
-pub fn hash(ingest: &[u8], hash_config: usize) -> Vec<u8> {
-    let hash = blake2b(hash_config, &[], ingest);
-    hash.as_bytes().to_vec()
-}
-
-pub fn address_hash(ingest: &[u8]) -> Vec<u8> {
-    hash(ingest, PAYLOAD_HASH_LENGTH)
-}
-
-pub fn checksum(ingest: &[u8]) -> Vec<u8> {
-    hash(ingest, CHECKSUM_HASH_LENGTH)
-}
-
-const ENCODE_STD: &str = "abcdefghijklmnopqrstuvwxyz234567";
-
-pub fn base32_encode(input: &[u8]) -> String {
-    let mut spec = Specification::new();
-    spec.symbols.push_str(ENCODE_STD);
-    spec.padding = None;
-    let encoder = spec.encoding().unwrap();
-
-    encoder.encode(&input)
 }
 
 // cbor decode
@@ -320,7 +281,7 @@ mod tests {
         ];
 
         for (b, s) in test_cases.into_iter() {
-            let addr: crate::address::Address = crate::address::Secp256k1Public(b.to_vec())
+            let addr: crate::address::Address = crate::address::Account::SECP256K1(b.to_vec())
                 .try_into()
                 .unwrap();
             assert_eq!(s.to_string(), addr.to_string());
@@ -368,8 +329,9 @@ mod tests {
         ];
 
         for (b, s) in test_cases.into_iter() {
-            let addr: crate::address::Address =
-                crate::address::ActorPublic(b.to_vec()).try_into().unwrap();
+            let addr: crate::address::Address = crate::address::Account::Actor(b.to_vec())
+                .try_into()
+                .unwrap();
             assert_eq!(s.to_string(), addr.to_string());
         }
     }
@@ -405,7 +367,7 @@ mod tests {
 
         for (b, s) in test_cases.into_iter() {
             let addr: crate::address::Address =
-                crate::address::BlsPublic(b.to_vec()).try_into().unwrap();
+                crate::address::Account::BLS(b.to_vec()).try_into().unwrap();
             assert_eq!(s.to_string(), addr.to_string());
         }
     }
@@ -424,7 +386,7 @@ mod tests {
         ];
         // {math.MaxUint64, fmt.Sprintf("t0%s", strconv.FormatUint(math.MaxUint64, 10))},
         for (b, s) in test_cases.into_iter() {
-            let addr: crate::address::Address = crate::address::Id(*b).try_into().unwrap();
+            let addr: crate::address::Address = crate::address::Account::ID(*b).try_into().unwrap();
             assert_eq!(s.to_string(), addr.to_string());
         }
     }
