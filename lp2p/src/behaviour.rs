@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX
+// Copyright 2019 PolkaX.
 
 use crate::config;
 use libp2p::core::{either::EitherOutput, ConnectedPoint};

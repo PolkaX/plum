@@ -1,14 +1,14 @@
-// Copyright 2019 PolkX Team.
+// Copyright 2019 PolkX.
 
-use libp2p::{PeerId, Multiaddr};
-use log::{debug};
+use libp2p::{Multiaddr, PeerId};
+use log::debug;
 use std::{collections::HashMap, time::Instant};
 
 const MAX_FIL_PEERS: u32 = 32;
 const MIN_FIL_PEERS: u32 = 8;
 
 #[derive(Debug, Clone)]
-pub struct Node{}
+pub struct Node {}
 
 #[derive(Debug, Clone)]
 pub struct PeerMgr {
@@ -17,7 +17,7 @@ pub struct PeerMgr {
     MaxFilPeers: u32,
     MinFilPeers: u32,
     Expanding: bool,
- //   swarm: Swarm,
+    //   swarm: Swarm,
 }
 
 /*
@@ -26,5 +26,4 @@ libp2p::swarm::ExpandedSwarm<impl std::clone::Clone+libp2p::core::transport::Tra
 ;*/
 
 #[cfg(test)]
-mod tests {
-}
+mod tests {}
