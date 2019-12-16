@@ -1,8 +1,8 @@
-// Copyright 2019 PolkX.
+// Copyright 2019 PolkaX. Licensed under GPL-3.0.
+
+use std::{collections::HashMap, time::Instant};
 
 use libp2p::{Multiaddr, PeerId};
-use log::debug;
-use std::{collections::HashMap, time::Instant};
 
 const MAX_FIL_PEERS: u32 = 32;
 const MIN_FIL_PEERS: u32 = 8;
@@ -12,11 +12,11 @@ pub struct Node {}
 
 #[derive(Debug, Clone)]
 pub struct PeerMgr {
-    Bootstrappers: Vec<Multiaddr>,
-    Peers: HashMap<PeerId, Node>,
-    MaxFilPeers: u32,
-    MinFilPeers: u32,
-    Expanding: bool,
+    bootstrappers: Vec<Multiaddr>,
+    peers: HashMap<PeerId, Node>,
+    max_fil_peers: u32,
+    min_fil_peers: u32,
+    expanding: bool,
     //   swarm: Swarm,
 }
 

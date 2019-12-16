@@ -1,5 +1,4 @@
-// copyright 2019 chainnet.tech
+// Copyright 2019 PolkaX. Licensed under GPL-3.0.
 
-// To Do:
-pub trait Storage {
-}
+// TODO:
+pub trait Storage {}

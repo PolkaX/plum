@@ -1,4 +1,4 @@
-// Copright 2019 chainnet.tech
+// Copyright 2019 PolkaX. Licensed under GPL-3.0.
 
 use crate::types::{BlockHeader, Message, SignedMessage};
 

@@ -1,4 +1,4 @@
-// Copyright 2019 chainnet.tech
+// Copyright 2019 PolkaX. Licensed under GPL-3.0.
 
 lazy_static! {
     static ref BASE32: data_encoding::Encoding = {
@@ -11,6 +11,7 @@ lazy_static! {
 const PayloadHashLength: u32 = 20;
 const ChecksumHashLength: u32 = 4;
 const MaxAddressStringLength: u32 = 2 + 84;
+
 pub type AddressEncoding = BASE32;
 
 #[derive(Default, PartialEq, Clone, Eq)]
@@ -41,7 +42,7 @@ fn encode(network: Network, addr Address) -> (string, error) {
 impl Address {
     pub fn protocol(&self) -> Protocol {
         if self.0.len() == 0 {
-           return UNKNOWN;
+            return UNKNOWN;
         }
         self.0[0]
     }

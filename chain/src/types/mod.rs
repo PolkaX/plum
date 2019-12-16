@@ -1,38 +1,38 @@
-// Copyright 2019 杭州链网科技
+// Copyright 2019 PolkaX. Licensed under GPL-3.0.
 
-mod error;
-mod bigint;
-mod fil;
+mod actor;
 mod address;
-mod signature;
-mod message;
+mod ask;
+mod bigint;
 mod block_header;
 mod block_msg;
-mod tipset;
-mod signed_message;
+mod error;
+mod fil;
 mod full_block;
-mod actor;
-mod ask;
 mod key_info;
 mod logs;
+mod message;
 mod message_receipt;
+mod signature;
+mod signed_message;
+mod tipset;
 
-pub use fil::{FIL, parse_fil};
-pub use bigint::BigInt;
+pub use self::actor::Actor;
+pub use self::address::Address;
+pub use self::ask::{SignedStorageAsk, StorageAsk};
+pub use self::bigint::BigInt;
+pub use self::block_header::BlockHeader;
+pub use self::error::Error;
+pub use self::fil::{parse_fil, FIL};
+pub use self::full_block::FullBlock;
+pub use self::logs::LogCids;
+pub use self::message::Message;
+pub use self::message_receipt::MessageReceipt;
+pub use self::signature::Signature;
+pub use self::signed_message::SignedMessage;
+pub use self::tipset::TipSet;
+
 pub use cid::Cid;
-pub use address::Address;
-pub use signature::Signature;
-pub use block_header::BlockHeader;
-pub use tipset::TipSet;
-pub use message::Message;
-pub use signed_message::SignedMessage;
-pub use full_block::FullBlock;
-pub use actor::Actor;
-pub use ask::{ StorageAsk, SignedStorageAsk };
-pub use error::Error;
-pub use logs::LogCids;
-pub use message_receipt::MessageReceipt;
 
 #[cfg(test)]
-mod tests {
-}
+mod tests {}

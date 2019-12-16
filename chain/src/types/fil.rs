@@ -1,4 +1,4 @@
-// Copyright 2019 杭州链网科技
+// Copyright 2019 PolkaX. Licensed under GPL-3.0.
 
 use crate::types::BigInt;
 

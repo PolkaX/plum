@@ -1,4 +1,4 @@
-// Copyright 2019 chainnet.tech
+// Copyright 2019 PolkaX. Licensed under GPL-3.0.
 
 const SIGNATUREMAXLENGTH: u32 = 200;
 

@@ -1,6 +1,5 @@
-// Copyright 2019 PolkaX.
+// Copyright 2019 PolkaX. Licensed under GPL-3.0.
 
-use crate::config;
 use libp2p::core::{either::EitherOutput, ConnectedPoint};
 use libp2p::swarm::{IntoProtocolsHandler, IntoProtocolsHandlerSelect, ProtocolsHandler};
 use libp2p::swarm::{NetworkBehaviour, NetworkBehaviourAction, PollParameters};
@@ -10,8 +9,9 @@ use libp2p::{
     tokio_io::{AsyncRead, AsyncWrite},
     Multiaddr, PeerId,
 };
-use log::info;
 use tokio::prelude::Async;
+
+use crate::config;
 
 pub struct Fil {}
 // We create a custom network behaviour that combines floodsub and kad.
