@@ -11,6 +11,6 @@ const IKTBLS: i32 = 1;
 
 #[derive(Default, PartialEq, Clone, Eq)]
 pub struct Signature {
-    Type: String,
-    Data: Vec<u8>,
+    ty: String,
+    data: Vec<u8>,
 }

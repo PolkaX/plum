@@ -8,9 +8,9 @@ lazy_static! {
     };
 }
 
-const PayloadHashLength: u32 = 20;
-const ChecksumHashLength: u32 = 4;
-const MaxAddressStringLength: u32 = 2 + 84;
+const PAYLOAD_HASH_LENGTH: u32 = 20;
+const CHECKSUM_HASH_LENGTH: u32 = 4;
+const MAX_ADDRESS_STRING_LENGTH: u32 = 2 + 84;
 
 pub type AddressEncoding = BASE32;
 
