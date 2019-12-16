@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX. Licensed under GPL-3.0.
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 lazy_static! {
     static ref BASE32: data_encoding::Encoding = {

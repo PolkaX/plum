@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX. Licensed under GPL-3.0.
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 use libp2p::core::{either::EitherOutput, ConnectedPoint};
 use libp2p::swarm::{IntoProtocolsHandler, IntoProtocolsHandlerSelect, ProtocolsHandler};
