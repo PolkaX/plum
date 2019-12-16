@@ -2,93 +2,6 @@ use std::convert::TryInto;
 
 use crate::crypto::*;
 
-pub trait Protocol {
-    fn protocol(&self) -> u8;
-}
-
-pub enum Varint {
-    U64(u64),
-}
-
-impl Into<Vec<u8>> for Varint {
-    fn into(self) -> Vec<u8> {
-        match self {
-            Self::U64(x) => {
-                let mut buf = varint::encode::u64_buffer();
-                varint::encode::u64(x, &mut buf).to_vec()
-            }
-        }
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum Account {
-    ID(u64),
-    SECP256K1(Vec<u8>),
-    Actor(Vec<u8>),
-    BLS(Vec<u8>),
-}
-
-impl TryInto<Address> for Account {
-    type Error = ();
-    fn try_into(self) -> Result<Address, Self::Error> {
-        match self {
-            Self::ID(id) => {
-                // TODO check
-
-                let mut v = Vec::new();
-                v.push(0u8);
-                v.extend_from_slice(&Into::<Vec<u8>>::into(Varint::U64(id)));
-
-                Ok(Address::ID(v))
-            }
-            Self::Actor(data) => {
-                let hash = address_hash(&data);
-
-                if hash.len() != PAYLOAD_HASH_LENGTH {
-                    return Err(());
-                }
-
-                let mut v = Vec::new();
-                v.push(2u8);
-                v.extend_from_slice(&hash);
-
-                let mut x = [0u8; PAYLOAD_HASH_LENGTH + 1];
-                x.copy_from_slice(&v);
-
-                Ok(Address::Actor(x))
-            }
-            Self::SECP256K1(pubkey) => {
-                let hash = address_hash(&pubkey);
-
-                if hash.len() != PAYLOAD_HASH_LENGTH {
-                    return Err(());
-                }
-
-                let mut v = Vec::new();
-                v.push(1u8);
-                v.extend_from_slice(&hash);
-
-                let mut x = [0u8; PAYLOAD_HASH_LENGTH + 1];
-                x.copy_from_slice(&v);
-
-                Ok(Address::SECP256K1(x))
-            }
-            Self::BLS(pubkey) => {
-                if pubkey.len() != BLS_PUBLICKEY_LEN as usize {
-                    return Err(());
-                }
-
-                let mut v = Vec::new();
-                v.push(3u8);
-                v.extend_from_slice(&pubkey);
-
-                Ok(Address::BLS(v))
-            }
-        }
-    }
-}
-
 // SignatureBytes is the length of a BLS signature
 pub const BLS_SIGNATURE_LEN: u8 = 96;
 
@@ -119,10 +32,109 @@ pub enum Error {
 // it include the network prefx, protocol, and bls publickey
 pub const MAX_ADDRESS_STRING_LEN: u8 = 2 + 84;
 
+pub trait Protocol {
+    fn protocol(&self) -> u8;
+}
+
+pub enum Varint {
+    U64(u64),
+}
+
+impl Into<Vec<u8>> for Varint {
+    fn into(self) -> Vec<u8> {
+        match self {
+            Self::U64(x) => {
+                let mut buf = varint::encode::u64_buffer();
+                varint::encode::u64(x, &mut buf).to_vec()
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum Account {
+    ID(u64),
+    SECP256K1(Vec<u8>),
+    Actor(Vec<u8>),
+    BLS(Vec<u8>),
+}
+
+impl Protocol for Account {
+    fn protocol(&self) -> u8 {
+        match *self {
+            Self::ID(_) => 0u8,
+            Self::SECP256K1(_) => 1u8,
+            Self::Actor(_) => 2u8,
+            Self::BLS(_) => 3u8,
+        }
+    }
+}
+
+impl Account {
+    pub fn encode_actor_secp256k1(
+        &self,
+        data_or_pubkey: &[u8],
+    ) -> Result<[u8; PAYLOAD_HASH_LENGTH + 1], ()> {
+        let hash = address_hash(data_or_pubkey);
+
+        if hash.len() != PAYLOAD_HASH_LENGTH {
+            return Err(());
+        }
+
+        let mut v = Vec::new();
+        v.push(self.protocol());
+        v.extend_from_slice(&hash);
+
+        let mut x = [0u8; PAYLOAD_HASH_LENGTH + 1];
+        x.copy_from_slice(&v);
+        Ok(x)
+    }
+}
+
+impl TryInto<Address> for Account {
+    type Error = ();
+    fn try_into(self) -> Result<Address, Self::Error> {
+        match self {
+            Self::ID(id) => {
+                // TODO check
+                let mut v = Vec::new();
+                v.push(self.protocol());
+                v.extend_from_slice(&Into::<Vec<u8>>::into(Varint::U64(id)));
+
+                Ok(Address::ID(v))
+            }
+            Self::Actor(ref data) => Ok(Address::Actor(self.encode_actor_secp256k1(data)?)),
+            Self::SECP256K1(ref pubkey) => {
+                Ok(Address::SECP256K1(self.encode_actor_secp256k1(pubkey)?))
+            }
+            Self::BLS(ref pubkey) => {
+                if pubkey.len() != BLS_PUBLICKEY_LEN as usize {
+                    return Err(());
+                }
+
+                let mut v = Vec::new();
+                v.push(self.protocol());
+                v.extend_from_slice(pubkey);
+
+                Ok(Address::BLS(v))
+            }
+        }
+    }
+}
+
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Network {
     Mainnet,
     Testnet,
+}
+
+impl Network {
+    pub fn prefix(&self) -> &str {
+        match *self {
+            Self::Mainnet => "f",
+            Self::Testnet => "t",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -135,19 +147,18 @@ pub enum Address {
 
 impl Protocol for Address {
     fn protocol(&self) -> u8 {
-        match *self {
-            Self::ID(_) => 0u8,
-            Self::SECP256K1(_) => 1u8,
-            Self::Actor(_) => 2u8,
-            Self::BLS(_) => 3u8,
+        match self.clone() {
+            Self::ID(id) => id[0],
+            Self::SECP256K1(secp256k1) => secp256k1[0],
+            Self::Actor(actor) => actor[0],
+            Self::BLS(bls) => bls[0],
         }
     }
 }
 
 impl Address {
     pub fn payload(&self) -> Vec<u8> {
-        let c = self.clone();
-        match c {
+        match self.clone() {
             Self::ID(x) => x[1..].to_vec(),
             Self::SECP256K1(x) => x[1..].to_vec(),
             Self::Actor(x) => x[1..].to_vec(),
@@ -167,24 +178,30 @@ impl Address {
     }
 }
 
-impl ToString for Address {
-    fn to_string(&self) -> String {
-        let network = "t";
+pub trait Display {
+    fn display(&self, _: Network) -> String;
+}
+
+impl Display for Address {
+    fn display(&self, network: Network) -> String {
+        let network_prefix = network.prefix();
         match self {
             Self::SECP256K1(_) | Self::Actor(_) | Self::BLS(_) => {
-                let payload = self.payload();
-                let chsm = self.checksum();
+                let mut pc = Vec::new();
+                pc.extend_from_slice(&self.payload());
+                pc.extend_from_slice(&self.checksum());
 
-                let mut t = Vec::new();
-                t.extend_from_slice(&payload);
-                t.extend_from_slice(&chsm);
-
-                format!("{}{}{}", network, self.protocol(), base32_encode(&t))
+                format!(
+                    "{}{}{}",
+                    network_prefix,
+                    self.protocol(),
+                    base32_encode(&pc)
+                )
             }
             Self::ID(_) => {
                 let (id, _) =
                     varint::decode::u64(&self.payload()).expect("TODO: Ensure it won't panic");
-                format!("{}{}{}", network, self.protocol(), id)
+                format!("{}{}{}", network_prefix, self.protocol(), id)
             }
         }
     }
@@ -198,28 +215,7 @@ impl ToString for Address {
 mod tests {
     use super::*;
 
-    use data_encoding::HEXUPPER;
     use std::convert::TryInto;
-
-    #[test]
-    fn address_hash_should_work() {
-        let ingest = [115, 97, 116, 111, 115, 104, 105];
-        let hashed = [
-            71, 22, 176, 35, 183, 254, 132, 182, 231, 220, 218, 48, 60, 61, 117, 75, 26, 143, 242,
-            252,
-        ];
-        assert_eq!(address_hash(&ingest[..]), hashed.to_vec());
-    }
-
-    #[test]
-    fn base32_encoding_should_work() {
-        let input = [
-            253, 29, 15, 77, 252, 215, 233, 154, 252, 185, 154, 131, 38, 183, 220, 69, 157, 50,
-            198, 40, 148, 236, 248, 227,
-        ];
-        let base32_encoded = "7uoq6tp427uzv7fztkbsnn64iwotfrristwpryy";
-        assert_eq!(base32_encoded.to_string(), base32_encode(&input));
-    }
 
     #[test]
     fn new_secp256k1_address_should_work() {
@@ -284,7 +280,7 @@ mod tests {
             let addr: crate::address::Address = crate::address::Account::SECP256K1(b.to_vec())
                 .try_into()
                 .unwrap();
-            assert_eq!(s.to_string(), addr.to_string());
+            assert_eq!(s.to_string(), addr.display(Network::Testnet));
         }
     }
 
@@ -332,43 +328,41 @@ mod tests {
             let addr: crate::address::Address = crate::address::Account::Actor(b.to_vec())
                 .try_into()
                 .unwrap();
-            assert_eq!(s.to_string(), addr.to_string());
+            assert_eq!(s.to_string(), addr.display(Network::Testnet));
         }
     }
 
     #[test]
     fn bls_address() {
-        let test_cases = [
-		([173, 88, 223, 105, 110, 45, 78, 145, 234, 134, 200, 129, 233, 56,
-			186, 78, 168, 27, 57, 94, 18, 121, 123, 132, 185, 207, 49, 75, 149, 70,
-			112, 94, 131, 156, 122, 153, 214, 6, 178, 71, 221, 180, 249, 172, 122,
-			52, 20, 221],
-			"t3vvmn62lofvhjd2ugzca6sof2j2ubwok6cj4xxbfzz4yuxfkgobpihhd2thlanmsh3w2ptld2gqkn2jvlss4a"),
-		([179, 41, 79, 10, 46, 41, 224, 198, 110, 188, 35, 93, 47, 237,
-			202, 86, 151, 191, 120, 74, 246, 5, 199, 90, 246, 8, 230, 166, 61, 92,
-			211, 142, 168, 92, 168, 152, 158, 14, 253, 233, 24, 139, 56, 47,
-			147, 114, 70, 13],
-			"t3wmuu6crofhqmm3v4enos73okk2l366ck6yc4owxwbdtkmpk42ohkqxfitcpa57pjdcftql4tojda2poeruwa"),
-		([150, 161, 163, 228, 234, 122, 20, 212, 153, 133, 230, 97, 178,
-			36, 1, 212, 79, 237, 64, 45, 29, 9, 37, 178, 67, 201, 35, 88, 156,
-			15, 188, 126, 50, 205, 4, 226, 158, 215, 141, 21, 211, 125, 58, 170,
-			63, 230, 218, 51],
-			"t3s2q2hzhkpiknjgmf4zq3ejab2rh62qbndueslmsdzervrhapxr7dftie4kpnpdiv2n6tvkr743ndhrsw6d3a"),
-		([134, 180, 84, 37, 140, 88, 148, 117, 247, 209, 111, 90, 172, 1,
-			138, 121, 246, 193, 22, 157, 32, 252, 51, 146, 29, 216, 181, 206, 28,
-			172, 108, 52, 143, 144, 163, 96, 54, 36, 246, 174, 185, 27, 100, 81,
-			140, 46, 128, 149],
-			"t3q22fijmmlckhl56rn5nkyamkph3mcfu5ed6dheq53c244hfmnq2i7efdma3cj5voxenwiummf2ajlsbxc65a"),
-		([167, 114, 107, 3, 128, 34, 247, 90, 56, 70, 23, 88, 83, 96, 206,
-			230, 41, 7, 10, 45, 157, 40, 113, 41, 101, 229, 242, 110, 204, 64,
-			133, 131, 130, 128, 55, 36, 237, 52, 242, 114, 3, 54, 240, 157, 182,
-			49, 240, 116],
-			"t3u5zgwa4ael3vuocgc5mfgygo4yuqocrntuuhcklf4xzg5tcaqwbyfabxetwtj4tsam3pbhnwghyhijr5mixa")];
+        let test_cases = [([173, 88, 223, 105, 110, 45, 78, 145, 234, 134, 200, 129, 233, 56,
+            186, 78, 168, 27, 57, 94, 18, 121, 123, 132, 185, 207, 49, 75, 149, 70,
+            112, 94, 131, 156, 122, 153, 214, 6, 178, 71, 221, 180, 249, 172, 122,
+            52, 20, 221], "t3vvmn62lofvhjd2ugzca6sof2j2ubwok6cj4xxbfzz4yuxfkgobpihhd2thlanmsh3w2ptld2gqkn2jvlss4a"),
+        ([179, 41, 79, 10, 46, 41, 224, 198, 110, 188, 35, 93, 47, 237,
+            202, 86, 151, 191, 120, 74, 246, 5, 199, 90, 246, 8, 230, 166, 61, 92,
+            211, 142, 168, 92, 168, 152, 158, 14, 253, 233, 24, 139, 56, 47,
+            147, 114, 70, 13],
+            "t3wmuu6crofhqmm3v4enos73okk2l366ck6yc4owxwbdtkmpk42ohkqxfitcpa57pjdcftql4tojda2poeruwa"),
+        ([150, 161, 163, 228, 234, 122, 20, 212, 153, 133, 230, 97, 178,
+            36, 1, 212, 79, 237, 64, 45, 29, 9, 37, 178, 67, 201, 35, 88, 156,
+            15, 188, 126, 50, 205, 4, 226, 158, 215, 141, 21, 211, 125, 58, 170,
+            63, 230, 218, 51],
+            "t3s2q2hzhkpiknjgmf4zq3ejab2rh62qbndueslmsdzervrhapxr7dftie4kpnpdiv2n6tvkr743ndhrsw6d3a"),
+        ([134, 180, 84, 37, 140, 88, 148, 117, 247, 209, 111, 90, 172, 1,
+            138, 121, 246, 193, 22, 157, 32, 252, 51, 146, 29, 216, 181, 206, 28,
+            172, 108, 52, 143, 144, 163, 96, 54, 36, 246, 174, 185, 27, 100, 81,
+            140, 46, 128, 149],
+            "t3q22fijmmlckhl56rn5nkyamkph3mcfu5ed6dheq53c244hfmnq2i7efdma3cj5voxenwiummf2ajlsbxc65a"),
+        ([167, 114, 107, 3, 128, 34, 247, 90, 56, 70, 23, 88, 83, 96, 206,
+            230, 41, 7, 10, 45, 157, 40, 113, 41, 101, 229, 242, 110, 204, 64,
+            133, 131, 130, 128, 55, 36, 237, 52, 242, 114, 3, 54, 240, 157, 182,
+            49, 240, 116],
+            "t3u5zgwa4ael3vuocgc5mfgygo4yuqocrntuuhcklf4xzg5tcaqwbyfabxetwtj4tsam3pbhnwghyhijr5mixa")];
 
         for (b, s) in test_cases.into_iter() {
             let addr: crate::address::Address =
                 crate::address::Account::BLS(b.to_vec()).try_into().unwrap();
-            assert_eq!(s.to_string(), addr.to_string());
+            assert_eq!(s.to_string(), addr.display(Network::Testnet));
         }
     }
 
@@ -387,7 +381,7 @@ mod tests {
         // {math.MaxUint64, fmt.Sprintf("t0%s", strconv.FormatUint(math.MaxUint64, 10))},
         for (b, s) in test_cases.into_iter() {
             let addr: crate::address::Address = crate::address::Account::ID(*b).try_into().unwrap();
-            assert_eq!(s.to_string(), addr.to_string());
+            assert_eq!(s.to_string(), addr.display(Network::Testnet));
         }
     }
 }
