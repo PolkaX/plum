@@ -138,6 +138,14 @@ impl Network {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
+pub enum AddressFormat {
+    ID,
+    SECP256K1,
+    Actor,
+    BLS,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Address {
     ID(Vec<u8>),
     SECP256K1([u8; PAYLOAD_HASH_LENGTH + 1]),
