@@ -1,3 +1,3 @@
-// Copyright 2019 chainnet.tech
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-pub struct Error{}
+pub struct Error {}

@@ -1,6 +1,6 @@
-// Copyright 2019 chainnet.tech
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::types::{BigInt, Address, Cid, Signature};
+use crate::types::{Address, BigInt, Cid, Signature};
 
 pub struct Ticket {
     vrf_proof: Vec<u8>,
@@ -13,8 +13,8 @@ pub struct BlockHeader {
     tickets: Vec<Ticket>,
     election_proof: Vec<u8>,
     parents: Vec<Cid>,
-    parentWeight: BigInt,
-    Height: u64,
+    parent_weight: BigInt,
+    height: u64,
     parent_state_root: Cid,
     parent_message_receipts: Cid,
     messages: Cid,

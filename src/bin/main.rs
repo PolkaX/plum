@@ -1,5 +1,7 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::types::Cid;
+//! Plum Node CLI.
 
-pub struct LogCids(Vec<Cid>);
+fn main() {
+    cli::run();
+}

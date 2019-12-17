@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 use cid::{Cid, Codec, Version};
 use libp2p::{
@@ -15,11 +15,16 @@ pub fn configure_key() -> (identity::Keypair, PeerId) {
     (local_key, local_peer_id)
 }
 
-pub fn configure_topic() -> Vec<Topic> {
-    // Create a Floodsub topic
-    let msg_topic = TopicBuilder::new("/fil/messages").build();
-    let blocks_topic = TopicBuilder::new("/fil/blocks").build();
-    vec![msg_topic, blocks_topic]
+pub fn hello_topic() -> Topic {
+    TopicBuilder::new("/fil/hello").build()
+}
+
+pub fn msg_topic() -> Topic {
+    TopicBuilder::new("/fil/messages").build()
+}
+
+pub fn blocks_topic() -> Topic {
+    TopicBuilder::new("/fil/blocks").build()
 }
 
 pub fn configure_kad(peer_id: &PeerId) -> (KademliaConfig, MemoryStore) {

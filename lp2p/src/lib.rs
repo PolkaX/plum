@@ -1,21 +1,25 @@
-// Copyright 2019 PolkaX
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
+
+#[macro_use]
+extern crate log;
 
 mod behaviour;
 mod config;
-mod hello;
 
 use futures::prelude::*;
-use libp2p::{Swarm, core::Multiaddr};
+use libp2p::{core::Multiaddr, Swarm};
 use tokio::runtime::TaskExecutor;
-use log::info;
 
 #[derive(Debug, Clone, Default)]
 pub struct NetworkState {
-    listenning: bool,
+    listening: bool,
 }
 
-pub fn initialize(task_executor: TaskExecutor,
-          mut network_state: NetworkState, peer_ip: Option<String>) {
+pub fn initialize(
+    task_executor: TaskExecutor,
+    mut network_state: NetworkState,
+    peer_ip: Option<String>,
+) {
     let (local_key, local_peer_id) = config::configure_key();
     // Set up a an encrypted DNS-enabled TCP Transport over the Mplex and Yamux protocols
     let transport = libp2p::build_development_transport(local_key);
@@ -23,9 +27,7 @@ pub fn initialize(task_executor: TaskExecutor,
     // Create a Swarm to manage peers and events
     let mut swarm = {
         let mut bh = behaviour::Behaviour::new(&local_peer_id);
-        config::configure_topic()
-            .iter()
-            .map(|topic| bh.floodsub.subscribe(topic.clone()));
+        bh.floodsub.subscribe(config::hello_topic());
         Swarm::new(transport, bh, local_peer_id.clone())
     };
 
@@ -43,13 +45,13 @@ pub fn initialize(task_executor: TaskExecutor,
                     info!("rcv event:{:?}", e);
                 }
                 Async::Ready(None) | Async::NotReady => {
-                    if !network_state.listenning {
+                    if !network_state.listening {
                         if let Some(a) = Swarm::listeners(&swarm).next() {
                             info!("Listening on {:?}", a);
                         }
-                        network_state.listenning = true;
+                        network_state.listening = true;
                     }
-                    return Ok(Async::NotReady)
+                    return Ok(Async::NotReady);
                 }
             }
         }

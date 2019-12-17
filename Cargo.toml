@@ -1,17 +1,24 @@
 [package]
 name = "plum"
 version = "0.1.0"
-license = "GPL-3.0"
+authors = ["The PolkaX Authors"]
 edition = "2018"
+license = "GPL-3.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "plum"
+
+[[bin]]
+name = "plum-node"
+path = "src/bin/main.rs"
 
 [dependencies]
-lp2p = { path = "./lp2p" }
 cli = { path = "./cli" }
-libp2p = { version = "0.12.0", default-features = false }
-futures = "0.1"
-tokio = "0.1.2"
-exit-future = "0.1"
-log = "0.4.8"
-env_logger = "0.7.0"
+
+[workspace]
+members = [
+	"chain",
+	"cli",
+	"lp2p",
+	"peermgr",
+]

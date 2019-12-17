@@ -1,4 +1,4 @@
-// Copyright 2019 chainnet.tech
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 const SIGNATUREMAXLENGTH: u32 = 200;
 
@@ -11,6 +11,6 @@ const IKTBLS: i32 = 1;
 
 #[derive(Default, PartialEq, Clone, Eq)]
 pub struct Signature {
-    Type: String,
-    Data: Vec<u8>,
+    ty: String,
+    data: Vec<u8>,
 }

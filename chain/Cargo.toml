@@ -1,12 +1,11 @@
 [package]
 name = "chain"
 version = "0.1.0"
-authors = ["gguoss <guanghuaguo.oss@gmail.com>"]
+authors = ["The PolkaX Authors"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "GPL-3.0"
 
 [dependencies]
-data-encoding = { version = "2.1.2" }
-lazy_static = { version = "1.4.0" }
-cid = "*"
+data-encoding = "2.1"
+lazy_static = "1.4"
+cid = "0.3"

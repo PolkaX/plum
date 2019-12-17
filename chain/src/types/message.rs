@@ -1,6 +1,6 @@
-// Copright 2019 chainnet.tech
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::types::{BigInt, Address};
+use crate::types::{Address, BigInt};
 
 pub struct Message {
     to: Address,
