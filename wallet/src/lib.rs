@@ -56,15 +56,15 @@ pub struct Wallet {
 }
 
 impl Wallet {
-    pub fn new_address(key_type: KeyTypeId) -> Result<String> {
-        let pair = keystore::KeyPair::generate_key_pair(key_type)?;
-        match key_type {
-            crypto::key_types::BLS => {
-
-            },
-            crypto::key_types::SECP256K1 => {
-
-            }
-        }
-    }
+//    pub fn new_address(key_type: KeyTypeId) -> Result<String> {
+//        let pair = keystore::KeyPair::generate_key_pair(key_type)?;
+//        match key_type {
+//            crypto::key_types::BLS => {
+//
+//            },
+//            crypto::key_types::SECP256K1 => {
+//
+//            }
+//        }
+//    }
 }

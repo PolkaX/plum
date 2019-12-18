@@ -40,9 +40,7 @@ pub fn base32_encode(input: &[u8]) -> String {
 ///
 /// Values whose first character is `_` are reserved for private use and won't conflict with any
 /// public modules.
-#[derive(
-Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash
-)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct KeyTypeId(pub [u8; 4]);
 
 impl From<u32> for KeyTypeId {
