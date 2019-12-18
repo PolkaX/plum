@@ -19,37 +19,12 @@ use std::{
     path::PathBuf,
     sync::Arc,
 };
+use crate::error::Error;
 
 /// Keystore pointer
 pub type KeyStorePtr = Arc<RwLock<Store>>;
-
-/// Keystore error.
-#[derive(Debug, derive_more::Display, derive_more::From)]
-pub enum Error {
-    /// IO error.
-    Io(io::Error),
-    /// JSON error.
-    Json(serde_json::Error),
-    /// Invalid key type
-    #[display(fmt = "Invalid key type")]
-    InvalidKeyType,
-    /// Keystore unavailable
-    #[display(fmt = "Keystore unavailable")]
-    Unavailable,
-}
-
-/// Keystore Result
 pub type Result<T> = std::result::Result<T, Error>;
 
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Error::Io(ref err) => Some(err),
-            Error::Json(ref err) => Some(err),
-            _ => None,
-        }
-    }
-}
 
 #[derive(Clone)]
 pub struct KeyPair {
@@ -76,7 +51,7 @@ impl KeyPair {
         Ok(addr)
     }
 
-    fn to_string(self) -> String {
+    pub fn to_string(self) -> String {
         format!(
             "PublicKey:{:?}\nPrivateKey:{:?}\n",
             self.pubkey, self.privkey
