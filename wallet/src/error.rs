@@ -1,3 +1,4 @@
+use crate::keystore;
 use std::{
     collections::HashMap,
     fs::{self, File},
@@ -5,7 +6,6 @@ use std::{
     path::PathBuf,
     sync::Arc,
 };
-use crate::keystore;
 
 /// Keystore error.
 #[derive(Debug, derive_more::Display, derive_more::From)]
@@ -30,15 +30,21 @@ pub enum Error {
     #[display(fmt = "Keystore unavailable")]
     Unavailable,
 }
-/// wallet Result
 
+//impl std::error::Error for Error {
+//    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+//        match self {
+//            Error::Io(ref err) => Some(err),
+//            Error::Json(ref err) => Some(err),
+//            _ => None,
+//        }
+//    }
+//}
 
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Error::Io(ref err) => Some(err),
-            Error::Json(ref err) => Some(err),
-            _ => None,
+impl From<std::convert::Infallible> for Error {
+    fn from(inf: std::convert::Infallible) -> Self {
+        match inf {
+            _ => Error::Unavailable,
         }
     }
 }

@@ -369,6 +369,7 @@ dependencies = [
  "lp2p",
  "structopt",
  "tokio",
+ "wallet",
 ]
 
 [[package]]

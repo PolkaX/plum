@@ -10,5 +10,6 @@ structopt = "0.3"
 tokio = "0.1"
 exit-future = "0.1"
 lp2p = { path = "../lp2p" }
+wallet = { path = "../wallet" }
 log = "0.4"
 env_logger = "0.7.0"

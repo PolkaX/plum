@@ -1,5 +1,10 @@
-use crypto::KeyTypeId;
+use address::{Account, Address, Display, Network};
+use crypto::{key_types, KeyTypeId};
+use error::Error;
+use keystore::{KeyPair, Store};
 use parking_lot::RwLock;
+use std::convert::TryInto;
+use std::str::FromStr;
 use std::{
     collections::HashMap,
     fs::{self, File},
@@ -7,12 +12,11 @@ use std::{
     path::PathBuf,
     sync::Arc,
 };
-use error::Error;
 
 mod address;
-mod crypto;
-mod keystore;
+pub mod crypto;
 mod error;
+mod keystore;
 
 //
 // Generate
@@ -24,13 +28,51 @@ mod error;
 
 /// wallet pointer
 pub type WalletPtr = Arc<RwLock<Wallet>>;
+const KEYSTORE_PATH: &str = "/.plum/keystore";
 
 pub type Result<T> = std::result::Result<T, Error>;
 pub struct Wallet {}
 
 impl Wallet {
-        pub fn new_address(key_type: KeyTypeId) -> Result<String> {
-            let pair = keystore::KeyPair::generate_key_pair(key_type)?;
-            Ok(pair.to_string())
+    pub fn new_address(key_type: KeyTypeId) {
+        let home = std::env::var("HOME").unwrap();
+        let store = Store {
+            path: PathBuf::from_str(&(home.as_str().to_owned() + KEYSTORE_PATH)).unwrap(),
+            additional: HashMap::new(),
+        };
+        Store::open(store.path.clone()).unwrap();
+        let pair = store.generate_key(key_type).unwrap();
+        println!("{}", pair.to_string());
+    }
+
+    fn address(pair: KeyPair, net: Network) -> Result<String> {
+        let addr: Address = match pair.key_type.clone() {
+            key_types::BLS => Account::BLS(pair.pubkey.clone()).try_into().unwrap(),
+            key_types::SECP256K1 => Account::SECP256K1(pair.pubkey.clone()).try_into().unwrap(),
+            _ => return Err(Error::InvalidKeyType),
+        };
+        let addrs = addr.display(net);
+        let key = format!(
+            "key_type:{:?}\nPublicKey:{:?}\naddress:{:?}\n",
+            pair.key_type, pair.pubkey, addrs
+        );
+        Ok(key)
+    }
+
+    pub fn wallet_list(keystore_path: Option<String>) {
+        let home = std::env::var("HOME").unwrap();
+        let path = match keystore_path {
+            Some(p) => p,
+            None => home + &KEYSTORE_PATH.to_string(),
+        };
+        println!("path: {}", path);
+        let keystore_path = PathBuf::from_str(path.as_str()).unwrap();
+        if !keystore_path.exists() {}
+
+        let store = Store::open(keystore_path.clone()).unwrap();
+        let entries = fs::read_dir(keystore_path).unwrap();
+        for file in entries {
+            println!("Name: {}", file.unwrap().path().display())
         }
+    }
 }

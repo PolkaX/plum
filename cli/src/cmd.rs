@@ -4,6 +4,7 @@ use structopt::clap::arg_enum;
 use structopt::StructOpt;
 
 use crate::run_lp2p;
+use wallet::crypto;
 
 #[derive(StructOpt, Debug, Clone)]
 pub enum Auth {
@@ -182,8 +183,30 @@ pub enum Wallet {
     /// Generate a new key of the given type
     New {
         #[structopt(short="t", long="type", possible_values = &KeyType::variants(), case_insensitive = true)]
-        key_type: Option<KeyType>,
+        key_type: KeyType,
     },
+    #[structopt(name = "list")]
+    /// List all the key in keystore
+    List {
+        #[structopt(short = "p", long = "keystore_path", case_insensitive = true)]
+        keystore_path: Option<String>,
+    },
+}
+
+impl Wallet {
+    pub fn execute(&self) {
+        match self {
+            Wallet::New { key_type } => {
+                let keytype = match key_type {
+                    KeyType::Bls => crypto::key_types::BLS,
+                    KeyType::Secp256k1 => crypto::key_types::SECP256K1,
+                };
+                wallet::Wallet::new_address(keytype.to_owned())
+            }
+            Wallet::List { keystore_path } => wallet::Wallet::wallet_list(keystore_path.to_owned()),
+            _ => unimplemented!(),
+        }
+    }
 }
 
 #[derive(StructOpt, Debug, Clone)]
