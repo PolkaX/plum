@@ -1,13 +1,11 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-#[macro_use]
-extern crate log;
-
 mod behaviour;
 mod config;
 
 use futures::prelude::*;
 use libp2p::{core::Multiaddr, Swarm};
+use log::info;
 use tokio::runtime::TaskExecutor;
 
 #[derive(Debug, Clone, Default)]
