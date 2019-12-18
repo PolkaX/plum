@@ -1,6 +1,12 @@
-use std::{collections::HashMap, path::PathBuf, fs::{self, File}, io::{self, Write}, sync::Arc};
 use crypto::KeyTypeId;
 use parking_lot::RwLock;
+use std::{
+    collections::HashMap,
+    fs::{self, File},
+    io::{self, Write},
+    path::PathBuf,
+    sync::Arc,
+};
 
 mod address;
 mod crypto;
@@ -24,16 +30,16 @@ pub enum Error {
     /// JSON error.
     Json(serde_json::Error),
     /// Invalid password.
-    #[display(fmt="Invalid password")]
+    #[display(fmt = "Invalid password")]
     InvalidPassword,
     /// Invalid BIP39 phrase
-    #[display(fmt="Invalid recovery phrase (BIP39) data")]
+    #[display(fmt = "Invalid recovery phrase (BIP39) data")]
     InvalidPhrase,
     /// Invalid seed
-    #[display(fmt="Invalid seed")]
+    #[display(fmt = "Invalid seed")]
     InvalidSeed,
     /// Keystore unavailable
-    #[display(fmt="Keystore unavailable")]
+    #[display(fmt = "Keystore unavailable")]
     Unavailable,
 }
 /// wallet Result
@@ -51,20 +57,19 @@ impl std::error::Error for Error {
 
 pub struct Wallet {
     keys: HashMap<(KeyTypeId, Vec<u8>), Vec<u8>>,
-    path: PathBuf
-    //password: Option<Protected<String>>,
+    path: PathBuf, //password: Option<Protected<String>>,
 }
 
 impl Wallet {
-//    pub fn new_address(key_type: KeyTypeId) -> Result<String> {
-//        let pair = keystore::KeyPair::generate_key_pair(key_type)?;
-//        match key_type {
-//            crypto::key_types::BLS => {
-//
-//            },
-//            crypto::key_types::SECP256K1 => {
-//
-//            }
-//        }
-//    }
+    //    pub fn new_address(key_type: KeyTypeId) -> Result<String> {
+    //        let pair = keystore::KeyPair::generate_key_pair(key_type)?;
+    //        match key_type {
+    //            crypto::key_types::BLS => {
+    //
+    //            },
+    //            crypto::key_types::SECP256K1 => {
+    //
+    //            }
+    //        }
+    //    }
 }

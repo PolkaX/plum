@@ -32,7 +32,6 @@ pub fn base32_encode(input: &[u8]) -> String {
     encoder.encode(&input)
 }
 
-
 /// An identifier for a type of cryptographic key.
 ///
 /// To avoid clashes with other modules when distributing your module publically, register your

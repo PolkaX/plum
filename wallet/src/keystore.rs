@@ -4,15 +4,21 @@
 
 #![warn(missing_docs)]
 
-use std::{collections::HashMap, path::PathBuf, fs::{self, File}, io::{self, Write}, sync::Arc};
-use parking_lot::RwLock;
-use rand::{RngCore, rngs::OsRng};
-use bls::Serialize;
-use secp256k1;
+use crate::address::{Account, Address, Display, Network};
 use crate::crypto::{key_types, KeyTypeId};
-use crate::address::{Address, Account, Network, Display};
+use bls::Serialize;
+use parking_lot::RwLock;
+use rand::{rngs::OsRng, RngCore};
+use secp256k1;
 use std::convert::TryInto;
 use std::str::FromStr;
+use std::{
+    collections::HashMap,
+    fs::{self, File},
+    io::{self, Write},
+    path::PathBuf,
+    sync::Arc,
+};
 
 /// Keystore pointer
 pub type KeyStorePtr = Arc<RwLock<Store>>;
@@ -25,10 +31,10 @@ pub enum Error {
     /// JSON error.
     Json(serde_json::Error),
     /// Invalid key type
-    #[display(fmt="Invalid key type")]
+    #[display(fmt = "Invalid key type")]
     InvalidKeyType,
     /// Keystore unavailable
-    #[display(fmt="Keystore unavailable")]
+    #[display(fmt = "Keystore unavailable")]
     Unavailable,
 }
 
@@ -56,23 +62,25 @@ impl KeyPair {
     fn list(self, key_type: KeyTypeId, net: Network) -> Result<String> {
         let addr: Address;
         match key_type.clone() {
-            key_types::BLS => {
-                addr = Account::BLS(self.pubkey.clone()).try_into().unwrap()
-            },
+            key_types::BLS => addr = Account::BLS(self.pubkey.clone()).try_into().unwrap(),
             key_types::SECP256K1 => {
-                addr = Account::SECP256K1(self.pubkey.clone())
-                    .try_into()
-                    .unwrap()
-            },
+                addr = Account::SECP256K1(self.pubkey.clone()).try_into().unwrap()
+            }
             _ => return Err(Error::InvalidKeyType),
         }
         let addr = addr.display(net);
-        let addr = format!("key_type:{:?}\nPublicKey:{:?}\nPrivateKey:{:?}\naddress:{:?}\n",key_type, self.pubkey, self.privkey, addr);
+        let addr = format!(
+            "key_type:{:?}\nPublicKey:{:?}\nPrivateKey:{:?}\naddress:{:?}\n",
+            key_type, self.pubkey, self.privkey, addr
+        );
         Ok(addr)
     }
 
     fn to_string(self) -> String {
-        format!("PublicKey:{:?}\nPrivateKey:{:?}\n", self.pubkey, self.privkey)
+        format!(
+            "PublicKey:{:?}\nPrivateKey:{:?}\n",
+            self.pubkey, self.privkey
+        )
     }
 
     pub fn generate_key_pair(key_type: KeyTypeId) -> Result<Self> {
@@ -87,15 +95,14 @@ impl KeyPair {
                 let public_key = private_key.public_key();
                 pubkey = public_key.as_bytes();
                 privkey = private_key.as_bytes();
-
-            },
+            }
             key_types::SECP256K1 => {
-                let secert = secp256k1::SecretKey::random(& mut OsRng);
+                let secert = secp256k1::SecretKey::random(&mut OsRng);
                 let public_key = secp256k1::PublicKey::from_secret_key(&secert);
                 pubkey = public_key.serialize().to_vec();
                 privkey = secert.serialize().to_vec();
-            },
-            _ => return Err(Error::InvalidKeyType)
+            }
+            _ => return Err(Error::InvalidKeyType),
         }
         Ok(KeyPair {
             pubkey: pubkey,
@@ -117,7 +124,6 @@ pub struct Store {
 }
 
 impl Store {
-
     /// Open the store at the given path.
     ///
     /// Optionally takes a password that will be used to encrypt/decrypt the keys.
@@ -125,7 +131,10 @@ impl Store {
         let path = path.into();
         fs::create_dir_all(&path)?;
 
-        let instance = Self { path, additional: HashMap::new() };
+        let instance = Self {
+            path,
+            additional: HashMap::new(),
+        };
         Ok(Arc::new(RwLock::new(instance)))
     }
 
@@ -163,10 +172,10 @@ impl Store {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
-    use std::str::FromStr;
-    use crate::address::{Network, Account, Display};
+    use crate::address::{Account, Display, Network};
     use std::convert::TryInto;
+    use std::str::FromStr;
+    use tempfile::TempDir;
 
     #[test]
     fn test_generate_key() {
@@ -176,102 +185,104 @@ mod tests {
             additional: map,
         };
         let keypair = st.generate_bls_key(KeyTypeId::default()).unwrap();
-        println!("{}",keypair.clone().to_string());
+        println!("{}", keypair.clone().to_string());
         let addr: crate::address::Address =
-            crate::address::Account::BLS(keypair.bls_pubkey.as_bytes()).try_into().unwrap();
+            crate::address::Account::BLS(keypair.bls_pubkey.as_bytes())
+                .try_into()
+                .unwrap();
         println!("{}", addr.display(Network::Testnet));
     }
-//
-//    #[test]
-//    fn basic_store() {
-//        let temp_dir = TempDir::new().unwrap();
-//        let store = Store::open(temp_dir.path(), None).unwrap();
-//
-//        assert!(store.read().public_keys::<ed25519::AppPublic>().unwrap().is_empty());
-//
-//        let key: ed25519::AppPair = store.write().generate().unwrap();
-//        let key2: ed25519::AppPair = store.read().key_pair(&key.public()).unwrap();
-//
-//        assert_eq!(key.public(), key2.public());
-//
-//        assert_eq!(store.read().public_keys::<ed25519::AppPublic>().unwrap()[0], key.public());
-//    }
-//
-//    #[test]
-//    fn test_insert_ephemeral_from_seed() {
-//        let temp_dir = TempDir::new().unwrap();
-//        let store = Store::open(temp_dir.path(), None).unwrap();
-//
-//        let pair: ed25519::AppPair = store
-//            .write()
-//            .insert_ephemeral_from_seed("0x3d97c819d68f9bafa7d6e79cb991eebcd77d966c5334c0b94d9e1fa7ad0869dc")
-//            .unwrap();
-//        assert_eq!(
-//            "5DKUrgFqCPV8iAXx9sjy1nyBygQCeiUYRFWurZGhnrn3HJCA",
-//            pair.public().to_ss58check()
-//        );
-//
-//        drop(store);
-//        let store = Store::open(temp_dir.path(), None).unwrap();
-//        // Keys generated from seed should not be persisted!
-//        assert!(store.read().key_pair::<ed25519::AppPair>(&pair.public()).is_err());
-//    }
-//
-//    #[test]
-//    fn public_keys_are_returned() {
-//        let temp_dir = TempDir::new().unwrap();
-//        let store = Store::open(temp_dir.path(), None).unwrap();
-//
-//        let mut public_keys = Vec::new();
-//        for i in 0..10 {
-//            public_keys.push(store.write().generate::<ed25519::AppPair>().unwrap().public());
-//            public_keys.push(store.write().insert_ephemeral_from_seed::<ed25519::AppPair>(
-//                &format!("0x3d97c819d68f9bafa7d6e79cb991eebcd7{}d966c5334c0b94d9e1fa7ad0869dc", i),
-//            ).unwrap().public());
-//        }
-//
-//        // Generate a key of a different type
-//        store.write().generate::<sr25519::AppPair>().unwrap();
-//
-//        public_keys.sort();
-//        let mut store_pubs = store.read().public_keys::<ed25519::AppPublic>().unwrap();
-//        store_pubs.sort();
-//
-//        assert_eq!(public_keys, store_pubs);
-//    }
-//
-//    #[test]
-//    fn store_unknown_and_extract_it() {
-//        let temp_dir = TempDir::new().unwrap();
-//        let store = Store::open(temp_dir.path(), None).unwrap();
-//
-//        let secret_uri = "//Alice";
-//        let key_pair = sr25519::AppPair::from_string(secret_uri, None).expect("Generates key pair");
-//
-//        store.write().insert_unknown(
-//            SR25519,
-//            secret_uri,
-//            key_pair.public().as_ref(),
-//        ).expect("Inserts unknown key");
-//
-//        let store_key_pair = store.read().key_pair_by_type::<sr25519::AppPair>(
-//            &key_pair.public(),
-//            SR25519,
-//        ).expect("Gets key pair from keystore");
-//
-//        assert_eq!(key_pair.public(), store_key_pair.public());
-//    }
-//
-//    #[test]
-//    fn store_ignores_files_with_invalid_name() {
-//        let temp_dir = TempDir::new().unwrap();
-//        let store = Store::open(temp_dir.path(), None).unwrap();
-//
-//        let file_name = temp_dir.path().join(hex::encode(&SR25519.0[..2]));
-//        fs::write(file_name, "test").expect("Invalid file is written");
-//
-//        assert!(
-//            store.read().public_keys_by_type::<sr25519::AppPublic>(SR25519).unwrap().is_empty(),
-//        );
-//    }
+    //
+    //    #[test]
+    //    fn basic_store() {
+    //        let temp_dir = TempDir::new().unwrap();
+    //        let store = Store::open(temp_dir.path(), None).unwrap();
+    //
+    //        assert!(store.read().public_keys::<ed25519::AppPublic>().unwrap().is_empty());
+    //
+    //        let key: ed25519::AppPair = store.write().generate().unwrap();
+    //        let key2: ed25519::AppPair = store.read().key_pair(&key.public()).unwrap();
+    //
+    //        assert_eq!(key.public(), key2.public());
+    //
+    //        assert_eq!(store.read().public_keys::<ed25519::AppPublic>().unwrap()[0], key.public());
+    //    }
+    //
+    //    #[test]
+    //    fn test_insert_ephemeral_from_seed() {
+    //        let temp_dir = TempDir::new().unwrap();
+    //        let store = Store::open(temp_dir.path(), None).unwrap();
+    //
+    //        let pair: ed25519::AppPair = store
+    //            .write()
+    //            .insert_ephemeral_from_seed("0x3d97c819d68f9bafa7d6e79cb991eebcd77d966c5334c0b94d9e1fa7ad0869dc")
+    //            .unwrap();
+    //        assert_eq!(
+    //            "5DKUrgFqCPV8iAXx9sjy1nyBygQCeiUYRFWurZGhnrn3HJCA",
+    //            pair.public().to_ss58check()
+    //        );
+    //
+    //        drop(store);
+    //        let store = Store::open(temp_dir.path(), None).unwrap();
+    //        // Keys generated from seed should not be persisted!
+    //        assert!(store.read().key_pair::<ed25519::AppPair>(&pair.public()).is_err());
+    //    }
+    //
+    //    #[test]
+    //    fn public_keys_are_returned() {
+    //        let temp_dir = TempDir::new().unwrap();
+    //        let store = Store::open(temp_dir.path(), None).unwrap();
+    //
+    //        let mut public_keys = Vec::new();
+    //        for i in 0..10 {
+    //            public_keys.push(store.write().generate::<ed25519::AppPair>().unwrap().public());
+    //            public_keys.push(store.write().insert_ephemeral_from_seed::<ed25519::AppPair>(
+    //                &format!("0x3d97c819d68f9bafa7d6e79cb991eebcd7{}d966c5334c0b94d9e1fa7ad0869dc", i),
+    //            ).unwrap().public());
+    //        }
+    //
+    //        // Generate a key of a different type
+    //        store.write().generate::<sr25519::AppPair>().unwrap();
+    //
+    //        public_keys.sort();
+    //        let mut store_pubs = store.read().public_keys::<ed25519::AppPublic>().unwrap();
+    //        store_pubs.sort();
+    //
+    //        assert_eq!(public_keys, store_pubs);
+    //    }
+    //
+    //    #[test]
+    //    fn store_unknown_and_extract_it() {
+    //        let temp_dir = TempDir::new().unwrap();
+    //        let store = Store::open(temp_dir.path(), None).unwrap();
+    //
+    //        let secret_uri = "//Alice";
+    //        let key_pair = sr25519::AppPair::from_string(secret_uri, None).expect("Generates key pair");
+    //
+    //        store.write().insert_unknown(
+    //            SR25519,
+    //            secret_uri,
+    //            key_pair.public().as_ref(),
+    //        ).expect("Inserts unknown key");
+    //
+    //        let store_key_pair = store.read().key_pair_by_type::<sr25519::AppPair>(
+    //            &key_pair.public(),
+    //            SR25519,
+    //        ).expect("Gets key pair from keystore");
+    //
+    //        assert_eq!(key_pair.public(), store_key_pair.public());
+    //    }
+    //
+    //    #[test]
+    //    fn store_ignores_files_with_invalid_name() {
+    //        let temp_dir = TempDir::new().unwrap();
+    //        let store = Store::open(temp_dir.path(), None).unwrap();
+    //
+    //        let file_name = temp_dir.path().join(hex::encode(&SR25519.0[..2]));
+    //        fs::write(file_name, "test").expect("Invalid file is written");
+    //
+    //        assert!(
+    //            store.read().public_keys_by_type::<sr25519::AppPublic>(SR25519).unwrap().is_empty(),
+    //        );
+    //    }
 }
