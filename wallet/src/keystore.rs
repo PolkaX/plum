@@ -21,6 +21,9 @@ pub enum Error {
     Io(io::Error),
     /// JSON error.
     Json(serde_json::Error),
+    /// Invalid key type
+    #[display(fmt="Invalid key type")]
+    InvalidKeyType,
     /// Keystore unavailable
     #[display(fmt="Keystore unavailable")]
     Unavailable,
@@ -40,49 +43,47 @@ impl std::error::Error for Error {
 }
 
 #[derive(Clone)]
-pub struct BlsKeyPair {
-    bls_pubkey: bls::PublicKey,
-    bls_privkey: bls::PrivateKey,
+pub struct KeyPair {
+    pubkey: Vec<u8>,
+    privkey: Vec<u8>,
+    key_type: KeyTypeId,
 }
 
-impl BlsKeyPair {
-    fn to_string(self) -> String {
-        format!("PublicKey:{:?}\nPrivateKey:{:?}",self.bls_pubkey, self.bls_privkey)
-    }
-
-    pub fn generate_key_pair() -> Self {
-        let mut key = [0u8; 16];
-        OsRng.fill_bytes(&mut key);
-        let private_key = bls::PrivateKey::generate(&mut OsRng);
-        let public_key = private_key.public_key();
-        BlsKeyPair {
-            bls_pubkey: public_key,
-            bls_privkey: private_key,
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct  Secp156k1KeyPair {
-    pubkey: secp256k1::PublicKey,
-    privkey: secp256k1::SecretKey,
-}
-
-impl Secp156k1KeyPair {
+impl KeyPair {
     fn to_string(self) -> String {
         format!("PublicKey:{:?}\nPrivateKey:{:?}",self.pubkey, self.privkey)
     }
-    pub fn generate_key_pair() -> Self {
+
+    pub fn generate_key_pair(key_type: KeyTypeId) -> Result<Self> {
         let mut key = [0u8; 16];
+        let pubkey: Vec<u8>;
+        let privkey: Vec<u8>;
+
         OsRng.fill_bytes(&mut key);
-        let secert = secp256k1::SecretKey::random(& mut OsRng);
-        let pubkey = secp256k1::PublicKey::from_secret_key(&secert);
-        Secp156k1KeyPair {
-            pubkey: pubkey,
-            privkey: secert,
+        match key_type {
+            key_types::BLS => {
+                let private_key = bls::PrivateKey::generate(&mut OsRng);
+                let public_key = private_key.public_key();
+                pubkey = public_key.as_bytes();
+                privkey = private_key.as_bytes();
+
+            },
+            key_types::SECP256K1 => {
+                let secert = secp256k1::SecretKey::random(& mut OsRng);
+                let public_key = secp256k1::PublicKey::from_secret_key(&secert);
+                pubkey = public_key.serialize().to_vec();
+                privkey = secert.serialize().to_vec();
+            },
+            _ => return Err(Error::InvalidKeyType)
         }
+        Ok(KeyPair {
+            pubkey: pubkey,
+            privkey: privkey,
+            key_type: key_type,
+        })
     }
 }
+
 /// Key store.
 ///
 /// Stores key pairs in a file system store + short lived key pairs in memory.
@@ -110,20 +111,9 @@ impl Store {
     /// Generate a new key.
     ///
     /// Places it into the file system store.
-    pub fn generate_bls_key(&self, key_type: KeyTypeId) -> Result<BlsKeyPair> {
-        let pair = BlsKeyPair::generate_key_pair();
-        let mut file = File::create(self.key_file_path(pair.bls_pubkey.as_bytes().as_slice(), key_type))?;
-        serde_json::to_writer(&file, &pair.clone().to_string())?;
-        file.flush()?;
-        Ok(pair)
-    }
-
-    /// Generate a new key.
-    ///
-    /// Places it into the file system store.
-    pub fn generate_secp256k1_key(&self, key_type: KeyTypeId) -> Result<Secp156k1KeyPair> {
-        let pair = Secp156k1KeyPair::generate_key_pair();
-        let mut file = File::create(self.key_file_path(pair.pubkey.serialize().to_vec().as_slice(), key_type))?;
+    pub fn generate_key(&self, key_type: KeyTypeId) -> Result<KeyPair> {
+        let pair = KeyPair::generate_key_pair(key_type)?;
+        let mut file = File::create(self.key_file_path(pair.pubkey.as_slice(), key_type))?;
         serde_json::to_writer(&file, &pair.clone().to_string())?;
         file.flush()?;
         Ok(pair)
