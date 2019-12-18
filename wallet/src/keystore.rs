@@ -10,6 +10,7 @@ use rand::{RngCore, rngs::OsRng};
 use bls::Serialize;
 use secp256k1;
 use crate::crypto::{key_types, KeyTypeId};
+use crate::address;
 
 /// Keystore pointer
 pub type KeyStorePtr = Arc<RwLock<Store>>;
@@ -50,8 +51,23 @@ pub struct KeyPair {
 }
 
 impl KeyPair {
-    fn to_string(self) -> String {
-        format!("PublicKey:{:?}\nPrivateKey:{:?}",self.pubkey, self.privkey)
+    fn to_string(self, key_type: KeyTypeId, net: address::Network) -> Result<String> {
+        let addr: address::Address;
+        match key_type {
+            key_types::BLS => {
+                addr = address::Account::BLS(self.pubkey).try_into().unwrap();
+
+            },
+            key_types::SECP256K1 => {
+                addr = address::Account::SECP256K1(self.pubkey)
+                    .try_into()
+                    .unwrap();
+            }
+            _ => return Err(Error::InvalidKeyType)
+        }
+        let addr = addr.display(net);
+        let addr = format!("key_type:{:?}\nPublicKey:{:?}\nPrivateKey:{:?}\naddress:{:?}\n",key_type, self.pubkey, self.privkey, addr)
+        Ok(addr)
     }
 
     pub fn generate_key_pair(key_type: KeyTypeId) -> Result<Self> {
