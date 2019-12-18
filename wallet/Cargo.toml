@@ -4,8 +4,6 @@ version = "0.1.0"
 authors = ["Liu-Cheng Xu <xuliuchengxlc@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 bls = { package = "bls-signatures", version = "0.3" }
 varint = { package = "unsigned-varint", version = "0.2.3" }
@@ -13,3 +11,11 @@ blake2-rfc = { package = "blake2-rfc", version = "0.2.18" }
 libsecp256k1 = { version = "0.3.0" }
 derive_more = { version = "0.99.2"}
 data-encoding = { package = "data-encoding", version = "2.0.0" }
+hex = "0.4.0"
+rand = "0.7.2"
+serde_json = "1.0.41"
+subtle = "2.1.1"
+parking_lot = "0.9.0"
+
+[dev-dependencies]
+tempfile = "3.1.0"
