@@ -75,21 +75,29 @@ impl Wallet {
         let entries = fs::read_dir(keystore_path).unwrap();
         for file in entries {
             let file_name = file.unwrap().file_name();
-            println!("public: {:?}", file_name.clone());
             match hex::decode(file_name.to_str().unwrap()) {
                 Ok(ref name) if name.len() > 4 => {
-                    let key_type =
-                        KeyTypeId::try_from(std::str::from_utf8(&name[0..4]).unwrap()).unwrap();
+                    let type_name = std::str::from_utf8(&name[0..4]).unwrap();
+                    let key_type = KeyTypeId::try_from(type_name).unwrap();
                     let public = &name[4..];
+                    println!("pubkey: {}", hex::encode(&public));
                     match key_type {
                         key_types::BLS => {
                             let addr: Address = Account::BLS(public.to_vec()).try_into().unwrap();
-                            println!("addr: {}\n", addr.display(Network::Testnet));
+                            println!(
+                                "addr: {}\ntype: {}\n",
+                                addr.display(Network::Testnet),
+                                "bls"
+                            );
                         }
                         key_types::SECP256K1 => {
                             let addr: Address =
                                 Account::SECP256K1(public.to_vec()).try_into().unwrap();
-                            println!("addr: {}\n", addr.display(Network::Testnet));
+                            println!(
+                                "addr: {}\ntype: {}\n",
+                                addr.display(Network::Testnet),
+                                "secp256k1"
+                            );
                         }
                         _ => continue,
                     }
