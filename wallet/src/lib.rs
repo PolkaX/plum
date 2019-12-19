@@ -29,18 +29,10 @@ mod keystore;
 //walletexport
 /// wallet pointer
 pub type WalletPtr = Arc<RwLock<Wallet>>;
-const KEYSTORE_PATH: &str = "/.plum/keystore";
+const KEYSTORE_PATH: &str = "/.plum/keystore/";
 
 pub type Result<T> = std::result::Result<T, Error>;
 pub struct Wallet {}
-macro_rules! check {
-    ($e:expr) => {
-        match $e {
-            Ok(t) => t,
-            Err(e) => panic!("{} failed with: {}", stringify!($e), e),
-        }
-    };
-}
 
 impl Wallet {
     pub fn new_address(key_type: KeyTypeId) {
@@ -138,7 +130,7 @@ impl Wallet {
                         let type_name = std::str::from_utf8(&hex_name[0..4]).unwrap();
                         let key_type = KeyTypeId::try_from(type_name).unwrap();
                         let public = &hex_name[4..];
-                        let mut file = File::open(path + "/" + name).unwrap();
+                        let mut file = File::open(path + name).unwrap();
                         let mut file_copy = file.try_clone().unwrap();
                         let mut contents = String::new();
                         file_copy.read_to_string(&mut contents).unwrap();
