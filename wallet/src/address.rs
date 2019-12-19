@@ -198,7 +198,6 @@ impl Display for Address {
                 let mut pc = Vec::new();
                 pc.extend_from_slice(&self.payload());
                 pc.extend_from_slice(&self.checksum());
-
                 format!(
                     "{}{}{}",
                     network_prefix,

@@ -9,7 +9,7 @@ use std::str::FromStr;
 use std::{
     collections::HashMap,
     fs::{self, File},
-    io::{self, Write},
+    io::{self, Read, Write},
     path::PathBuf,
     sync::Arc,
 };
@@ -26,13 +26,21 @@ mod keystore;
 //walletNew,
 //walletList,
 //walletBalance,
-
+//walletexport
 /// wallet pointer
 pub type WalletPtr = Arc<RwLock<Wallet>>;
 const KEYSTORE_PATH: &str = "/.plum/keystore";
 
 pub type Result<T> = std::result::Result<T, Error>;
 pub struct Wallet {}
+macro_rules! check {
+    ($e:expr) => {
+        match $e {
+            Ok(t) => t,
+            Err(e) => panic!("{} failed with: {}", stringify!($e), e),
+        }
+    };
+}
 
 impl Wallet {
     pub fn new_address(key_type: KeyTypeId) {
@@ -103,6 +111,68 @@ impl Wallet {
                     }
                 }
                 _ => continue,
+            }
+        }
+    }
+
+    pub fn export(pubkey: String) {
+        let home = std::env::var("HOME").unwrap();
+        let path = home + &KEYSTORE_PATH.to_string();
+        let keystore_path = PathBuf::from_str(path.as_str()).unwrap();
+        if !keystore_path.exists() {
+            println!("No such file: {:?}", keystore_path.clone());
+        }
+
+        let store = Store::open(keystore_path.clone()).unwrap();
+        let entries = fs::read_dir(keystore_path).unwrap();
+        for file in entries {
+            let file_name = file.unwrap().file_name();
+            let name = file_name.to_str().unwrap();
+            if name.contains(&pubkey) {
+                match hex::decode(name) {
+                    Ok(ref hex_name) => {
+                        if hex_name.len() < 4 {
+                            println!("Invalid public key:{}", pubkey);
+                            return;
+                        }
+                        let type_name = std::str::from_utf8(&hex_name[0..4]).unwrap();
+                        let key_type = KeyTypeId::try_from(type_name).unwrap();
+                        let public = &hex_name[4..];
+                        let mut file = File::open(path + "/" + name).unwrap();
+                        let mut file_copy = file.try_clone().unwrap();
+                        let mut contents = String::new();
+                        file_copy.read_to_string(&mut contents).unwrap();
+
+                        let privkey = &contents[1..contents.len() - 1];
+                        match key_type {
+                            key_types::BLS => {
+                                let addr: Address =
+                                    Account::BLS(public.to_vec()).try_into().unwrap();
+                                println!(
+                                    "addr: {}\ntype: {}\nprivate_key: {:?}\n",
+                                    addr.display(Network::Testnet),
+                                    "bls",
+                                    privkey
+                                );
+                            }
+                            key_types::SECP256K1 => {
+                                let addr: Address =
+                                    Account::SECP256K1(public.to_vec()).try_into().unwrap();
+                                println!(
+                                    "addr: {}\ntype: {}\nprivate_key: {:?}\n",
+                                    addr.display(Network::Testnet),
+                                    "secp256k1",
+                                    privkey
+                                );
+                            }
+                            _ => unreachable!("only bls,secp256k1"),
+                        }
+                    }
+                    Err(e) => println!("{}", e),
+                }
+                return;
+            } else {
+                continue;
             }
         }
     }

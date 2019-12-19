@@ -1,5 +1,5 @@
 use blake2_rfc::blake2b::blake2b;
-use data_encoding::Specification;
+use data_encoding::{Encoding, Specification, BASE64};
 use std::convert::TryFrom;
 
 // PayloadHashLength defines the hash length taken over addresses using the Actor and SECP256K1 protocols.

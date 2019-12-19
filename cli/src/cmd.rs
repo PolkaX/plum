@@ -191,6 +191,12 @@ pub enum Wallet {
         #[structopt(short = "p", long = "keystore_path", case_insensitive = true)]
         keystore_path: Option<String>,
     },
+    #[structopt(name = "export")]
+    /// Export key-info by pubkey
+    Export {
+        #[structopt(short = "addr", long = "address", case_insensitive = true)]
+        pubkey: String,
+    },
 }
 
 impl Wallet {
@@ -204,6 +210,7 @@ impl Wallet {
                 wallet::Wallet::new_address(keytype.to_owned())
             }
             Wallet::List { keystore_path } => wallet::Wallet::wallet_list(keystore_path.to_owned()),
+            Wallet::Export { pubkey } => wallet::Wallet::export(pubkey.to_string()),
             _ => unimplemented!(),
         }
     }
