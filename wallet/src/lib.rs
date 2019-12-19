@@ -43,7 +43,7 @@ impl Wallet {
         };
         Store::open(store.path.clone()).unwrap();
         let pair = store.generate_key(key_type).unwrap();
-        println!("{}", pair.to_string());
+        println!("{}\n", pair.to_string(key_type, Network::Testnet));
     }
 
     fn address(pair: KeyPair, net: Network) -> Result<String> {

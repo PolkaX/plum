@@ -33,8 +33,18 @@ pub struct KeyPair {
 }
 
 impl KeyPair {
-    pub fn to_string(&self) -> String {
-        hex::encode(&self.privkey)
+    pub fn to_string(&self, key_type: KeyTypeId, net: Network) -> String {
+        let addr: Address = match key_type {
+            key_types::BLS => Account::BLS(self.pubkey.clone()).try_into().unwrap(),
+            key_types::SECP256K1 => Account::SECP256K1(self.pubkey.clone()).try_into().unwrap(),
+            _ => unreachable!("key types [bls, secp256k1]"),
+        };
+        format!(
+            "pubkey:{}\nprivkey:{}\naddress:{}",
+            hex::encode(&self.pubkey),
+            hex::encode(&self.privkey),
+            addr.display(net)
+        )
     }
 
     pub fn generate_key_pair(key_type: KeyTypeId) -> Result<Self> {
@@ -98,15 +108,8 @@ impl Store {
     /// Places it into the file system store.
     pub fn generate_key(&self, key_type: KeyTypeId) -> Result<KeyPair> {
         let pair = KeyPair::generate_key_pair(key_type)?;
-
-        println!("key_type:{:?}", key_type);
-        println!("pair.pubkey.as_slice():{:?}", pair.pubkey.as_slice());
-        println!(
-            "path:{:?}",
-            self.key_file_path(pair.pubkey.as_slice(), key_type)
-        );
         let mut file = File::create(self.key_file_path(pair.pubkey.as_slice(), key_type))?;
-        serde_json::to_writer(&file, &pair.clone().to_string())?;
+        serde_json::to_writer(&file, &hex::encode(&pair.clone().privkey))?;
         file.flush()?;
         Ok(pair)
     }
