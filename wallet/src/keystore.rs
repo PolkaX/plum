@@ -34,10 +34,7 @@ pub struct KeyPair {
 
 impl KeyPair {
     pub fn to_string(&self) -> String {
-        format!(
-            "PublicKey:{:?}\nPrivateKey:{:?}\n",
-            self.pubkey, self.privkey
-        )
+        hex::encode(&self.privkey)
     }
 
     pub fn generate_key_pair(key_type: KeyTypeId) -> Result<Self> {
