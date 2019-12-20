@@ -194,8 +194,22 @@ pub enum Wallet {
     #[structopt(name = "export")]
     /// Export key-info by pubkey
     Export {
-        #[structopt(short = "addr", long = "address", case_insensitive = true)]
+        #[structopt(short = "public-key", long = "public-key", case_insensitive = true)]
         pubkey: String,
+    },
+    #[structopt(name = "import")]
+    /// Export key-info by pubkey
+    Import {
+        #[structopt(short="t", long="type", possible_values = &KeyType::variants(), case_insensitive = true)]
+        key_type: KeyType,
+        #[structopt(short = "private-key", long = "private-key", case_insensitive = true)]
+        privkey: String,
+    },
+    #[structopt(name = "balance")]
+    /// Get balance info by address
+    Balance {
+        #[structopt(short = "balance", long = "balance", case_insensitive = true)]
+        address: String,
     },
 }
 
@@ -211,6 +225,14 @@ impl Wallet {
             }
             Wallet::List { keystore_path } => wallet::Wallet::wallet_list(keystore_path.to_owned()),
             Wallet::Export { pubkey } => wallet::Wallet::export(pubkey.to_string()),
+            Wallet::Import { key_type, privkey } => {
+                let keytype = match key_type {
+                    KeyType::Bls => crypto::key_types::BLS,
+                    KeyType::Secp256k1 => crypto::key_types::SECP256K1,
+                };
+                wallet::Wallet::import(keytype, privkey.to_string())
+            }
+            Wallet::Balance { address } => unimplemented!(),
             _ => unimplemented!(),
         }
     }

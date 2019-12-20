@@ -168,4 +168,16 @@ impl Wallet {
             }
         }
     }
+    pub fn import(key_type: KeyTypeId, privkey: String) {
+        let privkey = hex::decode(privkey).unwrap();
+        let home = std::env::var("HOME").unwrap();
+        let path = home + &KEYSTORE_PATH.to_string();
+        let store = Store {
+            path: PathBuf::from_str(&path).unwrap(),
+            additional: HashMap::new(),
+        };
+        Store::open(store.path.clone()).unwrap();
+        let pair = store.import_key(key_type, privkey.as_slice()).unwrap();
+        println!("{}\n", pair.to_string(key_type, Network::Testnet));
+    }
 }

@@ -74,6 +74,29 @@ impl KeyPair {
             key_type: key_type,
         })
     }
+
+    pub fn get_pubkey_by_private(key_type: KeyTypeId, privkey: &[u8]) -> Result<Self> {
+        let pubkey: Vec<u8>;
+        match key_type {
+            key_types::BLS => {
+                let private_key = bls::PrivateKey::from_bytes(privkey)?;
+
+                let public_key = private_key.public_key();
+                pubkey = public_key.as_bytes();
+            }
+            key_types::SECP256K1 => {
+                let secert = secp256k1::SecretKey::parse_slice(privkey)?;
+                let public_key = secp256k1::PublicKey::from_secret_key(&secert);
+                pubkey = public_key.serialize().to_vec();
+            }
+            _ => return Err(Error::InvalidKeyType),
+        }
+        Ok(KeyPair {
+            pubkey: pubkey,
+            privkey: privkey.to_vec(),
+            key_type: key_type,
+        })
+    }
 }
 
 /// Key store.
@@ -108,6 +131,14 @@ impl Store {
     /// Places it into the file system store.
     pub fn generate_key(&self, key_type: KeyTypeId) -> Result<KeyPair> {
         let pair = KeyPair::generate_key_pair(key_type)?;
+        let mut file = File::create(self.key_file_path(pair.pubkey.as_slice(), key_type))?;
+        serde_json::to_writer(&file, &hex::encode(&pair.clone().privkey))?;
+        file.flush()?;
+        Ok(pair)
+    }
+
+    pub fn import_key(&self, key_type: KeyTypeId, privkey: &[u8]) -> Result<KeyPair> {
+        let pair = KeyPair::get_pubkey_by_private(key_type, privkey)?;
         let mut file = File::create(self.key_file_path(pair.pubkey.as_slice(), key_type))?;
         serde_json::to_writer(&file, &hex::encode(&pair.clone().privkey))?;
         file.flush()?;

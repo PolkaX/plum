@@ -1,4 +1,5 @@
 use crate::keystore;
+use failure;
 use std::{
     collections::HashMap,
     fs::{self, File},
@@ -24,26 +25,47 @@ pub enum Error {
     #[display(fmt = "Invalid seed")]
     InvalidSeed,
     /// Invalid key type
-    #[display(fmt = "Invalid key type")]
+    #[display(fmt = "Invalid Key Type")]
     InvalidKeyType,
+    #[display(fmt = "Invalid Signature")]
+    InvalidSignature,
+    #[display(fmt = "Invalid PublicKey")]
+    InvalidPublicKey,
+    #[display(fmt = "Invalid SecretKey")]
+    InvalidSecretKey,
+    #[display(fmt = "Invalid Message")]
+    InvalidMessage,
+    #[display(fmt = "Invalid Input Length")]
+    InvalidInputLength,
     /// Keystore unavailable
     #[display(fmt = "Keystore unavailable")]
     Unavailable,
 }
 
-//impl std::error::Error for Error {
-//    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-//        match self {
-//            Error::Io(ref err) => Some(err),
-//            Error::Json(ref err) => Some(err),
-//            _ => None,
-//        }
-//    }
-//}
-
 impl From<std::convert::Infallible> for Error {
     fn from(inf: std::convert::Infallible) -> Self {
         match inf {
+            _ => Error::Unavailable,
+        }
+    }
+}
+
+impl From<secp256k1::Error> for Error {
+    fn from(e: secp256k1::Error) -> Self {
+        match e {
+            secp256k1::Error::InvalidSignature => Error::InvalidSignature,
+            secp256k1::Error::InvalidPublicKey => Error::InvalidPublicKey,
+            secp256k1::Error::InvalidSecretKey => Error::InvalidSecretKey,
+            secp256k1::Error::InvalidMessage => Error::InvalidMessage,
+            secp256k1::Error::InvalidInputLength => Error::InvalidInputLength,
+            _ => Error::Unavailable,
+        }
+    }
+}
+
+impl From<failure::Error> for Error {
+    fn from(e: failure::Error) -> Self {
+        match e {
             _ => Error::Unavailable,
         }
     }
