@@ -187,10 +187,7 @@ pub enum Wallet {
     },
     #[structopt(name = "list")]
     /// List all the key in keystore
-    List {
-        #[structopt(short = "p", long = "keystore_path", case_insensitive = true)]
-        keystore_path: Option<String>,
-    },
+    List,
     #[structopt(name = "export")]
     /// Export key-info by pubkey
     Export {
@@ -223,7 +220,7 @@ impl Wallet {
                 };
                 wallet::Wallet::new_address(keytype.to_owned())
             }
-            Wallet::List { keystore_path } => wallet::Wallet::wallet_list(keystore_path.to_owned()),
+            Wallet::List => wallet::Wallet::wallet_list(),
             Wallet::Export { pubkey } => wallet::Wallet::export(pubkey.to_string()),
             Wallet::Import { key_type, privkey } => {
                 let keytype = match key_type {

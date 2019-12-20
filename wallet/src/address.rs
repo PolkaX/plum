@@ -1,6 +1,6 @@
-use crate::crypto::{
-    address_hash, base32_encode, checksum, PAYLOAD_HASH_LENGTH,
-};
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
+
+use crate::crypto::{address_hash, base32_encode, checksum, PAYLOAD_HASH_LENGTH};
 use std::convert::TryInto;
 use std::io::Write;
 

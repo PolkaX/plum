@@ -1,3 +1,5 @@
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
+
 use address::{Account, Address, Display, Network};
 use crypto::{key_types, KeyTypeId};
 use error::Error;
@@ -7,7 +9,6 @@ use std::convert::TryFrom;
 use std::convert::TryInto;
 use std::str::FromStr;
 use std::{
-    collections::HashMap,
     fs::{self, File},
     io::Read,
     path::PathBuf,
@@ -19,38 +20,25 @@ pub mod crypto;
 mod error;
 mod keystore;
 
-/// wallet pointer
-pub type WalletPtr = Arc<RwLock<Wallet>>;
 const KEYSTORE_PATH: &str = "/.plum/keystore/";
+const NET_TYPE: Network = Network::Testnet;
 
 pub type Result<T> = std::result::Result<T, Error>;
 pub struct Wallet {}
 
 impl Wallet {
+    /// generate address by type
     pub fn new_address(key_type: KeyTypeId) {
-        let home = std::env::var("HOME").unwrap();
-        let store = Store {
-            path: PathBuf::from_str(&(home.as_str().to_owned() + KEYSTORE_PATH)).unwrap(),
-            additional: HashMap::new(),
-        };
-        Store::open(store.path.clone()).unwrap();
+        let store = check_keystore_path();
         let pair = store.generate_key(key_type).unwrap();
-        println!("{}\n", pair.to_string(key_type, Network::Testnet));
+        println!("{}\n", pair.to_string(key_type, NET_TYPE));
     }
 
-    pub fn wallet_list(keystore_path: Option<String>) {
-        let home = std::env::var("HOME").unwrap();
-        let path = match keystore_path {
-            Some(p) => p,
-            None => home + &KEYSTORE_PATH.to_string(),
-        };
-        let keystore_path = PathBuf::from_str(path.as_str()).unwrap();
-        if !keystore_path.exists() {
-            println!("No such file: {:?}", keystore_path.clone());
-        }
-
-        let _ = Store::open(keystore_path.clone()).unwrap();
-        let entries = fs::read_dir(keystore_path).unwrap();
+    /// list all address-info in keystore
+    pub fn wallet_list() {
+        let store = check_keystore_path();
+        let _ = store.open().unwrap();
+        let entries = fs::read_dir(store.path).unwrap();
         for file in entries {
             let file_name = file.unwrap().file_name();
             match hex::decode(file_name.to_str().unwrap()) {
@@ -59,10 +47,7 @@ impl Wallet {
                     let key_type = KeyTypeId::try_from(type_name).unwrap();
                     let public = &name[4..];
 
-                    println!(
-                        "{}",
-                        pubkey_to_address(public.to_vec(), key_type, Network::Testnet)
-                    );
+                    println!("{}", pubkey_to_address(public.to_vec(), key_type, NET_TYPE));
                     println!("pubkey: {}\n\n", hex::encode(&public));
                 }
                 _ => continue,
@@ -70,16 +55,11 @@ impl Wallet {
         }
     }
 
+    /// export the address-info by public key
     pub fn export(pubkey: String) {
-        let home = std::env::var("HOME").unwrap();
-        let path = home + &KEYSTORE_PATH.to_string();
-        let keystore_path = PathBuf::from_str(path.as_str()).unwrap();
-        if !keystore_path.exists() {
-            println!("No such file: {:?}", keystore_path.clone());
-        }
-
-        let _ = Store::open(keystore_path.clone()).unwrap();
-        let entries = fs::read_dir(keystore_path).unwrap();
+        let store = check_keystore_path();
+        let entries = fs::read_dir(store.path.clone()).unwrap();
+        let path = store.path.to_str().unwrap();
         for file in entries {
             let file_name = file.unwrap().file_name();
             let name = file_name.to_str().unwrap();
@@ -93,15 +73,12 @@ impl Wallet {
                         let type_name = std::str::from_utf8(&hex_name[0..4]).unwrap();
                         let key_type = KeyTypeId::try_from(type_name).unwrap();
                         let public = &hex_name[4..];
-                        let file = File::open(path + name).unwrap();
+                        let file = File::open(path.to_owned() + name).unwrap();
                         let mut file_copy = file.try_clone().unwrap();
                         let mut contents = String::new();
                         file_copy.read_to_string(&mut contents).unwrap();
                         let privkey = &contents[1..contents.len() - 1];
-                        println!(
-                            "{}",
-                            pubkey_to_address(public.to_vec(), key_type, Network::Testnet)
-                        );
+                        println!("{}", pubkey_to_address(public.to_vec(), key_type, NET_TYPE));
                         println!("private_key: {}\n\n", privkey);
                     }
                     Err(e) => println!("{}", e),
@@ -112,15 +89,11 @@ impl Wallet {
             }
         }
     }
+
+    /// inport account by type and private-key
     pub fn import(key_type: KeyTypeId, privkey: String) {
+        let store = check_keystore_path();
         let privkey = hex::decode(privkey).unwrap();
-        let home = std::env::var("HOME").unwrap();
-        let path = home + &KEYSTORE_PATH.to_string();
-        let store = Store {
-            path: PathBuf::from_str(&path).unwrap(),
-            additional: HashMap::new(),
-        };
-        Store::open(store.path.clone()).unwrap();
         let pair = store.import_key(key_type, privkey.as_slice()).unwrap();
         println!("{}\n", pair.to_string(key_type, Network::Testnet));
     }
@@ -138,4 +111,16 @@ fn pubkey_to_address(pubkey: Vec<u8>, key_type: KeyTypeId, net: Network) -> Stri
         }
         _ => unreachable!("only bls,secp256k1"),
     }
+}
+
+fn check_keystore_path() -> Store {
+    let home = std::env::var("HOME").unwrap();
+    let store = Store {
+        path: PathBuf::from_str(&(home.as_str().to_owned() + KEYSTORE_PATH)).unwrap(),
+    };
+    if !store.path.exists() {
+        println!("No such file: {:?}", store.path.clone());
+    }
+    let _ = store.open().unwrap();
+    store
 }

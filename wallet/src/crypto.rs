@@ -1,3 +1,5 @@
+// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
+
 use crate::keystore::KeyPair;
 use blake2_rfc::blake2b::blake2b;
 use bls::Serialize;
@@ -42,9 +44,13 @@ pub fn base32_encode(input: &[u8]) -> String {
 ///
 /// Values whose first character is `_` are reserved for private use and won't conflict with any
 /// public modules.
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct KeyTypeId(pub [u8; 4]);
-
+impl Default for KeyTypeId {
+    fn default() -> Self {
+        KeyTypeId(*b"bls0")
+    }
+}
 impl From<u32> for KeyTypeId {
     fn from(x: u32) -> Self {
         Self(x.to_le_bytes())
