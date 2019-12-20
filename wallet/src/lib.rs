@@ -141,7 +141,7 @@ impl Wallet {
                                 let addr: Address =
                                     Account::BLS(public.to_vec()).try_into().unwrap();
                                 println!(
-                                    "addr: {}\ntype: {}\nprivate_key: {:?}\n",
+                                    "addr: {}\ntype: {}\nprivate_key: {}\n",
                                     addr.display(Network::Testnet),
                                     "bls",
                                     privkey
@@ -151,7 +151,7 @@ impl Wallet {
                                 let addr: Address =
                                     Account::SECP256K1(public.to_vec()).try_into().unwrap();
                                 println!(
-                                    "addr: {}\ntype: {}\nprivate_key: {:?}\n",
+                                    "addr: {}\ntype: {}\nprivate_key: {}\n",
                                     addr.display(Network::Testnet),
                                     "secp256k1",
                                     privkey
