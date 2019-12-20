@@ -46,20 +46,6 @@ impl Wallet {
         println!("{}\n", pair.to_string(key_type, Network::Testnet));
     }
 
-    fn address(pair: KeyPair, net: Network) -> Result<String> {
-        let addr: Address = match pair.key_type.clone() {
-            key_types::BLS => Account::BLS(pair.pubkey.clone()).try_into().unwrap(),
-            key_types::SECP256K1 => Account::SECP256K1(pair.pubkey.clone()).try_into().unwrap(),
-            _ => return Err(Error::InvalidKeyType),
-        };
-        let addrs = addr.display(net);
-        let key = format!(
-            "key_type:{:?}\nPublicKey:{:?}\naddress:{:?}\n",
-            pair.key_type, pair.pubkey, addrs
-        );
-        Ok(key)
-    }
-
     pub fn wallet_list(keystore_path: Option<String>) {
         let home = std::env::var("HOME").unwrap();
         let path = match keystore_path {
@@ -80,27 +66,9 @@ impl Wallet {
                     let type_name = std::str::from_utf8(&name[0..4]).unwrap();
                     let key_type = KeyTypeId::try_from(type_name).unwrap();
                     let public = &name[4..];
-                    println!("pubkey: {}", hex::encode(&public));
-                    match key_type {
-                        key_types::BLS => {
-                            let addr: Address = Account::BLS(public.to_vec()).try_into().unwrap();
-                            println!(
-                                "addr: {}\ntype: {}\n",
-                                addr.display(Network::Testnet),
-                                "bls"
-                            );
-                        }
-                        key_types::SECP256K1 => {
-                            let addr: Address =
-                                Account::SECP256K1(public.to_vec()).try_into().unwrap();
-                            println!(
-                                "addr: {}\ntype: {}\n",
-                                addr.display(Network::Testnet),
-                                "secp256k1"
-                            );
-                        }
-                        _ => continue,
-                    }
+
+                    println!("{}", pubkey_to_address(public.to_vec(), key_type, Network::Testnet));
+                    println!("pubkey: {}\n\n", hex::encode(&public));
                 }
                 _ => continue,
             }
@@ -134,31 +102,9 @@ impl Wallet {
                         let mut file_copy = file.try_clone().unwrap();
                         let mut contents = String::new();
                         file_copy.read_to_string(&mut contents).unwrap();
-
                         let privkey = &contents[1..contents.len() - 1];
-                        match key_type {
-                            key_types::BLS => {
-                                let addr: Address =
-                                    Account::BLS(public.to_vec()).try_into().unwrap();
-                                println!(
-                                    "addr: {}\ntype: {}\nprivate_key: {}\n",
-                                    addr.display(Network::Testnet),
-                                    "bls",
-                                    privkey
-                                );
-                            }
-                            key_types::SECP256K1 => {
-                                let addr: Address =
-                                    Account::SECP256K1(public.to_vec()).try_into().unwrap();
-                                println!(
-                                    "addr: {}\ntype: {}\nprivate_key: {}\n",
-                                    addr.display(Network::Testnet),
-                                    "secp256k1",
-                                    privkey
-                                );
-                            }
-                            _ => unreachable!("only bls,secp256k1"),
-                        }
+                        println!("{}", pubkey_to_address(public.to_vec(), key_type, Network::Testnet));
+                        println!("private_key: {}\n\n",privkey);
                     }
                     Err(e) => println!("{}", e),
                 }
@@ -179,5 +125,28 @@ impl Wallet {
         Store::open(store.path.clone()).unwrap();
         let pair = store.import_key(key_type, privkey.as_slice()).unwrap();
         println!("{}\n", pair.to_string(key_type, Network::Testnet));
+    }
+}
+
+fn pubkey_to_address(pubkey: Vec<u8>, key_type: KeyTypeId, net: Network) -> String {
+    match key_type {
+        key_types::BLS => {
+            let addr: Address = Account::BLS(pubkey).try_into().unwrap();
+            format!(
+                "address: {}\ntype: {}",
+                addr.display(net),
+                "bls"
+            )
+        },
+        key_types::SECP256K1 => {
+            let addr: Address =
+                Account::SECP256K1(pubkey).try_into().unwrap();
+            format!(
+                "address: {}\ntype: {}",
+                addr.display(net),
+                "secp256k1"
+            )
+        }
+        _ => unreachable!("only bls,secp256k1"),
     }
 }
