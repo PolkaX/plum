@@ -1,12 +1,5 @@
-use crate::keystore;
 use failure;
-use std::{
-    collections::HashMap,
-    fs::{self, File},
-    io::{self, Write},
-    path::PathBuf,
-    sync::Arc,
-};
+use std::io;
 
 /// Keystore error.
 #[derive(Debug, derive_more::Display, derive_more::From)]
@@ -37,6 +30,8 @@ pub enum Error {
     InvalidMessage,
     #[display(fmt = "Invalid Input Length")]
     InvalidInputLength,
+    #[display(fmt = "Invalid Length")]
+    InvalidLength,
     /// Keystore unavailable
     #[display(fmt = "Keystore unavailable")]
     Unavailable,

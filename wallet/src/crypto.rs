@@ -1,5 +1,8 @@
+use crate::keystore::KeyPair;
 use blake2_rfc::blake2b::blake2b;
-use data_encoding::{Encoding, Specification, BASE64};
+use bls::Serialize;
+use data_encoding::Specification;
+use secp256k1::Message;
 use std::convert::TryFrom;
 
 // PayloadHashLength defines the hash length taken over addresses using the Actor and SECP256K1 protocols.
@@ -78,6 +81,23 @@ pub mod key_types {
     pub const BLS: KeyTypeId = KeyTypeId(*b"bls0");
     /// Key type for Grandpa module, build-in.
     pub const SECP256K1: KeyTypeId = KeyTypeId(*b"secp");
+}
+
+pub fn signature(pair: KeyPair, msg: &[u8]) -> Result<Vec<u8>, ()> {
+    match pair.key_type {
+        key_types::BLS => {
+            let private_key = bls::PrivateKey::from_bytes(pair.privkey.as_slice()).unwrap();
+            let signature = private_key.sign(&msg);
+            Ok(signature.as_bytes())
+        }
+        key_types::SECP256K1 => {
+            let secert = secp256k1::SecretKey::parse_slice(pair.privkey.as_slice()).unwrap();
+            let mssage = Message::parse_slice(msg).unwrap();
+            let (signature, _) = secp256k1::sign(&mssage, &secert);
+            Ok(signature.serialize().to_vec())
+        }
+        _ => unreachable!(),
+    }
 }
 
 #[test]

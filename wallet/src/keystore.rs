@@ -12,11 +12,10 @@ use parking_lot::RwLock;
 use rand::{rngs::OsRng, RngCore};
 use secp256k1;
 use std::convert::TryInto;
-use std::str::FromStr;
 use std::{
     collections::HashMap,
     fs::{self, File},
-    io::{self, Write},
+    io::Write,
     path::PathBuf,
     sync::Arc,
 };
@@ -75,7 +74,7 @@ impl KeyPair {
         })
     }
 
-    pub fn get_pubkey_by_private(key_type: KeyTypeId, privkey: &[u8]) -> Result<Self> {
+    pub fn get_keypair_by_private(key_type: KeyTypeId, privkey: &[u8]) -> Result<Self> {
         let pubkey: Vec<u8>;
         match key_type {
             key_types::BLS => {
@@ -138,7 +137,7 @@ impl Store {
     }
 
     pub fn import_key(&self, key_type: KeyTypeId, privkey: &[u8]) -> Result<KeyPair> {
-        let pair = KeyPair::get_pubkey_by_private(key_type, privkey)?;
+        let pair = KeyPair::get_keypair_by_private(key_type, privkey)?;
         let mut file = File::create(self.key_file_path(pair.pubkey.as_slice(), key_type))?;
         serde_json::to_writer(&file, &hex::encode(&pair.clone().privkey))?;
         file.flush()?;
@@ -181,13 +180,13 @@ mod tests {
             additional: map,
         };
         let keypair = st.generate_bls_key(KeyTypeId::default()).unwrap();
-        println!("{}", keypair.clone().to_string());
         let addr: crate::address::Address =
             crate::address::Account::BLS(keypair.bls_pubkey.as_bytes())
                 .try_into()
                 .unwrap();
         println!("{}", addr.display(Network::Testnet));
     }
+
     //
     //    #[test]
     //    fn basic_store() {

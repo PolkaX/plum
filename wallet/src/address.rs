@@ -1,18 +1,20 @@
+use crate::crypto::{
+    address_hash, base32_encode, checksum, PAYLOAD_HASH_LENGTH,
+};
 use std::convert::TryInto;
-
-use crate::crypto::*;
+use std::io::Write;
 
 // SignatureBytes is the length of a BLS signature
-pub const BLS_SIGNATURE_LEN: u8 = 96;
+//pub const BLS_SIGNATURE_LEN: u8 = 96;
 
 // PrivateKeyBytes is the length of a BLS private key
-pub const BLS_PRIVATEKEY_LEN: u8 = 32;
+//pub const BLS_PRIVATEKEY_LEN: u8 = 32;
 
 // PublicKeyBytes is the length of a BLS public key
 pub const BLS_PUBLICKEY_LEN: u8 = 48;
 
 // DigestBytes is the length of a BLS message hash/digest
-pub const BLS_DIGEST_LEN: u8 = 96;
+//pub const BLS_DIGEST_LEN: u8 = 96;
 
 #[derive(Debug, derive_more::Display, derive_more::From)]
 pub enum Error {
