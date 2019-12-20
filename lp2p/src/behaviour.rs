@@ -9,6 +9,7 @@ use libp2p::{
     tokio_io::{AsyncRead, AsyncWrite},
     Multiaddr, PeerId,
 };
+use log::info;
 use tokio::prelude::Async;
 
 use crate::config;
@@ -80,14 +81,14 @@ where
     fn inject_connected(&mut self, peer_id: PeerId, endpoint: ConnectedPoint) {
         self.floodsub
             .inject_connected(peer_id.clone(), endpoint.clone());
-        self.kad.inject_connected(peer_id.clone(), endpoint.clone());
+        self.kad.inject_connected(peer_id.clone(), endpoint);
         info!("inject_connected, peer_id:{:?}", peer_id.clone());
         self.floodsub.add_node_to_partial_view(peer_id);
     }
 
     fn inject_disconnected(&mut self, peer_id: &PeerId, endpoint: ConnectedPoint) {
         self.floodsub.inject_disconnected(peer_id, endpoint.clone());
-        self.kad.inject_disconnected(peer_id, endpoint.clone());
+        self.kad.inject_disconnected(peer_id, endpoint);
     }
 
     fn inject_replaced(
@@ -101,11 +102,8 @@ where
             closed_endpoint.clone(),
             new_endpoint.clone(),
         );
-        self.kad.inject_replaced(
-            peer_id.clone(),
-            closed_endpoint.clone(),
-            new_endpoint.clone(),
-        );
+        self.kad
+            .inject_replaced(peer_id, closed_endpoint, new_endpoint);
     }
 
     fn inject_node_event(
@@ -163,6 +161,7 @@ where
         >
 >{
         info!("poll");
+
         loop {
             match self.floodsub.poll(params) {
                 Async::NotReady => break,
@@ -173,7 +172,7 @@ where
                             info!("recv floodsub msg, msg:{:?}", msg);
                         }
                         FloodsubEvent::Subscribed { peer_id, .. } => {
-                            info!("rcv subscribed msg, peer_id:{:?}", peer_id.clone());
+                            info!("recv subscribed msg, peer_id:{:?}", peer_id.clone());
                             self.events.push(Event::Connecting(peer_id.clone()));
                         }
                         FloodsubEvent::Unsubscribed { .. } => {}
@@ -197,6 +196,7 @@ where
                 }
             }
         }
+
         loop {
             match self.kad.poll(params) {
                 Async::NotReady => break,
@@ -221,11 +221,13 @@ where
                 }
             }
         }
+
         if let Some(Event::Connecting(peer_id)) = self.events.pop() {
             let msg = Msg::Hello(HelloMsg { peer_id });
             self.send(config::hello_topic(), &msg);
             info!("send hello topic");
         }
+
         Async::NotReady
     }
 }
