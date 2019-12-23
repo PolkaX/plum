@@ -1,5 +1,7 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
+use lazy_static::lazy_static;
+
 lazy_static! {
     static ref BASE32: data_encoding::Encoding = {
         let mut spec = data_encoding::Specification::new();
