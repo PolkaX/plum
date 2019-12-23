@@ -1,8 +1,9 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::crypto::{address_hash, base32_encode, checksum, PAYLOAD_HASH_LENGTH};
 use std::convert::TryInto;
 use std::io::Write;
+use blake2_rfc::blake2b::blake2b;
+use data_encoding::Specification;
 
 // SignatureBytes is the length of a BLS signature
 //pub const BLS_SIGNATURE_LEN: u8 = 96;
@@ -33,6 +34,35 @@ pub enum Error {
 // MaxAddressStringLength is the max length of an address encoded as a string
 // it include the network prefx, protocol, and bls publickey
 pub const MAX_ADDRESS_STRING_LEN: u8 = 2 + 84;
+// PayloadHashLength defines the hash length taken over addresses using the Actor and SECP256K1 protocols.
+pub const PAYLOAD_HASH_LENGTH: usize = 20;
+
+// ChecksumHashLength defines the hash length used for calculating address checksums.
+pub const CHECKSUM_HASH_LENGTH: usize = 4;
+
+pub const ENCODE_STD: &str = "abcdefghijklmnopqrstuvwxyz234567";
+
+pub fn blake2b_hash(ingest: &[u8], hash_config: usize) -> Vec<u8> {
+    let hash = blake2b(hash_config, &[], ingest);
+    hash.as_bytes().to_vec()
+}
+
+pub fn address_hash(ingest: &[u8]) -> Vec<u8> {
+    blake2b_hash(ingest, PAYLOAD_HASH_LENGTH)
+}
+
+pub fn checksum(ingest: &[u8]) -> Vec<u8> {
+    blake2b_hash(ingest, CHECKSUM_HASH_LENGTH)
+}
+
+pub fn base32_encode(input: &[u8]) -> String {
+    let mut spec = Specification::new();
+    spec.symbols.push_str(ENCODE_STD);
+    spec.padding = None;
+    let encoder = spec.encoding().unwrap();
+
+    encoder.encode(&input)
+}
 
 pub trait Protocol {
     fn protocol(&self) -> u8;

@@ -15,7 +15,6 @@ use std::{
     sync::Arc,
 };
 
-mod address;
 pub mod crypto;
 mod error;
 mod keystore;

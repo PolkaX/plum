@@ -4,7 +4,7 @@
 
 #![warn(missing_docs)]
 
-use crate::address::{Account, Address, Display, Network};
+use address::{Account, Address, Display, Network};
 use crate::crypto::{key_types, KeyTypeId};
 use crate::error::Error;
 use bls::Serialize;

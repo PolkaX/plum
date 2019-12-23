@@ -15,6 +15,7 @@ path = "src/bin/main.rs"
 [dependencies]
 cli = { path = "./cli" }
 wallet = { path = "./wallet" }
+address = { path = "./address" }
 
 [workspace]
 members = [
@@ -23,4 +24,5 @@ members = [
 	"lp2p",
 	"peermgr",
 	"wallet",
+	"address",
 ]

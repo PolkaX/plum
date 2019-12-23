@@ -1,6 +1,7 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::types::{Address, BigInt, Cid, Signature};
+use crate::types::{BigInt, Cid, Signature};
+use address::Address;
 
 pub struct Ticket {
     vrf_proof: Vec<u8>,

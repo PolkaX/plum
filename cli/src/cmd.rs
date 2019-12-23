@@ -195,7 +195,7 @@ pub enum Wallet {
         pubkey: String,
     },
     #[structopt(name = "import")]
-    /// Export key-info by pubkey
+    /// Import key-info by pubkey
     Import {
         #[structopt(short="t", long="type", possible_values = &KeyType::variants(), case_insensitive = true)]
         key_type: KeyType,
