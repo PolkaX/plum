@@ -6,13 +6,12 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
+cid = "0.3"
+log = "0.4"
+void = "1.0"
+tokio = "0.1"
 libp2p = { version = "0.13", default-features = false }
 futures = "0.1"
-tokio = "0.1"
-void = "1.0"
-cid = "0.3"
 multihash = "~0.8.0"
-log = "0.4"
-parity-multiaddr = "0.6"
 
 chain = { path = "../chain" }
