@@ -1,21 +1,23 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-use std::convert::TryInto;
-use std::io::Write;
 use blake2_rfc::blake2b::blake2b;
 use data_encoding::Specification;
+use serde::{Deserialize, Serialize};
+use serde_cbor::{from_slice, to_vec};
+use std::convert::TryInto;
+use std::io::Write;
 
 // SignatureBytes is the length of a BLS signature
-//pub const BLS_SIGNATURE_LEN: u8 = 96;
+pub const BLS_SIGNATURE_LEN: u8 = 96;
 
 // PrivateKeyBytes is the length of a BLS private key
-//pub const BLS_PRIVATEKEY_LEN: u8 = 32;
+pub const BLS_PRIVATEKEY_LEN: u8 = 32;
 
 // PublicKeyBytes is the length of a BLS public key
 pub const BLS_PUBLICKEY_LEN: u8 = 48;
 
 // DigestBytes is the length of a BLS message hash/digest
-//pub const BLS_DIGEST_LEN: u8 = 96;
+pub const BLS_DIGEST_LEN: u8 = 96;
 
 #[derive(Debug, derive_more::Display, derive_more::From)]
 pub enum Error {
@@ -29,11 +31,14 @@ pub enum Error {
     InvalidLength,
     // Invalid address checksum
     InvalidChecksum,
+    InvalidId,
 }
+
+//pub type Result<T> = std::result::Result<T, Error>;
 
 // MaxAddressStringLength is the max length of an address encoded as a string
 // it include the network prefx, protocol, and bls publickey
-pub const MAX_ADDRESS_STRING_LEN: u8 = 2 + 84;
+pub const MAX_ADDRESS_STRING_LEN: usize = 2 + 84;
 // PayloadHashLength defines the hash length taken over addresses using the Actor and SECP256K1 protocols.
 pub const PAYLOAD_HASH_LENGTH: usize = 20;
 
@@ -63,6 +68,7 @@ pub fn base32_encode(input: &[u8]) -> String {
 
     encoder.encode(&input)
 }
+
 
 pub trait Protocol {
     fn protocol(&self) -> u8;
@@ -177,7 +183,7 @@ pub enum AddressFormat {
     BLS,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Address {
     ID(Vec<u8>),
     SECP256K1([u8; PAYLOAD_HASH_LENGTH + 1]),
@@ -206,16 +212,68 @@ impl Address {
         }
     }
 
-    pub fn checksum(&self) -> Vec<u8> {
-        match self.clone() {
-            Self::SECP256K1(addr) => checksum(&addr[..]),
-            Self::Actor(addr) => checksum(&addr[..]),
-            Self::BLS(addr) => checksum(&addr[..]),
-            _ => unreachable!(
-                "Only secp256k1, actor and bls address has to perform the checksum function"
-            ),
+    pub fn decode(addr: &str) -> Result<Address, Error> {
+        if addr.len() == 0 || addr.len() > MAX_ADDRESS_STRING_LEN || addr.len() < 3 {
+            return Err(Error::InvalidLength);
         }
+        let net = addr.chars().nth(0).unwrap();
+        if net.to_string().as_str() != Network::Mainnet.prefix()
+            || net.to_string().as_str() != Network::Testnet.prefix()
+        {
+            return Err(Error::UnknownNetwork);
+        }
+        let protocol = addr.chars().nth(1).unwrap();
+        let p = match protocol {
+            '0' => AddressFormat::ID,
+            '1' => AddressFormat::SECP256K1,
+            '2' => AddressFormat::Actor,
+            '3' => AddressFormat::BLS,
+            _ => return Err(Error::UnknownProtocol),
+        };
+        let addr_st = addr.to_string();
+        let raw = &addr_st[2..];
+        if p == AddressFormat::ID {
+            // 20 is length of math.MaxUint64 as a string
+            if raw.len() > 20 {
+                return Err(Error::InvalidLength);
+            }
+            let id = match raw.parse::<u64>() {
+                Ok(i) => i,
+                Err(e) => return Err(Error::InvalidId)
+            };
+            return Ok(Account::ID(id).try_into().unwrap())
+        }
+        let payload = &raw[..raw.len()-CHECKSUM_HASH_LENGTH];
+        let checksum = &raw[raw.len()-CHECKSUM_HASH_LENGTH..];
+        if p == AddressFormat::SECP256K1 || p == AddressFormat::Actor {
+            if payload.len() != 20 {
+                return Err(Error::InvalidPayload)
+            }
+        }
+
+        if !validate_checksum(payload.as_bytes(), checksum.as_bytes()) {
+            return Err(Error::InvalidChecksum)
+        }
+
+        match p {
+            AddressFormat::SECP256K1 => {
+                Ok(Account::SECP256K1(payload.as_bytes().to_vec()).try_into().unwrap())
+            },
+            AddressFormat::BLS => {
+                Ok(Account::BLS(payload.as_bytes().to_vec()).try_into().unwrap())
+            },
+            AddressFormat::Actor => {
+                Ok(Account::Actor(payload.as_bytes().to_vec()).try_into().unwrap())
+            },
+            _ => Err(Error::UnknownProtocol)
+        }
+
     }
+}
+
+pub fn validate_checksum(ingest: &[u8], expect: &[u8]) -> bool {
+    let digest = checksum(ingest);
+    digest.eq(&expect.to_vec())
 }
 
 pub trait Display {
@@ -229,7 +287,7 @@ impl Display for Address {
             Self::SECP256K1(_) | Self::Actor(_) | Self::BLS(_) => {
                 let mut pc = Vec::new();
                 pc.extend_from_slice(&self.payload());
-                pc.extend_from_slice(&self.checksum());
+                pc.extend_from_slice(checksum(&self.payload().as_slice()).as_slice());
                 format!(
                     "{}{}{}",
                     network_prefix,
@@ -247,14 +305,46 @@ impl Display for Address {
 }
 
 // cbor decode
-
-// cbor encode
+impl Address {
+    fn encode() {}
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     use std::convert::TryInto;
+
+    //    #[test]
+    //    fn test_encode() {
+    //
+    //    }
+
+    #[test]
+    fn test_decode() {
+        //        let mut object = BTreeMap::new();
+        //        object.insert(vec![0i64], ());
+        //        object.insert(vec![100i64], ());
+        //        object.insert(vec![-1i64], ());
+        //        object.insert(vec![-2i64], ());
+        //        object.insert(vec![0i64, 0i64], ());
+        //        object.insert(vec![0i64, -1i64], ());
+        //        let vec = to_vec(&serde_cbor::value::to_value(object.clone()).unwrap()).unwrap();
+        //        assert_eq!(
+        //            vec![
+        //                166, 129, 0, 246, 129, 24, 100, 246, 129, 32, 246, 129, 33, 246, 130, 0, 0, 246,
+        //                130, 0, 32, 246
+        //            ],
+        //            vec
+        //        );
+        let vec = vec![
+            166, 129, 0, 246, 129, 24, 100, 246, 129, 32, 246, 129, 33, 246, 130, 0, 0, 246, 130,
+            0, 32, 246,
+        ];
+        let test_object: Address = from_slice(&vec[..]).unwrap();
+        println!("test_object:{:?}", test_object);
+        //assert_eq!(object, test_object);
+    }
 
     #[test]
     fn new_secp256k1_address_should_work() {
@@ -316,9 +406,7 @@ mod tests {
         ];
 
         for (b, s) in test_cases.into_iter() {
-            let addr: crate::address::Address = crate::address::Account::SECP256K1(b.to_vec())
-                .try_into()
-                .unwrap();
+            let addr: Address = Account::SECP256K1(b.to_vec()).try_into().unwrap();
             assert_eq!(s.to_string(), addr.display(Network::Testnet));
         }
     }
@@ -364,9 +452,7 @@ mod tests {
         ];
 
         for (b, s) in test_cases.into_iter() {
-            let addr: crate::address::Address = crate::address::Account::Actor(b.to_vec())
-                .try_into()
-                .unwrap();
+            let addr: Address = Account::Actor(b.to_vec()).try_into().unwrap();
             assert_eq!(s.to_string(), addr.display(Network::Testnet));
         }
     }
@@ -399,8 +485,7 @@ mod tests {
             "t3u5zgwa4ael3vuocgc5mfgygo4yuqocrntuuhcklf4xzg5tcaqwbyfabxetwtj4tsam3pbhnwghyhijr5mixa")];
 
         for (b, s) in test_cases.into_iter() {
-            let addr: crate::address::Address =
-                crate::address::Account::BLS(b.to_vec()).try_into().unwrap();
+            let addr: Address = Account::BLS(b.to_vec()).try_into().unwrap();
             assert_eq!(s.to_string(), addr.display(Network::Testnet));
         }
     }
@@ -419,7 +504,7 @@ mod tests {
         ];
         // {math.MaxUint64, fmt.Sprintf("t0%s", strconv.FormatUint(math.MaxUint64, 10))},
         for (b, s) in test_cases.into_iter() {
-            let addr: crate::address::Address = crate::address::Account::ID(*b).try_into().unwrap();
+            let addr: Address = Account::ID(*b).try_into().unwrap();
             assert_eq!(s.to_string(), addr.display(Network::Testnet));
         }
     }

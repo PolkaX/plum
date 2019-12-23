@@ -14,3 +14,4 @@ data-encoding = { package = "data-encoding", version = "2.0.0" }
 hex = "0.4.0"
 serde_json = "1.0.41"
 serde_cbor = { git = "https://github.com/PolkaX/cbor"}
+serde = { version = "1.0", features = ["derive"] }

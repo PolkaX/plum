@@ -4,9 +4,9 @@
 
 #![warn(missing_docs)]
 
-use address::{Account, Address, Display, Network};
 use crate::crypto::{key_types, KeyTypeId};
 use crate::error::Error;
+use address::{Account, Address, Display, Network};
 use bls::Serialize;
 use parking_lot::RwLock;
 use rand::{rngs::OsRng, RngCore};
