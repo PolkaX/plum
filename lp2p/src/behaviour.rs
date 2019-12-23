@@ -1,5 +1,8 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
+use std::collections::HashMap;
+use std::time::Instant;
+
 use futures::sync::mpsc::UnboundedSender;
 use libp2p::core::{either::EitherOutput, ConnectedPoint};
 use libp2p::swarm::{IntoProtocolsHandler, IntoProtocolsHandlerSelect, ProtocolsHandler};
@@ -15,12 +18,32 @@ use tokio::prelude::Async;
 
 use crate::config;
 
+#[derive(Debug)]
+pub enum PeerState {
+    /// The peer misbehaved. If the PSM wants us to connect to this node, we will add an artificial
+    /// delay to the connection.
+    Banned {
+        /// Until when the node is banned.
+        until: Instant,
+    },
+
+    /// We are connected to this peer and the peerset has accepted it. The handler is in the
+    /// enabled state.
+    Enabled {
+        /// How we are connected to this peer.
+        connected_point: ConnectedPoint,
+        /// If true, we have a custom protocol open with this peer.
+        open: bool,
+    },
+}
+
 // We create a custom network behaviour that combines floodsub and kad.
 // In the future, we want to improve libp2p to make this easier to do.
 pub struct Behaviour<TSubstream> {
     pub floodsub: Floodsub<TSubstream>,
     pub kad: Kademlia<TSubstream, MemoryStore>,
     pub sender: UnboundedSender<Event>,
+    pub peers: HashMap<PeerId, PeerState>,
 }
 
 #[derive(Debug)]
@@ -55,6 +78,7 @@ impl<TSubstream> Behaviour<TSubstream> {
             floodsub: Floodsub::new(local_peer_id.clone()),
             kad: Kademlia::with_config(local_peer_id.clone(), store, cfg),
             sender,
+            peers: HashMap::new(),
         }
     }
 
@@ -67,6 +91,10 @@ impl<TSubstream> Behaviour<TSubstream> {
 
     pub fn on_event(&mut self, event: Event) {
         let _ = self.sender.unbounded_send(event);
+    }
+
+    pub fn on_connet(&mut self) {
+        // self.floodsub.publish(topic, b"123".to_vec());
     }
 }
 
@@ -90,14 +118,22 @@ where
     fn inject_connected(&mut self, peer_id: PeerId, endpoint: ConnectedPoint) {
         self.floodsub
             .inject_connected(peer_id.clone(), endpoint.clone());
-        self.kad.inject_connected(peer_id.clone(), endpoint);
+        self.kad.inject_connected(peer_id.clone(), endpoint.clone());
         info!("inject_connected, peer_id:{:?}", peer_id.clone());
-        self.floodsub.add_node_to_partial_view(peer_id);
+        self.floodsub.add_node_to_partial_view(peer_id.clone());
+        self.peers.insert(
+            peer_id,
+            PeerState::Enabled {
+                connected_point: endpoint,
+                open: true,
+            },
+        );
     }
 
     fn inject_disconnected(&mut self, peer_id: &PeerId, endpoint: ConnectedPoint) {
         self.floodsub.inject_disconnected(peer_id, endpoint.clone());
         self.kad.inject_disconnected(peer_id, endpoint);
+        self.peers.remove(peer_id);
     }
 
     fn inject_replaced(

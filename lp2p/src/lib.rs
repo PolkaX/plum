@@ -53,14 +53,26 @@ pub fn initialize<C: chain::Client>(
                     match e {
                         Event::Connecting(peer_id) => {
                             info!("---- mpsc receiver channel connecting : {:?}", peer_id);
-                            // TODO handle the messages
+                            info!("current peers: {:?}", swarm.peers);
+                            // TODO
+                            // 1. encode using CBOR
+                            // 2. handle the messages
+                            //
                             // let best_hash = client.best_hash();
-                            let msg = behaviour::Msg::Hello(behaviour::HelloMsg { peer_id });
+                            let msg = behaviour::Msg::Hello(behaviour::HelloMsg {
+                                peer_id: peer_id.clone(),
+                            });
                             info!("--------- send hello topic");
                             let data = msg.to_vec();
-                            swarm.floodsub.publish(config::hello_topic(), data);
+                            swarm
+                                .floodsub
+                                .publish(config::hello_topic(), b"456".to_vec());
                         }
-                        Event::Message(_msg) => {
+                        Event::Message(msg) => {
+                            info!(
+                                "receiver channel received msg: {:?}",
+                                String::from_utf8_lossy(&msg.data)
+                            );
                             // on FloodsubMessage
                         }
                     }
