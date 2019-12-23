@@ -7,6 +7,7 @@ use std::io::Write;
 use ansi_term::Colour;
 use lazy_static::lazy_static;
 use log::info;
+use parity_multiaddr::Multiaddr;
 use regex::Regex;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
@@ -35,7 +36,7 @@ impl Plum {
     }
 }
 
-pub fn run_lp2p(peer_ip: Option<String>) {
+pub fn run_lp2p(peer_ip: Option<Multiaddr>) {
     let (exit_send, exit) = exit_future::signal();
     let mut runtime = Runtime::new().expect("failed to start runtime on current thread");
     let task_executor = runtime.executor();

@@ -16,7 +16,7 @@ pub struct NetworkState {
 pub fn initialize(
     task_executor: TaskExecutor,
     mut network_state: NetworkState,
-    peer_ip: Option<String>,
+    peer_ip: Option<Multiaddr>,
 ) {
     let (local_key, local_peer_id) = config::configure_key();
     // Set up a an encrypted DNS-enabled TCP Transport over the Mplex and Yamux protocols
@@ -34,7 +34,7 @@ pub fn initialize(
     Swarm::listen_on(&mut swarm, listen_address.clone()).unwrap();
     swarm.kad.add_address(&local_peer_id, listen_address);
     if let Some(peer_ip) = peer_ip {
-        Swarm::dial_addr(&mut swarm, peer_ip.parse().unwrap());
+        Swarm::dial_addr(&mut swarm, peer_ip);
     }
     task_executor.spawn(futures::future::poll_fn(move || -> Result<_, ()> {
         loop {

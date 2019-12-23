@@ -16,5 +16,6 @@ env_logger = "0.7.0"
 exit-future = "0.1"
 ansi_term = "0.12.1"
 lazy_static = "1.4.0"
+parity-multiaddr = "0.6"
 
 lp2p = { path = "../lp2p" }
