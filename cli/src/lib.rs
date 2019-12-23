@@ -133,7 +133,7 @@ pub fn run() {
     let args = std::env::args().collect::<Vec<String>>();
 
     if args.len() == 1 {
-        init_logger(Some("".into()));
+        init_logger(None);
         run_lp2p(None);
     } else {
         let plum = Plum::from_iter(args.iter());
