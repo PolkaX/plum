@@ -36,12 +36,17 @@ impl Plum {
     }
 }
 
+pub struct Client;
+
+impl chain::Client for Client {}
+
 pub fn run_lp2p(peer_ip: Option<Multiaddr>) {
     let (exit_send, exit) = exit_future::signal();
     let mut runtime = Runtime::new().expect("failed to start runtime on current thread");
     let task_executor = runtime.executor();
     let network_state = lp2p::NetworkState::default();
-    lp2p::initialize(task_executor, network_state, peer_ip);
+    let client = Client;
+    lp2p::initialize(task_executor, network_state, peer_ip, client);
     let _ = runtime.block_on(exit);
     exit_send.fire();
 }

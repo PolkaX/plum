@@ -2,5 +2,7 @@
 
 pub mod types;
 
+pub trait Client {}
+
 #[cfg(test)]
 mod tests {}

@@ -1,10 +1,11 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
+use futures::sync::mpsc::UnboundedSender;
 use libp2p::core::{either::EitherOutput, ConnectedPoint};
 use libp2p::swarm::{IntoProtocolsHandler, IntoProtocolsHandlerSelect, ProtocolsHandler};
 use libp2p::swarm::{NetworkBehaviour, NetworkBehaviourAction, PollParameters};
 use libp2p::{
-    floodsub::{Floodsub, FloodsubEvent, Topic},
+    floodsub::{Floodsub, FloodsubEvent, FloodsubMessage, Topic},
     kad::{record::store::MemoryStore, Kademlia},
     tokio_io::{AsyncRead, AsyncWrite},
     Multiaddr, PeerId,
@@ -14,14 +15,12 @@ use tokio::prelude::Async;
 
 use crate::config;
 
-pub struct Fil {}
 // We create a custom network behaviour that combines floodsub and kad.
 // In the future, we want to improve libp2p to make this easier to do.
 pub struct Behaviour<TSubstream> {
     pub floodsub: Floodsub<TSubstream>,
     pub kad: Kademlia<TSubstream, MemoryStore>,
-    fil: Fil,
-    events: Vec<Event>,
+    pub sender: UnboundedSender<Event>,
 }
 
 #[derive(Debug)]
@@ -30,26 +29,32 @@ pub enum Msg {
     FIL,
 }
 
+impl Msg {
+    pub fn to_vec(self) -> Vec<u8> {
+        b"encode the message".to_vec()
+    }
+}
+
 #[derive(Debug)]
 pub enum Event {
     Connecting(PeerId),
+    Message(FloodsubMessage),
 }
 
 #[derive(Debug)]
 pub struct HelloMsg {
-    peer_id: PeerId,
+    pub peer_id: PeerId,
 }
 
 impl<TSubstream> Behaviour<TSubstream> {
-    pub fn new(local_peer_id: &PeerId) -> Self {
+    pub fn new(local_peer_id: &PeerId, sender: UnboundedSender<Event>) -> Self {
         let (cfg, store) = config::configure_kad(local_peer_id);
         let _cid = config::configure_genesis_hash();
 
         Behaviour {
             floodsub: Floodsub::new(local_peer_id.clone()),
             kad: Kademlia::with_config(local_peer_id.clone(), store, cfg),
-            fil: Fil {},
-            events: Vec::new(),
+            sender,
         }
     }
 
@@ -58,6 +63,10 @@ impl<TSubstream> Behaviour<TSubstream> {
         let mut data = Vec::<u8>::new();
         data.push(2);
         self.floodsub.publish(topic, data);
+    }
+
+    pub fn on_event(&mut self, event: Event) {
+        let _ = self.sender.unbounded_send(event);
     }
 }
 
@@ -169,11 +178,10 @@ where
                     info!("floodsub poll");
                     match ev {
                         FloodsubEvent::Message(msg) => {
-                            info!("recv floodsub msg, msg:{:?}", msg);
+                            self.on_event(Event::Message(msg));
                         }
                         FloodsubEvent::Subscribed { peer_id, .. } => {
-                            info!("recv subscribed msg, peer_id:{:?}", peer_id.clone());
-                            self.events.push(Event::Connecting(peer_id.clone()));
+                            self.on_event(Event::Connecting(peer_id));
                         }
                         FloodsubEvent::Unsubscribed { .. } => {}
                     }
@@ -220,12 +228,6 @@ where
                     return Async::Ready(NetworkBehaviourAction::ReportObservedAddr { address })
                 }
             }
-        }
-
-        if let Some(Event::Connecting(peer_id)) = self.events.pop() {
-            let msg = Msg::Hello(HelloMsg { peer_id });
-            self.send(config::hello_topic(), &msg);
-            info!("send hello topic");
         }
 
         Async::NotReady

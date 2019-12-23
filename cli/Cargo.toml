@@ -19,3 +19,4 @@ lazy_static = "1.4.0"
 parity-multiaddr = "0.6"
 
 lp2p = { path = "../lp2p" }
+chain = { path = "../chain" }
