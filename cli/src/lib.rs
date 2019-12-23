@@ -6,8 +6,8 @@ use std::io::Write;
 
 use ansi_term::Colour;
 use lazy_static::lazy_static;
+use libp2p::core::Multiaddr;
 use log::info;
-use parity_multiaddr::Multiaddr;
 use regex::Regex;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;

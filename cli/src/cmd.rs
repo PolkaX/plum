@@ -1,6 +1,6 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-use parity_multiaddr::Multiaddr;
+use libp2p::core::Multiaddr;
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
 
