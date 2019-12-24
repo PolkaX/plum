@@ -14,6 +14,7 @@ use libp2p::{
     Multiaddr, PeerId,
 };
 use log::info;
+use serde::{Deserialize, Serialize};
 use tokio::prelude::Async;
 
 use crate::config;
@@ -46,9 +47,9 @@ pub struct Behaviour<TSubstream> {
     pub peers: HashMap<PeerId, PeerState>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum Msg {
-    Hello(HelloMsg),
+    Hello(crate::hello::Message),
     FIL,
 }
 
@@ -62,11 +63,6 @@ impl Msg {
 pub enum Event {
     Connecting(PeerId),
     Message(FloodsubMessage),
-}
-
-#[derive(Debug)]
-pub struct HelloMsg {
-    pub peer_id: PeerId,
 }
 
 impl<TSubstream> Behaviour<TSubstream> {

@@ -10,8 +10,10 @@ cid = "0.3"
 log = "0.4"
 void = "1.0"
 tokio = "0.1"
+serde = { version = "1.0", features = ["derive"] }
 libp2p = { version = "0.13", default-features = false }
 futures = "0.1"
 multihash = "~0.8.0"
+serde_cbor = { git = "https://github.com/PolkaX/cbor", branch = "impl-tag", features = ["tags"] }
 
 chain = { path = "../chain" }

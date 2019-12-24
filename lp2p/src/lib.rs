@@ -2,11 +2,13 @@
 
 mod behaviour;
 mod config;
+mod hello;
 
 use futures::prelude::*;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use libp2p::{core::Multiaddr, Swarm};
 use log::info;
+use serde::Serialize;
 use tokio::runtime::TaskExecutor;
 
 use crate::behaviour::Event;
@@ -59,20 +61,33 @@ pub fn initialize<C: chain::Client>(
                             // 2. handle the messages
                             //
                             // let best_hash = client.best_hash();
-                            let msg = behaviour::Msg::Hello(behaviour::HelloMsg {
-                                peer_id: peer_id.clone(),
-                            });
-                            info!("--------- send hello topic");
-                            let data = msg.to_vec();
-                            swarm
-                                .floodsub
-                                .publish(config::hello_topic(), b"456".to_vec());
+                            let hello_msg = crate::hello::Message::new(0u8, 1u128, 1u8);
+                            let msg = behaviour::Msg::Hello(hello_msg);
+                            info!("--------- send hello message: {:?}", msg);
+                            let data = serde_cbor::to_vec(&msg).expect("Fail to apply serde_cbor");
+                            swarm.floodsub.publish(config::hello_topic(), data);
                         }
                         Event::Message(msg) => {
                             info!(
                                 "receiver channel received msg: {:?}",
                                 String::from_utf8_lossy(&msg.data)
                             );
+                            let behaviour_msg: behaviour::Msg =
+                                serde_cbor::from_slice(&msg.data).expect("Fail to decode cbor");
+                            match behaviour_msg {
+                                behaviour::Msg::Hello(msg) => {
+                                    let crate::hello::Message {
+                                        heaviest_tip_set,
+                                        heaviest_tip_set_weight,
+                                        genesis_hash,
+                                    } = msg;
+                                    info!("heaviest_tip_set: {:?}", heaviest_tip_set);
+                                    info!("heaviest_tip_set_weight: {:?}", heaviest_tip_set_weight);
+                                    info!("genesis_hash: {:?}", genesis_hash);
+                                }
+                                _ => info!("Other messages"),
+                            }
+                            println!("receiver msg: {:?}", msg);
                             // on FloodsubMessage
                         }
                     }
