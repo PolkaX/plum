@@ -8,10 +8,10 @@ use futures::prelude::*;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use libp2p::{core::Multiaddr, Swarm};
 use log::info;
-use serde::Serialize;
 use tokio::runtime::TaskExecutor;
 
 use crate::behaviour::Event;
+use crate::hello::Message as HelloMessage;
 
 #[derive(Debug, Clone, Default)]
 pub struct NetworkState {
@@ -51,43 +51,31 @@ pub fn initialize<C: chain::Client>(
             match receiver.poll().expect("Error polling in receiver channel") {
                 Async::Ready(None) | Async::NotReady => break,
                 Async::Ready(Some(e)) => {
-                    info!("mpsc receiver channel received: {:?}", e);
                     match e {
                         Event::Connecting(peer_id) => {
                             info!("---- mpsc receiver channel connecting : {:?}", peer_id);
                             info!("current peers: {:?}", swarm.peers);
-                            // TODO
-                            // 1. encode using CBOR
-                            // 2. handle the messages
-                            //
-                            // let best_hash = client.best_hash();
-                            let hello_msg = crate::hello::Message::new(0u8, 1u128, 1u8);
-                            let msg = behaviour::Msg::Hello(hello_msg);
-                            info!("--------- send hello message: {:?}", msg);
+                            let hello_msg = HelloMessage::new(0u8, 1u128, 1u8);
+                            let msg = behaviour::GenericMessage::Hello(hello_msg);
                             let data = serde_cbor::to_vec(&msg).expect("Fail to apply serde_cbor");
                             swarm.floodsub.publish(config::hello_topic(), data);
                         }
                         Event::Message(msg) => {
-                            info!(
-                                "receiver channel received msg: {:?}",
-                                String::from_utf8_lossy(&msg.data)
-                            );
-                            let behaviour_msg: behaviour::Msg =
+                            let behaviour_msg: behaviour::GenericMessage =
                                 serde_cbor::from_slice(&msg.data).expect("Fail to decode cbor");
                             match behaviour_msg {
-                                behaviour::Msg::Hello(msg) => {
-                                    let crate::hello::Message {
+                                behaviour::GenericMessage::Hello(msg) => {
+                                    let HelloMessage {
                                         heaviest_tip_set,
                                         heaviest_tip_set_weight,
                                         genesis_hash,
                                     } = msg;
+                                    // TODO handle hello message
                                     info!("heaviest_tip_set: {:?}", heaviest_tip_set);
                                     info!("heaviest_tip_set_weight: {:?}", heaviest_tip_set_weight);
                                     info!("genesis_hash: {:?}", genesis_hash);
                                 }
-                                _ => info!("Other messages"),
                             }
-                            println!("receiver msg: {:?}", msg);
                             // on FloodsubMessage
                         }
                     }

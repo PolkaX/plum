@@ -18,6 +18,7 @@ use serde::{Deserialize, Serialize};
 use tokio::prelude::Async;
 
 use crate::config;
+use crate::hello::Message as HelloMessage;
 
 #[derive(Debug)]
 pub enum PeerState {
@@ -48,15 +49,8 @@ pub struct Behaviour<TSubstream> {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum Msg {
-    Hello(crate::hello::Message),
-    FIL,
-}
-
-impl Msg {
-    pub fn to_vec(self) -> Vec<u8> {
-        b"encode the message".to_vec()
-    }
+pub enum GenericMessage {
+    Hello(HelloMessage),
 }
 
 #[derive(Debug)]
@@ -78,7 +72,7 @@ impl<TSubstream> Behaviour<TSubstream> {
         }
     }
 
-    pub fn send(&mut self, topic: Topic, _msg: &Msg) {
+    pub fn send(&mut self, topic: Topic, _msg: &GenericMessage) {
         // encode msg to Vec<u8>
         let mut data = Vec::<u8>::new();
         data.push(2);
@@ -102,7 +96,7 @@ where
         <Floodsub<TSubstream> as NetworkBehaviour>::ProtocolsHandler,
         <Kademlia<TSubstream, MemoryStore> as NetworkBehaviour>::ProtocolsHandler,
     >;
-    type OutEvent = Msg;
+    type OutEvent = GenericMessage;
     fn new_handler(&mut self) -> Self::ProtocolsHandler {
         IntoProtocolsHandler::select(self.floodsub.new_handler(), self.kad.new_handler())
     }
