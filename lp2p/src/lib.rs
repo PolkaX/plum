@@ -4,10 +4,13 @@ mod behaviour;
 mod config;
 mod hello;
 
+use std::pin::Pin;
+
 use futures::prelude::*;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use futures03::{StreamExt as _, TryStreamExt as _};
 use libp2p::{core::Multiaddr, PeerId, Swarm};
-use log::{info, warn};
+use log::{error, info, warn};
 use tokio::runtime::TaskExecutor;
 
 use crate::behaviour::{Behaviour, Event};
@@ -25,7 +28,7 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
     client: C,
 ) {
     let (local_key, local_peer_id) = config::configure_key();
-    info!("Local node identity: {:?}", local_peer_id);
+    info!("Local node identity: {}", local_peer_id);
 
     let (sender, mut receiver): (UnboundedSender<Event>, UnboundedReceiver<Event>) =
         mpsc::unbounded();
@@ -75,6 +78,8 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
         dial_addr(peer_ip);
     }
 
+    let (mut peermgr, peermgr_handle) = peermgr::PeerMgr::new();
+
     task_executor.spawn(futures::future::poll_fn(move || -> Result<_, ()> {
         loop {
             match receiver.poll().expect("Error polling in receiver channel") {
@@ -83,7 +88,7 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
                     match e {
                         Event::Connecting(peer_id) => {
                             info!("---- mpsc receiver channel connecting : {:?}", peer_id);
-                            info!("current peers: {:?}", swarm.peers);
+                            info!("current peers: {:#?}", swarm.peers);
                             let hello_msg =
                                 HelloMessage::new(0u8, 1u128, 1u8, local_peer_id.clone().into());
                             let msg = behaviour::GenericMessage::Hello(hello_msg);
@@ -101,11 +106,14 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
                                         genesis_hash,
                                         sender,
                                     } = msg;
-                                    let sender = PeerId::from_bytes(sender.0);
+                                    let sender = PeerId::from_bytes(sender.0)
+                                        .expect("TODO ensure it won't panic");
+
                                     // TODO handle hello message
                                     info!("heaviest_tip_set: {:?}", heaviest_tip_set);
                                     info!("heaviest_tip_set_weight: {:?}", heaviest_tip_set_weight);
                                     info!("genesis_hash: {:?}", genesis_hash);
+
                                     if genesis_hash != client.info().genesis_hash {
                                         warn!(
                                             "Our genesis hash: {}, theirs: {}, sender: {:?}",
@@ -114,13 +122,18 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
                                             sender,
                                         );
                                         // TODO disconnect
+                                        // info!("ban peer_id: {:?}", sender);
+                                        // Swarm::ban_peer_id(&mut swarm, sender);
+                                        peermgr_handle.remove_peer(sender);
                                         return Ok(Async::NotReady);
                                     }
+
                                     info!("we are on the same chain! {}", genesis_hash);
 
                                     // TODO: inform new head
 
                                     // TODO: add to peermgr
+                                    peermgr_handle.add_peer(sender);
                                 }
                             }
                             // on FloodsubMessage
@@ -146,5 +159,35 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
                 }
             }
         }
+    }));
+
+    task_executor.spawn(futures::future::poll_fn(move || -> Result<_, ()> {
+        // Poll for instructions from the peerset.
+        // Note that the peerset is a *best effort* crate, and we have to use defensive programming.
+        loop {
+            let mut peerset01 = futures03::stream::poll_fn(|cx| {
+                futures03::Stream::poll_next(Pin::new(&mut peermgr), cx)
+            })
+            .map(Ok::<_, ()>)
+            .compat();
+            match peerset01.poll() {
+                Ok(Async::Ready(Some(peermgr::Action::AddPeer(id)))) => {
+                    peermgr.on_add_peer(id);
+                }
+                Ok(Async::Ready(Some(peermgr::Action::RemovePeer(id)))) => {
+                    peermgr.on_remove_peer(&id);
+                }
+                Ok(Async::Ready(None)) => {
+                    error!(target: "sub-libp2p", "Peerset receiver stream has returned None");
+                    break;
+                }
+                Ok(Async::NotReady) => break,
+                Err(err) => {
+                    error!(target: "sub-libp2p", "Peerset receiver stream has errored: {:?}", err);
+                    break;
+                }
+            }
+        }
+        Ok(Async::NotReady)
     }));
 }

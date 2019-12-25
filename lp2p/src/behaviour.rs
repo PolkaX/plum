@@ -234,8 +234,8 @@ where
         loop {
             match self.kad.poll(params) {
                 Async::NotReady => break,
-                Async::Ready(NetworkBehaviourAction::GenerateEvent(_ev)) => {
-                    info!("kad poll");
+                Async::Ready(NetworkBehaviourAction::GenerateEvent(ev)) => {
+                    info!("kad poll, kad event: {:?}", ev);
                     //return NetworkBehaviourAction::GenerateEvent(ev);
                 }
                 Async::Ready(NetworkBehaviourAction::DialAddress { address }) => {
