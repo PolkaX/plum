@@ -6,11 +6,11 @@ mod hello;
 
 use futures::prelude::*;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use libp2p::{core::Multiaddr, Swarm};
-use log::info;
+use libp2p::{core::Multiaddr, PeerId, Swarm};
+use log::{info, warn};
 use tokio::runtime::TaskExecutor;
 
-use crate::behaviour::Event;
+use crate::behaviour::{Behaviour, Event};
 use crate::hello::Message as HelloMessage;
 
 #[derive(Debug, Clone, Default)]
@@ -18,32 +18,61 @@ pub struct NetworkState {
     listening: bool,
 }
 
-pub fn initialize<C: chain::Client>(
+pub fn initialize<C: 'static + Send + Sync + chain::Client>(
     task_executor: TaskExecutor,
     mut network_state: NetworkState,
     peer_ip: Option<Multiaddr>,
     client: C,
 ) {
     let (local_key, local_peer_id) = config::configure_key();
-    // Set up a an encrypted DNS-enabled TCP Transport over the Mplex and Yamux protocols
-    let transport = libp2p::build_development_transport(local_key);
+    info!("Local node identity: {:?}", local_peer_id);
 
     let (sender, mut receiver): (UnboundedSender<Event>, UnboundedReceiver<Event>) =
         mpsc::unbounded();
 
     // Create a Swarm to manage peers and events
     let mut swarm = {
-        let mut bh = behaviour::Behaviour::new(&local_peer_id, sender);
-        bh.floodsub.subscribe(config::hello_topic());
-        Swarm::new(transport, bh, local_peer_id.clone())
+        // Set up a an encrypted DNS-enabled TCP Transport over the Mplex and Yamux protocols
+        let transport = libp2p::build_development_transport(local_key);
+
+        let mut behaviour = Behaviour::new(&local_peer_id, sender);
+        behaviour.floodsub.subscribe(config::hello_topic());
+
+        Swarm::new(transport, behaviour, local_peer_id.clone())
     };
 
+    // TODO: listen on specified address
     let listen_address: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
+
     // Listen on all interfaces and whatever port the OS assigns
-    Swarm::listen_on(&mut swarm, listen_address.clone()).unwrap();
+    match Swarm::listen_on(&mut swarm, listen_address.clone()) {
+        Ok(_) => {
+            info!("Listening established, address: {}", listen_address);
+        }
+        Err(err) => {
+            panic!(
+                "Libp2p was unable to listen on the given listen address {:?}, error: {:?}",
+                listen_address, err
+            );
+        }
+    };
+
     swarm.kad.add_address(&local_peer_id, listen_address);
+
+    let mut dial_addr = |multiaddr: Multiaddr| {
+        match Swarm::dial_addr(&mut swarm, multiaddr.clone()) {
+            Ok(()) => info!("Dialing libp2p peer, address: {}", multiaddr),
+            Err(err) => info!(
+                "Could not connect to peer, address: {}, error: {:?}",
+                multiaddr, err
+            ),
+        };
+    };
+
+    // TODO: could pass a list of peer_ip,
+    // attempt to connect to user-input libp2p nodes
     if let Some(peer_ip) = peer_ip {
-        Swarm::dial_addr(&mut swarm, peer_ip);
+        dial_addr(peer_ip);
     }
 
     task_executor.spawn(futures::future::poll_fn(move || -> Result<_, ()> {
@@ -55,7 +84,8 @@ pub fn initialize<C: chain::Client>(
                         Event::Connecting(peer_id) => {
                             info!("---- mpsc receiver channel connecting : {:?}", peer_id);
                             info!("current peers: {:?}", swarm.peers);
-                            let hello_msg = HelloMessage::new(0u8, 1u128, 1u8);
+                            let hello_msg =
+                                HelloMessage::new(0u8, 1u128, 1u8, local_peer_id.clone().into());
                             let msg = behaviour::GenericMessage::Hello(hello_msg);
                             let data = serde_cbor::to_vec(&msg).expect("Fail to apply serde_cbor");
                             swarm.floodsub.publish(config::hello_topic(), data);
@@ -69,11 +99,28 @@ pub fn initialize<C: chain::Client>(
                                         heaviest_tip_set,
                                         heaviest_tip_set_weight,
                                         genesis_hash,
+                                        sender,
                                     } = msg;
+                                    let sender = PeerId::from_bytes(sender.0);
                                     // TODO handle hello message
                                     info!("heaviest_tip_set: {:?}", heaviest_tip_set);
                                     info!("heaviest_tip_set_weight: {:?}", heaviest_tip_set_weight);
                                     info!("genesis_hash: {:?}", genesis_hash);
+                                    if genesis_hash != client.info().genesis_hash {
+                                        warn!(
+                                            "Our genesis hash: {}, theirs: {}, sender: {:?}",
+                                            genesis_hash,
+                                            client.info().genesis_hash,
+                                            sender,
+                                        );
+                                        // TODO disconnect
+                                        return Ok(Async::NotReady);
+                                    }
+                                    info!("we are on the same chain! {}", genesis_hash);
+
+                                    // TODO: inform new head
+
+                                    // TODO: add to peermgr
                                 }
                             }
                             // on FloodsubMessage
