@@ -4,11 +4,8 @@ mod behaviour;
 mod config;
 mod hello;
 
-use std::pin::Pin;
-
 use futures::prelude::*;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use futures03::{StreamExt as _, TryStreamExt as _};
 use libp2p::{core::Multiaddr, PeerId, Swarm};
 use log::{error, info, warn};
 use tokio::runtime::TaskExecutor;
@@ -162,15 +159,8 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
     }));
 
     task_executor.spawn(futures::future::poll_fn(move || -> Result<_, ()> {
-        // Poll for instructions from the peerset.
-        // Note that the peerset is a *best effort* crate, and we have to use defensive programming.
         loop {
-            let mut peerset01 = futures03::stream::poll_fn(|cx| {
-                futures03::Stream::poll_next(Pin::new(&mut peermgr), cx)
-            })
-            .map(Ok::<_, ()>)
-            .compat();
-            match peerset01.poll() {
+            match peermgr.rx.poll() {
                 Ok(Async::Ready(Some(peermgr::Action::AddPeer(id)))) => {
                     peermgr.on_add_peer(id);
                 }
@@ -178,12 +168,10 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
                     peermgr.on_remove_peer(&id);
                 }
                 Ok(Async::Ready(None)) => {
-                    error!(target: "sub-libp2p", "Peerset receiver stream has returned None");
                     break;
                 }
                 Ok(Async::NotReady) => break,
-                Err(err) => {
-                    error!(target: "sub-libp2p", "Peerset receiver stream has errored: {:?}", err);
+                Err(_err) => {
                     break;
                 }
             }
