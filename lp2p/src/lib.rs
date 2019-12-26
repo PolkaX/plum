@@ -4,11 +4,14 @@ mod behaviour;
 mod config;
 mod hello;
 
+use std::time::{Duration, Instant};
+
 use futures::prelude::*;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use libp2p::{core::Multiaddr, PeerId, Swarm};
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use tokio::runtime::TaskExecutor;
+use tokio::timer::Interval;
 
 use crate::behaviour::{Behaviour, Event};
 use crate::hello::Message as HelloMessage;
@@ -28,6 +31,9 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
     info!("Local node identity: {}", local_peer_id);
 
     let (sender, mut receiver): (UnboundedSender<Event>, UnboundedReceiver<Event>) =
+        mpsc::unbounded();
+
+    let (kad_sender, mut kad_receiver): (UnboundedSender<bool>, UnboundedReceiver<bool>) =
         mpsc::unbounded();
 
     // Create a Swarm to manage peers and events
@@ -87,7 +93,7 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
                             info!("---- mpsc receiver channel connecting : {:?}", peer_id);
                             info!("current peers: {:#?}", swarm.peers);
                             let hello_msg =
-                                HelloMessage::new(0u8, 1u128, 1u8, local_peer_id.clone().into());
+                                HelloMessage::new(0u8, 1u128, 0u8, local_peer_id.clone().into());
                             let msg = behaviour::GenericMessage::Hello(hello_msg);
                             let data = serde_cbor::to_vec(&msg).expect("Fail to apply serde_cbor");
                             swarm.floodsub.publish(config::hello_topic(), data);
@@ -141,6 +147,24 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
         }
 
         loop {
+            match kad_receiver
+                .poll()
+                .expect("Error polling in receiver channel")
+            {
+                Async::Ready(None) | Async::NotReady => {
+                    break;
+                }
+                Async::Ready(Some(e)) => match e {
+                    true => {
+                        info!("[kad_receiver] do swarm.kad.bootstrap...");
+                        swarm.kad.bootstrap();
+                    }
+                    false => break,
+                },
+            }
+        }
+
+        loop {
             match swarm.poll().expect("Error while polling swarm") {
                 Async::Ready(Some(e)) => {
                     info!("rcv event:{:?}", e);
@@ -158,24 +182,49 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
         }
     }));
 
+    let mut task = Interval::new(Instant::now(), Duration::from_millis(5000));
+
     task_executor.spawn(futures::future::poll_fn(move || -> Result<_, ()> {
         loop {
             match peermgr.rx.poll() {
-                Ok(Async::Ready(Some(peermgr::Action::AddPeer(id)))) => {
-                    peermgr.on_add_peer(id);
+                Ok(Async::Ready(Some(action))) => {
+                    info!("[peermgr] rx poll");
+                    match action {
+                        peermgr::Action::AddPeer(id) => peermgr.on_add_peer(id),
+                        peermgr::Action::RemovePeer(id) => peermgr.on_remove_peer(&id),
+                    }
+                    let _ = kad_sender.unbounded_send(true);
                 }
-                Ok(Async::Ready(Some(peermgr::Action::RemovePeer(id)))) => {
-                    peermgr.on_remove_peer(&id);
-                }
-                Ok(Async::Ready(None)) => {
-                    break;
-                }
+                Ok(Async::Ready(None)) => break,
                 Ok(Async::NotReady) => break,
-                Err(_err) => {
-                    break;
-                }
+                Err(_err) => break,
             }
         }
+
+        loop {
+            match task.poll() {
+                Ok(Async::Ready(Some(_instant))) => {
+                    info!("[task] poll");
+                    let peer_cnt = peermgr.get_peer_count();
+                    if peer_cnt < peermgr.min_fil_peers as usize {
+                        info!(
+                        "current peer count: {:?}, min_fil_peers: {:?}, sending bootstrap request",
+                        peer_cnt, peermgr.min_fil_peers
+                    );
+                        let _ = kad_sender.unbounded_send(true);
+                    } else if peer_cnt > peermgr.max_fil_peers as usize {
+                        warn!(
+                            "peer count about threshold: {} > {}",
+                            peer_cnt, peermgr.max_fil_peers
+                        );
+                    }
+                }
+                Ok(Async::Ready(None)) => break,
+                Ok(Async::NotReady) => break,
+                Err(_err) => break,
+            }
+        }
+
         Ok(Async::NotReady)
     }));
 }

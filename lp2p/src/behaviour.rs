@@ -82,10 +82,6 @@ impl<TSubstream> Behaviour<TSubstream> {
     pub fn on_event(&mut self, event: Event) {
         let _ = self.sender.unbounded_send(event);
     }
-
-    pub fn on_connet(&mut self) {
-        // self.floodsub.publish(topic, b"123".to_vec());
-    }
 }
 
 impl<TSubstream> NetworkBehaviour for Behaviour<TSubstream>
@@ -201,7 +197,7 @@ where
             match self.floodsub.poll(params) {
                 Async::NotReady => break,
                 Async::Ready(NetworkBehaviourAction::GenerateEvent(ev)) => {
-                    info!("floodsub poll");
+                    info!("floodsub generate event: {:?}", ev);
                     match ev {
                         FloodsubEvent::Message(msg) => {
                             self.on_event(Event::Message(msg));
@@ -219,7 +215,10 @@ where
                     return Async::Ready(NetworkBehaviourAction::DialPeer { peer_id })
                 }
                 Async::Ready(NetworkBehaviourAction::SendEvent { peer_id, event }) => {
-                    info!("floodsub poll send event");
+                    info!(
+                        "floodsub poll send event, peer_id: {:?}, event: {:?}",
+                        peer_id, event
+                    );
                     return Async::Ready(NetworkBehaviourAction::SendEvent {
                         peer_id,
                         event: EitherOutput::First(event),
@@ -235,8 +234,7 @@ where
             match self.kad.poll(params) {
                 Async::NotReady => break,
                 Async::Ready(NetworkBehaviourAction::GenerateEvent(ev)) => {
-                    info!("kad poll, kad event: {:?}", ev);
-                    //return NetworkBehaviourAction::GenerateEvent(ev);
+                    info!("kad poll, kad generate event: {:?}", ev);
                 }
                 Async::Ready(NetworkBehaviourAction::DialAddress { address }) => {
                     return Async::Ready(NetworkBehaviourAction::DialAddress { address })

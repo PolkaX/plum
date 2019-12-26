@@ -46,8 +46,8 @@ pub struct PeerMgr {
     /// Sending side of `rx`.
     tx: mpsc::UnboundedSender<Action>,
     /// Queue of messages to be emitted when the `Peerset` is polled.
-    max_fil_peers: u32,
-    min_fil_peers: u32,
+    pub max_fil_peers: u32,
+    pub min_fil_peers: u32,
     expanding: bool,
     created: Instant,
 }
@@ -58,7 +58,7 @@ impl PeerMgr {
 
         let peermgr = Self {
             tx: tx.clone(),
-            rx,
+            rx: rx,
             created: Instant::now(),
             bootstrappers: Vec::new(),
             peers: Default::default(),
@@ -72,15 +72,21 @@ impl PeerMgr {
         (peermgr, handle)
     }
 
+    pub fn get_peer_count(&self) -> usize {
+        self.peers.len()
+    }
+
     pub fn on_add_peer(&mut self, peer_id: PeerId) {
         // TODO check max peers, ignore the incoming if the max reached?
-        info!("add {:?} to peer manager", peer_id);
+        info!("[peermgr] add {:?} to peer manager", peer_id);
         self.peers.insert(peer_id, ConnectionState::Enabled);
+        info!("[peermgr] after adding now peers: {:?}", self.peers);
     }
 
     pub fn on_remove_peer(&mut self, peer_id: &PeerId) {
         // TODO check min peers and do expand if neccessary.
         info!("[peermgr] remove {:?} from peer manager", peer_id);
         self.peers.remove(peer_id);
+        info!("[peermgr] after removing now peers: {:?}", self.peers);
     }
 }
