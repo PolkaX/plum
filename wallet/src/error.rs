@@ -1,7 +1,6 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 use address;
-use failure;
 use std::io;
 
 /// Keystore error.
@@ -11,29 +10,10 @@ pub enum Error {
     Io(io::Error),
     /// JSON error.
     Json(serde_json::Error),
-    Address(address::Error),
+    Address(address::error::Error),
     /// Invalid password.
     #[display(fmt = "Invalid password")]
     InvalidPassword,
-    /// Invalid BIP39 phrase
-    #[display(fmt = "Invalid recovery phrase (BIP39) data")]
-    InvalidPhrase,
-    /// Invalid seed
-    #[display(fmt = "Invalid seed")]
-    InvalidSeed,
-    /// Invalid key type
-    #[display(fmt = "Invalid Key Type")]
-    InvalidKeyType,
-    #[display(fmt = "Invalid Signature")]
-    InvalidSignature,
-    #[display(fmt = "Invalid PublicKey")]
-    InvalidPublicKey,
-    #[display(fmt = "Invalid SecretKey")]
-    InvalidSecretKey,
-    #[display(fmt = "Invalid Message")]
-    InvalidMessage,
-    #[display(fmt = "Invalid Input Length")]
-    InvalidInputLength,
     #[display(fmt = "Invalid Length")]
     InvalidLength,
     /// Keystore unavailable
@@ -44,27 +24,6 @@ pub enum Error {
 impl From<std::convert::Infallible> for Error {
     fn from(inf: std::convert::Infallible) -> Self {
         match inf {
-            _ => Error::Unavailable,
-        }
-    }
-}
-
-impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Self {
-        match e {
-            secp256k1::Error::InvalidSignature => Error::InvalidSignature,
-            secp256k1::Error::InvalidPublicKey => Error::InvalidPublicKey,
-            secp256k1::Error::InvalidSecretKey => Error::InvalidSecretKey,
-            secp256k1::Error::InvalidMessage => Error::InvalidMessage,
-            secp256k1::Error::InvalidInputLength => Error::InvalidInputLength,
-            _ => Error::Unavailable,
-        }
-    }
-}
-
-impl From<failure::Error> for Error {
-    fn from(e: failure::Error) -> Self {
-        match e {
             _ => Error::Unavailable,
         }
     }

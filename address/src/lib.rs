@@ -2,8 +2,12 @@
 
 use blake2_rfc::blake2b::blake2b;
 use data_encoding::{DecodeError, Specification, SpecificationError};
+use error::Error;
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
+
+pub mod error;
+pub mod keypair;
 
 // SignatureBytes is the length of a BLS signature
 pub const BLS_SIGNATURE_LEN: u8 = 96;
@@ -32,68 +36,7 @@ pub const CHECKSUM_HASH_LENGTH: usize = 4;
 
 pub const ENCODE_STD: &str = "abcdefghijklmnopqrstuvwxyz234567";
 
-#[derive(Debug, derive_more::Display)]
-pub enum Error {
-    // Unknown address network
-    UnknownNetwork,
-    // Unknown address protocol
-    UnknownProtocol,
-    // Invalid address payload
-    InvalidPayload,
-    // Invalid address length
-    InvalidLength,
-    // Invalid address checksum
-    InvalidChecksum,
-    // Invalid ID
-    InvalidID,
-    // Data Encoding
-    Encoding(SpecificationError),
-    // Data Decode
-    DataDecode(DecodeError),
-    //Varint U64 Decode
-    U64Decode(varint::decode::Error),
-}
-
-impl From<varint::decode::Error> for Error {
-    fn from(e: varint::decode::Error) -> Self {
-        match e {
-            _ => Error::U64Decode(e),
-        }
-    }
-}
-
 pub type Result<T> = std::result::Result<T, Error>;
-
-pub fn blake2b_hash(ingest: &[u8], hash_config: usize) -> Vec<u8> {
-    let hash = blake2b(hash_config, &[], ingest);
-    hash.as_bytes().to_vec()
-}
-
-pub fn address_hash(ingest: &[u8]) -> Vec<u8> {
-    blake2b_hash(ingest, PAYLOAD_HASH_LENGTH)
-}
-
-pub fn checksum(ingest: &[u8]) -> Vec<u8> {
-    blake2b_hash(ingest, CHECKSUM_HASH_LENGTH)
-}
-
-pub fn base32_encode(input: &[u8]) -> Result<String> {
-    let mut spec = Specification::new();
-    spec.symbols.push_str(ENCODE_STD);
-    spec.padding = None;
-    let encoder = spec.encoding().map_err(|e| Error::Encoding(e))?;
-    Ok(encoder.encode(&input))
-}
-
-pub fn base32_decode(input: &str) -> Result<Vec<u8>> {
-    let mut spec = Specification::new();
-    spec.symbols.push_str(ENCODE_STD);
-    spec.padding = None;
-    let encoder = spec.encoding().map_err(|e| Error::Encoding(e))?;
-    Ok(encoder
-        .decode(input.as_bytes())
-        .map_err(|e| Error::DataDecode(e))?)
-}
 
 pub trait Protocol {
     fn protocol(&self) -> u8;
@@ -366,10 +309,42 @@ impl Display for Address {
     }
 }
 
+pub fn blake2b_hash(ingest: &[u8], hash_config: usize) -> Vec<u8> {
+    let hash = blake2b(hash_config, &[], ingest);
+    hash.as_bytes().to_vec()
+}
+
+pub fn address_hash(ingest: &[u8]) -> Vec<u8> {
+    blake2b_hash(ingest, PAYLOAD_HASH_LENGTH)
+}
+
+pub fn checksum(ingest: &[u8]) -> Vec<u8> {
+    blake2b_hash(ingest, CHECKSUM_HASH_LENGTH)
+}
+
+pub fn base32_encode(input: &[u8]) -> Result<String> {
+    let mut spec = Specification::new();
+    spec.symbols.push_str(ENCODE_STD);
+    spec.padding = None;
+    let encoder = spec.encoding().map_err(|e| Error::Encoding(e))?;
+    Ok(encoder.encode(&input))
+}
+
+pub fn base32_decode(input: &str) -> Result<Vec<u8>> {
+    let mut spec = Specification::new();
+    spec.symbols.push_str(ENCODE_STD);
+    spec.padding = None;
+    let encoder = spec.encoding().map_err(|e| Error::Encoding(e))?;
+    Ok(encoder
+        .decode(input.as_bytes())
+        .map_err(|e| Error::DataDecode(e))?)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::convert::TryInto;
+    use keypair::{key_types, KeyPair, KeyTypeId};
 
     fn all_test_addresses() -> Vec<&'static str> {
         vec![
@@ -569,5 +544,86 @@ mod tests {
             let addr: Address = Account::ID(*b).try_into().unwrap();
             assert_eq!(s.to_string(), addr.display(Network::Testnet).unwrap());
         }
+    }
+
+    #[test]
+    fn test_random_id_address() {
+        let keypair = KeyPair::generate_key_pair(key_types::ID).unwrap();
+        let (id, _) = varint::decode::u64(&keypair.pubkey).unwrap();
+        let addr: Address = Account::ID(id)
+            .try_into()
+            .unwrap();
+        let id_c: Vec<u8> = Varint::U64(id).into();
+        assert_eq!(addr.payload(), id_c);
+        assert_eq!(addr.protocol(), AddressFormat::ID as u8);
+    }
+
+    #[test]
+    fn test_random_generate_address() {
+        let keypair = KeyPair::generate_key_pair(key_types::SECP256K1).unwrap();
+        let addr: Address = Account::SECP256K1(keypair.pubkey.clone())
+            .try_into()
+            .unwrap();
+        let new_addr = Address::decode(&addr.display(Network::Testnet).unwrap()).unwrap();
+        assert_eq!(addr, new_addr);
+    }
+
+    #[test]
+    fn test_random_actor_address() {
+        let keypair = KeyPair::generate_key_pair(key_types::ACTOR).unwrap();
+        let addr: Address = Account::Actor(keypair.pubkey.clone())
+            .try_into()
+            .unwrap();
+        let new_addr = Address::decode(&addr.display(Network::Testnet).unwrap()).unwrap();
+        assert_eq!(addr, new_addr);
+    }
+
+    #[test]
+    fn test_random_bls_address() {
+        let keypair = KeyPair::generate_key_pair(key_types::BLS).unwrap();
+        let addr: Address = Account::BLS(keypair.pubkey.clone())
+            .try_into()
+            .unwrap();
+        let new_addr = Address::decode(&addr.display(Network::Testnet).unwrap()).unwrap();
+        assert_eq!(addr, new_addr);
+    }
+    #[test]
+    fn test_invalid_string_address() {
+        let test_cases = vec![
+            ("Q2gfvuyh7v2sx3patm5k23wdzmhyhtmqctasbr23y", Error::UnknownNetwork),
+            ("t4gfvuyh7v2sx3patm5k23wdzmhyhtmqctasbr23y", Error::UnknownProtocol),
+            ("t2gfvuyh7v2sx3patm5k23wdzmhyhtmqctasbr24y", Error::InvalidChecksum),
+            ("t0banananananannnnnnnnn", Error::InvalidLength),
+            ("t0banananananannnnnnnn", Error::InvalidID),
+            ("t2", Error::InvalidLength)];
+        for case in test_cases {
+            let addr = Address::decode(case.0).unwrap_err();
+            assert_eq!(format!("{}", addr), format!("{}", case.1));
+        }
+    }
+    #[test]
+    fn test_invalid_byte_address() {}
+    #[test]
+    fn test_checksum() {}
+    #[test]
+    fn test_address_format_address() {}
+    #[test]
+    fn address_hash_should_work() {
+        let ingest = [115, 97, 116, 111, 115, 104, 105];
+        let hashed = [
+            71, 22, 176, 35, 183, 254, 132, 182, 231, 220, 218, 48, 60, 61, 117, 75, 26, 143, 242,
+            252,
+        ];
+        assert_eq!(address_hash(&ingest[..]), hashed.to_vec());
+    }
+
+    #[test]
+    fn base32_encoding_should_work() {
+        let input = [
+            253, 29, 15, 77, 252, 215, 233, 154, 252, 185, 154, 131, 38, 183, 220, 69, 157, 50,
+            198, 40, 148, 236, 248, 227,
+        ];
+        let base32_encoded = "7uoq6tp427uzv7fztkbsnn64iwotfrristwpryy";
+        assert_eq!(base32_encoded.to_string(), base32_encode(&input).unwrap());
     }
 }

@@ -1,7 +1,9 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-use address::{Account, Address, Display, Network};
-use crypto::{key_types, KeyTypeId};
+use address::{
+    keypair::{key_types, KeyTypeId},
+    Account, Address, Display, Network,
+};
 use error::Error;
 use keystore::Store;
 use parking_lot::RwLock;
@@ -15,7 +17,7 @@ use std::{
     sync::Arc,
 };
 
-pub mod crypto;
+mod crypto;
 mod error;
 mod keystore;
 

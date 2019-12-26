@@ -5,9 +5,12 @@ name = "address"
 version = "0.1.0"
 dependencies = [
  "blake2-rfc",
+ "bls-signatures",
  "data-encoding",
  "derive_more",
+ "hex",
  "libsecp256k1",
+ "rand 0.7.2",
  "serde",
  "unsigned-varint",
 ]
@@ -385,6 +388,7 @@ dependencies = [
 name = "cli"
 version = "0.1.0"
 dependencies = [
+ "address",
  "ansi_term 0.12.1",
  "atty",
  "env_logger",
@@ -2710,11 +2714,9 @@ dependencies = [
  "address",
  "bls-signatures",
  "derive_more",
- "failure",
  "hex",
  "libsecp256k1",
  "parking_lot 0.9.0",
- "rand 0.7.2",
  "serde_json",
 ]
 

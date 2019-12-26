@@ -4,7 +4,7 @@ use structopt::clap::arg_enum;
 use structopt::StructOpt;
 
 use crate::run_lp2p;
-use wallet::crypto;
+use address::keypair::{key_types, KeyPair};
 
 #[derive(StructOpt, Debug, Clone)]
 pub enum Auth {
@@ -215,8 +215,8 @@ impl Wallet {
         match self {
             Wallet::New { key_type } => {
                 let keytype = match key_type {
-                    KeyType::Bls => crypto::key_types::BLS,
-                    KeyType::Secp256k1 => crypto::key_types::SECP256K1,
+                    KeyType::Bls => key_types::BLS,
+                    KeyType::Secp256k1 => key_types::SECP256K1,
                 };
                 wallet::Wallet::new_address(keytype.to_owned())
             }
@@ -224,8 +224,8 @@ impl Wallet {
             Wallet::Export { pubkey } => wallet::Wallet::export(pubkey.to_string()),
             Wallet::Import { key_type, privkey } => {
                 let keytype = match key_type {
-                    KeyType::Bls => crypto::key_types::BLS,
-                    KeyType::Secp256k1 => crypto::key_types::SECP256K1,
+                    KeyType::Bls => key_types::BLS,
+                    KeyType::Secp256k1 => key_types::SECP256K1,
                 };
                 wallet::Wallet::import(keytype, privkey.to_string())
             }

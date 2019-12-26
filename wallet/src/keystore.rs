@@ -4,12 +4,9 @@
 
 #![warn(missing_docs)]
 
-use crate::crypto::{key_types, KeyTypeId};
 use crate::error::Error;
-use address::{Account, Address, Display, Network};
-use bls::Serialize;
+use address::keypair::{key_types, KeyPair, KeyTypeId};
 use parking_lot::RwLock;
-use rand::{rngs::OsRng, RngCore};
 use secp256k1;
 use std::convert::TryInto;
 use std::{
@@ -22,87 +19,6 @@ use std::{
 /// Keystore pointer
 pub type KeyStorePtr = Arc<RwLock<Store>>;
 pub type Result<T> = std::result::Result<T, Error>;
-
-#[derive(Clone)]
-pub struct KeyPair {
-    pub pubkey: Vec<u8>,
-    pub privkey: Vec<u8>,
-    pub key_type: KeyTypeId,
-}
-
-impl KeyPair {
-    pub fn to_string(&self, key_type: KeyTypeId, net: Network) -> Result<String> {
-        let addr = match key_type {
-            key_types::BLS => Account::BLS(self.pubkey.clone()).try_into(),
-            key_types::SECP256K1 => Account::SECP256K1(self.pubkey.clone()).try_into(),
-            _ => unreachable!("key types [bls, secp256k1]"),
-        };
-        let addr: Address = match addr {
-            Ok(b) => b,
-            Err(e) => return Err(Error::Address(e)),
-        };
-        Ok(format!(
-            "pubkey:{}\nprivkey:{}\naddress:{}",
-            hex::encode(&self.pubkey),
-            hex::encode(&self.privkey),
-            match addr.display(net) {
-                Ok(a) => a,
-                Err(e) => return Err(Error::Address(e)),
-            }
-        ))
-    }
-
-    pub fn generate_key_pair(key_type: KeyTypeId) -> Result<Self> {
-        let mut key = [0u8; 16];
-        let pubkey: Vec<u8>;
-        let privkey: Vec<u8>;
-
-        OsRng.fill_bytes(&mut key);
-        match key_type {
-            key_types::BLS => {
-                let private_key = bls::PrivateKey::generate(&mut OsRng);
-                let public_key = private_key.public_key();
-                pubkey = public_key.as_bytes();
-                privkey = private_key.as_bytes();
-            }
-            key_types::SECP256K1 => {
-                let secert = secp256k1::SecretKey::random(&mut OsRng);
-                let public_key = secp256k1::PublicKey::from_secret_key(&secert);
-                pubkey = public_key.serialize().to_vec();
-                privkey = secert.serialize().to_vec();
-            }
-            _ => return Err(Error::InvalidKeyType),
-        }
-        Ok(KeyPair {
-            pubkey: pubkey,
-            privkey: privkey,
-            key_type: key_type,
-        })
-    }
-
-    pub fn get_keypair_by_private(key_type: KeyTypeId, privkey: &[u8]) -> Result<Self> {
-        let pubkey: Vec<u8>;
-        match key_type {
-            key_types::BLS => {
-                let private_key = bls::PrivateKey::from_bytes(privkey)?;
-
-                let public_key = private_key.public_key();
-                pubkey = public_key.as_bytes();
-            }
-            key_types::SECP256K1 => {
-                let secert = secp256k1::SecretKey::parse_slice(privkey)?;
-                let public_key = secp256k1::PublicKey::from_secret_key(&secert);
-                pubkey = public_key.serialize().to_vec();
-            }
-            _ => return Err(Error::InvalidKeyType),
-        }
-        Ok(KeyPair {
-            pubkey: pubkey,
-            privkey: privkey.to_vec(),
-            key_type: key_type,
-        })
-    }
-}
 
 /// Key store.
 ///
@@ -159,7 +75,7 @@ impl Store {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::address::{Account, Display, Network};
+    use address::Network;
     use std::convert::TryInto;
     use std::str::FromStr;
     use tempfile::TempDir;
