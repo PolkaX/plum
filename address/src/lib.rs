@@ -343,8 +343,8 @@ pub fn base32_decode(input: &str) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::convert::TryInto;
     use keypair::{key_types, KeyPair, KeyTypeId};
+    use std::convert::TryInto;
 
     fn all_test_addresses() -> Vec<&'static str> {
         vec![
@@ -550,9 +550,7 @@ mod tests {
     fn test_random_id_address() {
         let keypair = KeyPair::generate_key_pair(key_types::ID).unwrap();
         let (id, _) = varint::decode::u64(&keypair.pubkey).unwrap();
-        let addr: Address = Account::ID(id)
-            .try_into()
-            .unwrap();
+        let addr: Address = Account::ID(id).try_into().unwrap();
         let id_c: Vec<u8> = Varint::U64(id).into();
         assert_eq!(addr.payload(), id_c);
         assert_eq!(addr.protocol(), AddressFormat::ID as u8);
@@ -571,9 +569,7 @@ mod tests {
     #[test]
     fn test_random_actor_address() {
         let keypair = KeyPair::generate_key_pair(key_types::ACTOR).unwrap();
-        let addr: Address = Account::Actor(keypair.pubkey.clone())
-            .try_into()
-            .unwrap();
+        let addr: Address = Account::Actor(keypair.pubkey.clone()).try_into().unwrap();
         let new_addr = Address::decode(&addr.display(Network::Testnet).unwrap()).unwrap();
         assert_eq!(addr, new_addr);
     }
@@ -581,21 +577,29 @@ mod tests {
     #[test]
     fn test_random_bls_address() {
         let keypair = KeyPair::generate_key_pair(key_types::BLS).unwrap();
-        let addr: Address = Account::BLS(keypair.pubkey.clone())
-            .try_into()
-            .unwrap();
+        let addr: Address = Account::BLS(keypair.pubkey.clone()).try_into().unwrap();
         let new_addr = Address::decode(&addr.display(Network::Testnet).unwrap()).unwrap();
         assert_eq!(addr, new_addr);
     }
     #[test]
     fn test_invalid_string_address() {
         let test_cases = vec![
-            ("Q2gfvuyh7v2sx3patm5k23wdzmhyhtmqctasbr23y", Error::UnknownNetwork),
-            ("t4gfvuyh7v2sx3patm5k23wdzmhyhtmqctasbr23y", Error::UnknownProtocol),
-            ("t2gfvuyh7v2sx3patm5k23wdzmhyhtmqctasbr24y", Error::InvalidChecksum),
+            (
+                "Q2gfvuyh7v2sx3patm5k23wdzmhyhtmqctasbr23y",
+                Error::UnknownNetwork,
+            ),
+            (
+                "t4gfvuyh7v2sx3patm5k23wdzmhyhtmqctasbr23y",
+                Error::UnknownProtocol,
+            ),
+            (
+                "t2gfvuyh7v2sx3patm5k23wdzmhyhtmqctasbr24y",
+                Error::InvalidChecksum,
+            ),
             ("t0banananananannnnnnnnn", Error::InvalidLength),
             ("t0banananananannnnnnnn", Error::InvalidID),
-            ("t2", Error::InvalidLength)];
+            ("t2", Error::InvalidLength),
+        ];
         for case in test_cases {
             let addr = Address::decode(case.0).unwrap_err();
             assert_eq!(format!("{}", addr), format!("{}", case.1));

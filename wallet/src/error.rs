@@ -2,22 +2,26 @@
 
 use address;
 use std::io;
+use thiserror;
 
 /// Keystore error.
-#[derive(Debug, derive_more::Display, derive_more::From)]
+#[derive(Debug, thiserror::Error, derive_more::From)]
 pub enum Error {
     /// IO error.
+    #[error("Invalid password")]
     Io(io::Error),
     /// JSON error.
+    #[error("Json error")]
     Json(serde_json::Error),
+    #[error("address error")]
     Address(address::error::Error),
     /// Invalid password.
-    #[display(fmt = "Invalid password")]
+    #[error("Invalid password")]
     InvalidPassword,
-    #[display(fmt = "Invalid Length")]
+    #[error("Invalid Length")]
     InvalidLength,
     /// Keystore unavailable
-    #[display(fmt = "Keystore unavailable")]
+    #[error("Keystore unavailable")]
     Unavailable,
 }
 

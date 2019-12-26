@@ -129,7 +129,7 @@ impl KeyPair {
             key_types::BLS => {
                 let private_key = match bls::PrivateKey::from_bytes(privkey) {
                     Ok(p) => p,
-                    Err(_) => return Err(Error::BytesConvertFailed)
+                    Err(_) => return Err(Error::BytesConvertFailed),
                 };
 
                 let public_key = private_key.public_key();
@@ -161,15 +161,11 @@ mod tests {
     fn test_generate_key() {
         // Generate a key of a different type
         let keypair = KeyPair::generate_key_pair(KeyTypeId::default()).unwrap();
-        let bls_addr: Address = Account::BLS(keypair.pubkey)
-            .try_into()
-            .unwrap();
+        let bls_addr: Address = Account::BLS(keypair.pubkey).try_into().unwrap();
         println!("{}\n", bls_addr.display(Network::Testnet).unwrap());
 
         let keypair = KeyPair::generate_key_pair(key_types::SECP256K1).unwrap();
-        let secp_addr: Address = Account::SECP256K1(keypair.pubkey)
-            .try_into()
-            .unwrap();
+        let secp_addr: Address = Account::SECP256K1(keypair.pubkey).try_into().unwrap();
         println!("{}\n", secp_addr.display(Network::Testnet).unwrap());
     }
 }

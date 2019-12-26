@@ -1,41 +1,42 @@
 use data_encoding::{DecodeError, SpecificationError};
 use std::io;
+use thiserror;
 
-#[derive(Debug, derive_more::Display)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[display(fmt = "Unknown address network")]
+    #[error("Unknown address network")]
     UnknownNetwork,
-    #[display(fmt = "Unknown address protocol")]
+    #[error("Unknown address protocol")]
     UnknownProtocol,
-    #[display(fmt = "Invalid address payload")]
+    #[error("Invalid address payload")]
     InvalidPayload,
-    #[display(fmt = "Invalid address length")]
+    #[error("Invalid address length")]
     InvalidLength,
-    #[display(fmt = "Invalid address checksum")]
+    #[error("Invalid address checksum")]
     InvalidChecksum,
-    #[display(fmt = "Invalid ID")]
+    #[error("Invalid ID")]
     InvalidID,
-    #[display(fmt = "Invalid KeyType")]
+    #[error("Invalid KeyType")]
     InvalidKeyType,
-    #[display(fmt = "Invalid Signature")]
+    #[error("Invalid Signature")]
     InvalidSignature,
-    #[display(fmt = "Invalid PublicKey")]
+    #[error("Invalid PublicKey")]
     InvalidPublicKey,
-    #[display(fmt = "Invalid SecretKey")]
+    #[error("Invalid SecretKey")]
     InvalidSecretKey,
-    #[display(fmt = "Invalid Message")]
+    #[error("Invalid Message")]
     InvalidMessage,
-    #[display(fmt = "Invalid Input Length")]
+    #[error("Invalid Input Length")]
     InvalidInputLength,
-    #[display(fmt = "Data encode error ")]
+    #[error("Data encode error ")]
     Encoding(SpecificationError),
-    #[display(fmt = "Data decode error")]
+    #[error("Data decode error")]
     DataDecode(DecodeError),
-    #[display(fmt = "Varint U64 decode error")]
+    #[error("Varint U64 decode error")]
     U64Decode(varint::decode::Error),
-    #[display(fmt = "Bytes Convert Failed")]
+    #[error("Bytes Convert Failed")]
     BytesConvertFailed,
-    #[display(fmt = "Unavailable")]
+    #[error("Unavailable")]
     Unavailable,
 }
 
@@ -44,7 +45,6 @@ impl From<varint::decode::Error> for Error {
         Error::U64Decode(e)
     }
 }
-
 
 impl From<secp256k1::Error> for Error {
     fn from(e: secp256k1::Error) -> Self {
