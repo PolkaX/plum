@@ -30,7 +30,7 @@ impl Wallet {
     pub fn new_address(key_type: KeyTypeId) {
         let store = check_keystore_path();
         let pair = store.generate_key(key_type).unwrap();
-        println!("{}\n", pair.to_string(key_type, NET_TYPE));
+        println!("{}\n", pair.to_string(key_type, NET_TYPE).unwrap());
     }
 
     /// list all address-info in keystore
@@ -94,7 +94,7 @@ impl Wallet {
         let store = check_keystore_path();
         let privkey = hex::decode(privkey).unwrap();
         let pair = store.import_key(key_type, privkey.as_slice()).unwrap();
-        println!("{}\n", pair.to_string(key_type, Network::Testnet));
+        println!("{}\n", pair.to_string(key_type, Network::Testnet).unwrap());
     }
 }
 
@@ -102,11 +102,15 @@ fn pubkey_to_address(pubkey: Vec<u8>, key_type: KeyTypeId, net: Network) -> Stri
     match key_type {
         key_types::BLS => {
             let addr: Address = Account::BLS(pubkey).try_into().unwrap();
-            format!("address: {}\ntype: {}", addr.display(net), "bls")
+            format!("address: {}\ntype: {}", addr.display(net).unwrap(), "bls")
         }
         key_types::SECP256K1 => {
             let addr: Address = Account::SECP256K1(pubkey).try_into().unwrap();
-            format!("address: {}\ntype: {}", addr.display(net), "secp256k1")
+            format!(
+                "address: {}\ntype: {}",
+                addr.display(net).unwrap(),
+                "secp256k1"
+            )
         }
         _ => unreachable!("only bls,secp256k1"),
     }

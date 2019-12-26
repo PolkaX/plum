@@ -1,5 +1,6 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
+use address;
 use failure;
 use std::io;
 
@@ -10,6 +11,7 @@ pub enum Error {
     Io(io::Error),
     /// JSON error.
     Json(serde_json::Error),
+    Address(address::Error),
     /// Invalid password.
     #[display(fmt = "Invalid password")]
     InvalidPassword,

@@ -31,18 +31,25 @@ pub struct KeyPair {
 }
 
 impl KeyPair {
-    pub fn to_string(&self, key_type: KeyTypeId, net: Network) -> String {
-        let addr: Address = match key_type {
-            key_types::BLS => Account::BLS(self.pubkey.clone()).try_into().unwrap(),
-            key_types::SECP256K1 => Account::SECP256K1(self.pubkey.clone()).try_into().unwrap(),
+    pub fn to_string(&self, key_type: KeyTypeId, net: Network) -> Result<String> {
+        let addr = match key_type {
+            key_types::BLS => Account::BLS(self.pubkey.clone()).try_into(),
+            key_types::SECP256K1 => Account::SECP256K1(self.pubkey.clone()).try_into(),
             _ => unreachable!("key types [bls, secp256k1]"),
         };
-        format!(
+        let addr: Address = match addr {
+            Ok(b) => b,
+            Err(e) => return Err(Error::Address(e)),
+        };
+        Ok(format!(
             "pubkey:{}\nprivkey:{}\naddress:{}",
             hex::encode(&self.pubkey),
             hex::encode(&self.privkey),
-            addr.display(net)
-        )
+            match addr.display(net) {
+                Ok(a) => a,
+                Err(e) => return Err(Error::Address(e)),
+            }
+        ))
     }
 
     pub fn generate_key_pair(key_type: KeyTypeId) -> Result<Self> {
@@ -137,16 +144,6 @@ impl Store {
         serde_json::to_writer(&file, &hex::encode(&pair.clone().privkey))?;
         file.flush()?;
         Ok(pair)
-    }
-
-    /// Insert a new key with anonymous crypto.
-    ///
-    /// Places it into the file system store.
-    fn insert_unknown(&self, key_type: KeyTypeId, suri: &str, public: &[u8]) -> Result<()> {
-        let mut file = File::create(self.key_file_path(public, key_type)).map_err(Error::Io)?;
-        serde_json::to_writer(&file, &suri).map_err(Error::Json)?;
-        file.flush().map_err(Error::Io)?;
-        Ok(())
     }
 
     /// Returns the file path for the given public key and key type.

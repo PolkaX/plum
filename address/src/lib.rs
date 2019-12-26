@@ -1,11 +1,9 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 use blake2_rfc::blake2b::blake2b;
-use data_encoding::{Specification, SpecificationError};
+use data_encoding::{DecodeError, Specification, SpecificationError};
 use serde::{Deserialize, Serialize};
-use serde_cbor::{from_slice, to_vec};
 use std::convert::TryInto;
-use std::io::{BufReader, BufWriter, Read, Write};
 
 // SignatureBytes is the length of a BLS signature
 pub const BLS_SIGNATURE_LEN: u8 = 96;
@@ -19,7 +17,22 @@ pub const BLS_PUBLICKEY_LEN: u8 = 48;
 // DigestBytes is the length of a BLS message hash/digest
 pub const BLS_DIGEST_LEN: u8 = 96;
 
-#[derive(Debug, derive_more::Display, derive_more::From)]
+//20 is length of MaxUint64 as a string
+pub const MAX_U64_LEN: usize = 20;
+
+// MaxAddressStringLength is the max length of an address encoded as a string
+// it include the network prefx, protocol, and bls publickey
+pub const MAX_ADDRESS_STRING_LEN: usize = 2 + 84;
+
+// PayloadHashLength defines the hash length taken over addresses using the Actor and SECP256K1 protocols.
+pub const PAYLOAD_HASH_LENGTH: usize = 20;
+
+// ChecksumHashLength defines the hash length used for calculating address checksums.
+pub const CHECKSUM_HASH_LENGTH: usize = 4;
+
+pub const ENCODE_STD: &str = "abcdefghijklmnopqrstuvwxyz234567";
+
+#[derive(Debug, derive_more::Display)]
 pub enum Error {
     // Unknown address network
     UnknownNetwork,
@@ -33,20 +46,23 @@ pub enum Error {
     InvalidChecksum,
     // Invalid ID
     InvalidID,
+    // Data Encoding
+    Encoding(SpecificationError),
+    // Data Decode
+    DataDecode(DecodeError),
+    //Varint U64 Decode
+    U64Decode(varint::decode::Error),
 }
 
-//pub type Result<T> = std::result::Result<T, Error>;
+impl From<varint::decode::Error> for Error {
+    fn from(e: varint::decode::Error) -> Self {
+        match e {
+            _ => Error::U64Decode(e),
+        }
+    }
+}
 
-// MaxAddressStringLength is the max length of an address encoded as a string
-// it include the network prefx, protocol, and bls publickey
-pub const MAX_ADDRESS_STRING_LEN: usize = 2 + 84;
-// PayloadHashLength defines the hash length taken over addresses using the Actor and SECP256K1 protocols.
-pub const PAYLOAD_HASH_LENGTH: usize = 20;
-
-// ChecksumHashLength defines the hash length used for calculating address checksums.
-pub const CHECKSUM_HASH_LENGTH: usize = 4;
-
-pub const ENCODE_STD: &str = "abcdefghijklmnopqrstuvwxyz234567";
+pub type Result<T> = std::result::Result<T, Error>;
 
 pub fn blake2b_hash(ingest: &[u8], hash_config: usize) -> Vec<u8> {
     let hash = blake2b(hash_config, &[], ingest);
@@ -61,21 +77,22 @@ pub fn checksum(ingest: &[u8]) -> Vec<u8> {
     blake2b_hash(ingest, CHECKSUM_HASH_LENGTH)
 }
 
-pub fn base32_encode(input: &[u8]) -> String {
+pub fn base32_encode(input: &[u8]) -> Result<String> {
     let mut spec = Specification::new();
     spec.symbols.push_str(ENCODE_STD);
     spec.padding = None;
-    let encoder = spec.encoding().unwrap();
-
-    encoder.encode(&input)
+    let encoder = spec.encoding().map_err(|e| Error::Encoding(e))?;
+    Ok(encoder.encode(&input))
 }
 
-pub fn base32_decode(input: &str) -> Vec<u8> {
+pub fn base32_decode(input: &str) -> Result<Vec<u8>> {
     let mut spec = Specification::new();
     spec.symbols.push_str(ENCODE_STD);
     spec.padding = None;
-    let encoder = spec.encoding().unwrap();
-    encoder.decode(input.as_bytes()).unwrap()
+    let encoder = spec.encoding().map_err(|e| Error::Encoding(e))?;
+    Ok(encoder
+        .decode(input.as_bytes())
+        .map_err(|e| Error::DataDecode(e))?)
 }
 
 pub trait Protocol {
@@ -120,11 +137,11 @@ impl Account {
     pub fn encode_actor_secp256k1(
         &self,
         data_or_pubkey: &[u8],
-    ) -> Result<[u8; PAYLOAD_HASH_LENGTH + 1], ()> {
+    ) -> Result<[u8; PAYLOAD_HASH_LENGTH + 1]> {
         let hash = address_hash(data_or_pubkey);
 
         if hash.len() != PAYLOAD_HASH_LENGTH {
-            return Err(());
+            return Err(Error::InvalidLength);
         }
 
         let mut v = Vec::new();
@@ -138,25 +155,22 @@ impl Account {
 }
 
 impl TryInto<Address> for Account {
-    type Error = ();
-    fn try_into(self) -> Result<Address, Self::Error> {
+    type Error = Error;
+    fn try_into(self) -> Result<Address> {
         match self {
             Self::ID(id) => {
-                // TODO check
                 let mut v = Vec::new();
                 v.push(self.protocol());
                 v.extend_from_slice(&Into::<Vec<u8>>::into(Varint::U64(id)));
-
                 Ok(Address::ID(v))
             }
             Self::Actor(ref data) => Ok(Address::Actor(self.encode_actor_secp256k1(data)?)),
             Self::SECP256K1(ref pubkey) => {
-                println!("pubkey:{:?}", pubkey);
                 Ok(Address::SECP256K1(self.encode_actor_secp256k1(pubkey)?))
             }
             Self::BLS(ref pubkey) => {
                 if pubkey.len() != BLS_PUBLICKEY_LEN as usize {
-                    return Err(());
+                    return Err(Error::InvalidLength);
                 }
 
                 let mut v = Vec::new();
@@ -241,17 +255,23 @@ impl Address {
         }
     }
 
-    pub fn decode(addr: &str) -> Result<Address, Error> {
+    pub fn decode(addr: &str) -> Result<Address> {
         if addr.len() == 0 || addr.len() > MAX_ADDRESS_STRING_LEN || addr.len() < 3 {
             return Err(Error::InvalidLength);
         }
-        let net = addr.chars().nth(0).unwrap();
+        let net = match addr.chars().nth(0).map(|n| n) {
+            Some(n) => n,
+            None => return Err(Error::InvalidLength),
+        };
         if net.to_string().as_str() != Network::Mainnet.prefix()
             && net.to_string().as_str() != Network::Testnet.prefix()
         {
             return Err(Error::UnknownNetwork);
         }
-        let protocol = addr.chars().nth(1).unwrap();
+        let protocol = match addr.chars().nth(1).map(|c| c) {
+            Some(c) => c,
+            None => return Err(Error::InvalidLength),
+        };
         let p = match protocol {
             '0' => AddressFormat::ID,
             '1' => AddressFormat::SECP256K1,
@@ -263,20 +283,20 @@ impl Address {
         let raw = &addr_st[2..];
         if p == AddressFormat::ID {
             // 20 is length of MaxUint64 as a string
-            if raw.len() > 20 {
+            if raw.len() > MAX_U64_LEN {
                 return Err(Error::InvalidLength);
             }
             let id = match raw.parse::<u64>() {
                 Ok(i) => i,
-                Err(e) => return Err(Error::InvalidID),
+                Err(_) => return Err(Error::InvalidID),
             };
-            return Ok(Account::ID(id).try_into().unwrap());
+            return Ok(Account::ID(id).try_into()?);
         }
-        let payloadcksm = base32_decode(raw);
+        let payloadcksm = base32_decode(raw)?;
         let payload = &payloadcksm[..payloadcksm.len() - CHECKSUM_HASH_LENGTH];
         let checksum = &payloadcksm[payloadcksm.len() - CHECKSUM_HASH_LENGTH..];
         if p == AddressFormat::SECP256K1 || p == AddressFormat::Actor {
-            if payload.len() != 20 {
+            if payload.len() != PAYLOAD_HASH_LENGTH {
                 return Err(Error::InvalidPayload);
             }
         }
@@ -312,14 +332,6 @@ impl Address {
             _ => Err(Error::UnknownProtocol),
         }
     }
-    //    pub fn marshal_CBOR(&self, writer: BufWriter) {
-    //        let abytes = self.as_bytes();
-    //        serde_cbor::to_writer(writer, &abytes).unwrap()
-    //    }
-    //
-    //    pub fn unmarshal_CBOR(&self, reader: BufReader) {
-    //        serde_cbor::from_reader(reader).unwrap();
-    //    }
 }
 
 pub fn validate_checksum(ingest: &[u8], expect: &[u8]) -> bool {
@@ -328,28 +340,27 @@ pub fn validate_checksum(ingest: &[u8], expect: &[u8]) -> bool {
 }
 
 pub trait Display {
-    fn display(&self, _: Network) -> String;
+    fn display(&self, _: Network) -> Result<String>;
 }
 
 impl Display for Address {
-    fn display(&self, network: Network) -> String {
+    fn display(&self, network: Network) -> Result<String> {
         let network_prefix = network.prefix();
         match self {
             Self::SECP256K1(_) | Self::Actor(_) | Self::BLS(_) => {
                 let mut pc = Vec::new();
                 pc.extend_from_slice(&self.payload());
                 pc.extend_from_slice(&self.checksum());
-                format!(
+                Ok(format!(
                     "{}{}{}",
                     network_prefix,
                     self.protocol(),
-                    base32_encode(&pc)
-                )
+                    base32_encode(&pc)?
+                ))
             }
             Self::ID(_) => {
-                let (id, _) =
-                    varint::decode::u64(&self.payload()).expect("TODO: Ensure it won't panic");
-                format!("{}{}{}", network_prefix, self.protocol(), id)
+                let (id, _) = varint::decode::u64(&self.payload())?;
+                Ok(format!("{}{}{}", network_prefix, self.protocol(), id))
             }
         }
     }
@@ -358,9 +369,7 @@ impl Display for Address {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     use std::convert::TryInto;
-    use std::io::Cursor;
 
     fn all_test_addresses() -> Vec<&'static str> {
         vec![
@@ -392,18 +401,11 @@ mod tests {
     }
 
     #[test]
-    fn test_cbor_marshal() {
-        let all_addr = all_test_addresses();
-        let mut w = BufWriter::with_capacity(512, Cursor::new(Vec::new()));
-
-    }
-
-    #[test]
     fn test_decode() {
         let all_addr = all_test_addresses();
         for a in all_addr.iter() {
-            let addr = Address::decode(*a).unwrap();
-            assert_eq!(*a, addr.display(Network::Testnet))
+            let addr = Address::decode(a).unwrap();
+            assert_eq!(*a, addr.display(Network::Testnet).unwrap())
         }
     }
 
@@ -466,9 +468,9 @@ mod tests {
             ),
         ];
 
-        for (b, s) in test_cases.into_iter() {
+        for (b, s) in test_cases.iter() {
             let addr: Address = Account::SECP256K1(b.to_vec()).try_into().unwrap();
-            assert_eq!(s.to_string(), addr.display(Network::Testnet));
+            assert_eq!(s.to_string(), addr.display(Network::Testnet).unwrap());
         }
     }
 
@@ -512,9 +514,9 @@ mod tests {
             ),
         ];
 
-        for (b, s) in test_cases.into_iter() {
+        for (b, s) in test_cases.iter() {
             let addr: Address = Account::Actor(b.to_vec()).try_into().unwrap();
-            assert_eq!(s.to_string(), addr.display(Network::Testnet));
+            assert_eq!(s.to_string(), addr.display(Network::Testnet).unwrap());
         }
     }
 
@@ -545,9 +547,9 @@ mod tests {
             49, 240, 116],
             "t3u5zgwa4ael3vuocgc5mfgygo4yuqocrntuuhcklf4xzg5tcaqwbyfabxetwtj4tsam3pbhnwghyhijr5mixa")];
 
-        for (b, s) in test_cases.into_iter() {
+        for (b, s) in test_cases.iter() {
             let addr: Address = Account::BLS(b.to_vec()).try_into().unwrap();
-            assert_eq!(s.to_string(), addr.display(Network::Testnet));
+            assert_eq!(s.to_string(), addr.display(Network::Testnet).unwrap());
         }
     }
 
@@ -563,10 +565,9 @@ mod tests {
             (1729, "t01729"),
             (999999, "t0999999"),
         ];
-        // {math.MaxUint64, fmt.Sprintf("t0%s", strconv.FormatUint(math.MaxUint64, 10))},
-        for (b, s) in test_cases.into_iter() {
+        for (b, s) in test_cases.iter() {
             let addr: Address = Account::ID(*b).try_into().unwrap();
-            assert_eq!(s.to_string(), addr.display(Network::Testnet));
+            assert_eq!(s.to_string(), addr.display(Network::Testnet).unwrap());
         }
     }
 }

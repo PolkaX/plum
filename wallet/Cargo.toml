@@ -1,8 +1,9 @@
 [package]
 name = "wallet"
 version = "0.1.0"
-authors = ["Liu-Cheng Xu <xuliuchengxlc@gmail.com>"]
+authors = ["The PolkaX Authors"]
 edition = "2018"
+license = "GPL-3.0"
 
 [dependencies]
 bls = { package = "bls-signatures", version = "0.3" }
