@@ -4,6 +4,7 @@ use structopt::clap::arg_enum;
 use structopt::StructOpt;
 
 use crate::run_lp2p;
+use address::keypair::key_types;
 
 #[derive(StructOpt, Debug, Clone)]
 pub enum Auth {
@@ -182,8 +183,56 @@ pub enum Wallet {
     /// Generate a new key of the given type
     New {
         #[structopt(short="t", long="type", possible_values = &KeyType::variants(), case_insensitive = true)]
-        key_type: Option<KeyType>,
+        key_type: KeyType,
     },
+    #[structopt(name = "list")]
+    /// List all the key in keystore
+    List,
+    #[structopt(name = "export")]
+    /// Export key-info by pubkey
+    Export {
+        #[structopt(short = "public-key", long = "public-key", case_insensitive = true)]
+        pubkey: String,
+    },
+    #[structopt(name = "import")]
+    /// Import key-info by pubkey
+    Import {
+        #[structopt(short="t", long="type", possible_values = &KeyType::variants(), case_insensitive = true)]
+        key_type: KeyType,
+        #[structopt(short = "private-key", long = "private-key", case_insensitive = true)]
+        privkey: String,
+    },
+    #[structopt(name = "balance")]
+    /// Get balance info by address
+    Balance {
+        #[structopt(short = "balance", long = "balance", case_insensitive = true)]
+        address: String,
+    },
+}
+
+impl Wallet {
+    pub fn execute(&self) {
+        match self {
+            Wallet::New { key_type } => {
+                let keytype = match key_type {
+                    KeyType::Bls => key_types::BLS,
+                    KeyType::Secp256k1 => key_types::SECP256K1,
+                };
+                wallet::Wallet::new_address(keytype.to_owned())
+            }
+            Wallet::List => wallet::Wallet::wallet_list(),
+            Wallet::Export { pubkey } => wallet::Wallet::export(pubkey.to_string()),
+            Wallet::Import { key_type, privkey } => {
+                let keytype = match key_type {
+                    KeyType::Bls => key_types::BLS,
+                    KeyType::Secp256k1 => key_types::SECP256K1,
+                };
+                wallet::Wallet::import(keytype, privkey.to_string())
+            }
+            Wallet::Balance { address } => unimplemented!(),
+            _ => unimplemented!(),
+        }
+    }
 }
 
 #[derive(StructOpt, Debug, Clone)]

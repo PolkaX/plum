@@ -30,6 +30,7 @@ impl Plum {
     pub fn execute(&self) {
         match &self.cmd {
             Command::Network(network) => network.execute(),
+            Command::Wallet(wallet) => wallet.execute(),
             _ => unimplemented!(),
         }
     }

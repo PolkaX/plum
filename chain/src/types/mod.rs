@@ -1,7 +1,6 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 mod actor;
-mod address;
 mod ask;
 mod bigint;
 mod block_header;
@@ -18,7 +17,6 @@ mod signed_message;
 mod tipset;
 
 pub use self::actor::Actor;
-pub use self::address::Address;
 pub use self::ask::{SignedStorageAsk, StorageAsk};
 pub use self::bigint::BigInt;
 pub use self::block_header::BlockHeader;

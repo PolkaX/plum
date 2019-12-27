@@ -9,3 +9,4 @@ license = "GPL-3.0"
 data-encoding = "2.1"
 lazy_static = "1.4"
 cid = "0.3"
+address = { path = "../address" }
