@@ -6,8 +6,8 @@ use futures::sync::mpsc;
 use libp2p::{Multiaddr, PeerId};
 use log::info;
 
-const MAX_FIL_PEERS: u32 = 32;
-const MIN_FIL_PEERS: u32 = 8;
+pub const MAX_FIL_PEERS: u32 = 4;
+pub const MIN_FIL_PEERS: u32 = 2;
 
 #[derive(Debug)]
 pub enum Action {
@@ -58,7 +58,7 @@ impl PeerMgr {
 
         let peermgr = Self {
             tx: tx.clone(),
-            rx: rx,
+            rx,
             created: Instant::now(),
             bootstrappers: Vec::new(),
             peers: Default::default(),
@@ -77,16 +77,26 @@ impl PeerMgr {
     }
 
     pub fn on_add_peer(&mut self, peer_id: PeerId) {
-        // TODO check max peers, ignore the incoming if the max reached?
-        info!("[peermgr] add {:?} to peer manager", peer_id);
-        self.peers.insert(peer_id, ConnectionState::Enabled);
-        info!("[peermgr] after adding now peers: {:?}", self.peers);
+        if self.get_peer_count() < self.max_fil_peers as usize {
+            info!("[on_add_peer] a new peer added: {:?}", peer_id);
+            self.peers.insert(peer_id, ConnectionState::Enabled);
+        } else {
+            info!(
+                "[on_add_peer] max_fil_peers reached, new peer {:?} ignored",
+                peer_id
+            );
+        }
     }
 
     pub fn on_remove_peer(&mut self, peer_id: &PeerId) {
         // TODO check min peers and do expand if neccessary.
-        info!("[peermgr] remove {:?} from peer manager", peer_id);
         self.peers.remove(peer_id);
-        info!("[peermgr] after removing now peers: {:?}", self.peers);
+        if self.get_peer_count() < self.min_fil_peers as usize {
+            info!(
+                "[on_remove_peer] current peer count {:?} less than: {:?}",
+                self.get_peer_count(),
+                self.min_fil_peers
+            );
+        }
     }
 }

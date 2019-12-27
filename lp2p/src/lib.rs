@@ -90,10 +90,10 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
                 Async::Ready(Some(e)) => {
                     match e {
                         Event::Connecting(peer_id) => {
-                            info!("---- mpsc receiver channel connecting : {:?}", peer_id);
-                            info!("current peers: {:#?}", swarm.peers);
+                            // TODO: mock hello msg
                             let hello_msg =
                                 HelloMessage::new(0u8, 1u128, 0u8, local_peer_id.clone().into());
+
                             let msg = behaviour::GenericMessage::Hello(hello_msg);
                             let data = serde_cbor::to_vec(&msg).expect("Fail to apply serde_cbor");
                             swarm.floodsub.publish(config::hello_topic(), data);
@@ -103,19 +103,16 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
                                 serde_cbor::from_slice(&msg.data).expect("Fail to decode cbor");
                             match behaviour_msg {
                                 behaviour::GenericMessage::Hello(msg) => {
+                                    // TODO handle hello message
                                     let HelloMessage {
                                         heaviest_tip_set,
                                         heaviest_tip_set_weight,
                                         genesis_hash,
                                         sender,
                                     } = msg;
+
                                     let sender = PeerId::from_bytes(sender.0)
                                         .expect("TODO ensure it won't panic");
-
-                                    // TODO handle hello message
-                                    info!("heaviest_tip_set: {:?}", heaviest_tip_set);
-                                    info!("heaviest_tip_set_weight: {:?}", heaviest_tip_set_weight);
-                                    info!("genesis_hash: {:?}", genesis_hash);
 
                                     if genesis_hash != client.info().genesis_hash {
                                         warn!(
@@ -154,13 +151,10 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
                 Async::Ready(None) | Async::NotReady => {
                     break;
                 }
-                Async::Ready(Some(e)) => match e {
-                    true => {
-                        info!("[kad_receiver] do swarm.kad.bootstrap...");
-                        swarm.kad.bootstrap();
-                    }
-                    false => break,
-                },
+                Async::Ready(Some(_)) => {
+                    info!("[kad_receiver] do swarm.kad.bootstrap...");
+                    swarm.kad.bootstrap();
+                }
             }
         }
 
@@ -182,13 +176,13 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
         }
     }));
 
-    let mut task = Interval::new(Instant::now(), Duration::from_millis(5000));
+    let mut peermgr_interval = Interval::new(Instant::now(), Duration::from_millis(5000));
 
     task_executor.spawn(futures::future::poll_fn(move || -> Result<_, ()> {
         loop {
             match peermgr.rx.poll() {
                 Ok(Async::Ready(Some(action))) => {
-                    info!("[peermgr] rx poll");
+                    info!("[peermgr.rx] poll");
                     match action {
                         peermgr::Action::AddPeer(id) => peermgr.on_add_peer(id),
                         peermgr::Action::RemovePeer(id) => peermgr.on_remove_peer(&id),
@@ -202,20 +196,30 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
         }
 
         loop {
-            match task.poll() {
+            match peermgr_interval.poll() {
                 Ok(Async::Ready(Some(_instant))) => {
-                    info!("[task] poll");
+                    info!("[peermgr_interval] poll");
                     let peer_cnt = peermgr.get_peer_count();
                     if peer_cnt < peermgr.min_fil_peers as usize {
                         info!(
-                        "current peer count: {:?}, min_fil_peers: {:?}, sending bootstrap request",
-                        peer_cnt, peermgr.min_fil_peers
-                    );
+                            "current peer count: {:?}, peermgr.min_fil_peers: {:?}, send bootstrap request",
+                            peer_cnt, peermgr.min_fil_peers
+                        );
+                        // TODO: use a timer delay
+                        // if timer_id != -1
+                        //  stop(timer_id)
+                        // endif
+                        // let timer_id = timer_start(30, { -> kad_sender.unbounded_send(true)});
                         let _ = kad_sender.unbounded_send(true);
                     } else if peer_cnt > peermgr.max_fil_peers as usize {
-                        warn!(
-                            "peer count about threshold: {} > {}",
-                            peer_cnt, peermgr.max_fil_peers
+                        info!(
+                            "peermgr.max_fil_peers {} reached, current peer count: {}",
+                            peermgr.max_fil_peers, peer_cnt
+                        );
+                    } else {
+                        info!(
+                            "current peer count: {:?}, peermgr.min_fil_peers: {:?}, peermgr.max_fil_peers: {:?}",
+                            peer_cnt, peermgr.min_fil_peers, peermgr.max_fil_peers
                         );
                     }
                 }
