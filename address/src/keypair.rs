@@ -52,11 +52,6 @@ impl<'a> TryFrom<&'a str> for KeyTypeId {
     }
 }
 
-/// Known key types; this also functions as a global registry of key types for projects wishing to
-/// avoid collisions with each other.
-///
-/// It's not universal in the sense that *all* key types need to be mentioned here, it's just a
-/// handy place to put common key types.
 pub mod key_types {
     use super::KeyTypeId;
     /// Key type for Babe module, build-in.
