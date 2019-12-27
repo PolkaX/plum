@@ -4,7 +4,7 @@ use structopt::clap::arg_enum;
 use structopt::StructOpt;
 
 use crate::run_lp2p;
-use address::keypair::{key_types, KeyPair};
+use address::keypair::key_types;
 
 #[derive(StructOpt, Debug, Clone)]
 pub enum Auth {

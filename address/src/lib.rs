@@ -605,12 +605,17 @@ mod tests {
             assert_eq!(format!("{}", addr), format!("{}", case.1));
         }
     }
+
     #[test]
-    fn test_invalid_byte_address() {}
-    #[test]
-    fn test_checksum() {}
-    #[test]
-    fn test_address_format_address() {}
+    fn test_checksum() {
+        let addr = Address::decode("t24dd4ox4c2vpf5vk5wkadgyyn6qtuvgcpxxon64a").unwrap();
+        let cksm = addr.checksum();
+        assert!(validate_checksum(
+            addr.as_bytes().as_slice(),
+            cksm.as_slice()
+        ))
+    }
+
     #[test]
     fn address_hash_should_work() {
         let ingest = [115, 97, 116, 111, 115, 104, 105];

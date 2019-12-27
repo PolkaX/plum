@@ -6,7 +6,6 @@ use address::{
 };
 use error::Error;
 use keystore::Store;
-use parking_lot::RwLock;
 use std::convert::TryFrom;
 use std::convert::TryInto;
 use std::str::FromStr;
@@ -14,7 +13,6 @@ use std::{
     fs::{self, File},
     io::Read,
     path::PathBuf,
-    sync::Arc,
 };
 
 mod crypto;

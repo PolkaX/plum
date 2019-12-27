@@ -7,8 +7,6 @@
 use crate::error::Error;
 use address::keypair::{key_types, KeyPair, KeyTypeId};
 use parking_lot::RwLock;
-use secp256k1;
-use std::convert::TryInto;
 use std::{
     fs::{self, File},
     io::Write,
@@ -75,7 +73,7 @@ impl Store {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use address::Network;
+    use address::{Account, Address, Display, Network};
     use std::convert::TryInto;
     use std::str::FromStr;
     use tempfile::TempDir;
@@ -89,15 +87,11 @@ mod tests {
 
         // Generate a key of a different type
         let keypair = st.generate_key(KeyTypeId::default()).unwrap();
-        let bls_addr: crate::address::Address = crate::address::Account::BLS(keypair.pubkey)
-            .try_into()
-            .unwrap();
-        println!("{}\n", bls_addr.display(Network::Testnet));
+        let bls_addr: Address = Account::BLS(keypair.pubkey).try_into().unwrap();
+        println!("{}\n", bls_addr.display(Network::Testnet).unwrap());
 
         let keypair = st.generate_key(key_types::SECP256K1).unwrap();
-        let secp_addr: crate::address::Address = crate::address::Account::SECP256K1(keypair.pubkey)
-            .try_into()
-            .unwrap();
-        println!("{}\n", secp_addr.display(Network::Testnet));
+        let secp_addr: Address = Account::SECP256K1(keypair.pubkey).try_into().unwrap();
+        println!("{}\n", secp_addr.display(Network::Testnet).unwrap());
     }
 }
