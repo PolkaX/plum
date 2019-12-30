@@ -6,8 +6,8 @@ use futures::sync::mpsc;
 use libp2p::{Multiaddr, PeerId};
 use log::{debug, warn};
 
-pub const MAX_FIL_PEERS: u32 = 4;
-pub const MIN_FIL_PEERS: u32 = 2;
+pub const MAX_FIL_PEERS: u32 = 32;
+pub const MIN_FIL_PEERS: u32 = 8;
 
 #[derive(Debug)]
 pub enum Action {

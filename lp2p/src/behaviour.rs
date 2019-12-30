@@ -79,7 +79,7 @@ impl<TSubstream> Behaviour<TSubstream> {
         self.floodsub.publish(topic, data);
     }
 
-    pub fn on_event(&mut self, event: Event) {
+    pub fn notify(&mut self, event: Event) {
         let _ = self.sender.unbounded_send(event);
     }
 }
@@ -200,10 +200,10 @@ where
                     info!("floodsub generate event: {:?}", ev);
                     match ev {
                         FloodsubEvent::Message(msg) => {
-                            self.on_event(Event::Message(msg));
+                            self.notify(Event::Message(msg));
                         }
                         FloodsubEvent::Subscribed { peer_id, .. } => {
-                            self.on_event(Event::Connecting(peer_id));
+                            self.notify(Event::Connecting(peer_id));
                         }
                         FloodsubEvent::Unsubscribed { .. } => {}
                     }
