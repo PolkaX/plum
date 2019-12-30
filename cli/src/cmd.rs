@@ -1,5 +1,6 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
+use libp2p::core::Multiaddr;
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
 
@@ -70,6 +71,10 @@ pub enum MessagePool {
     Subscribe,
 }
 
+fn try_parse_multiaddr(peer_str: &str) -> Result<Multiaddr, &'static str> {
+    peer_str.parse().map_err(|_| "Invalid Multiaddr")
+}
+
 #[derive(StructOpt, Debug, Clone)]
 pub enum Network {
     /// Print peers
@@ -82,8 +87,8 @@ pub enum Network {
     #[structopt(name = "connect")]
     Connect {
         /// Specify an IPFS peer ip to connect
-        #[structopt(short = "p", long = "peer")]
-        peer: String,
+        #[structopt(short = "p", long = "peer", parse(try_from_str = try_parse_multiaddr))]
+        peer: Multiaddr,
     },
     /// Get node identity
     #[structopt(name = "id")]

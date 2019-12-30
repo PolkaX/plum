@@ -6,7 +6,8 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-data-encoding = "2.1"
-lazy_static = "1.4"
 cid = "0.3"
+lazy_static = "1.4"
+data-encoding = "2.1"
+
 address = { path = "../address" }

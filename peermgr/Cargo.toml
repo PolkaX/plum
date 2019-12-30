@@ -6,6 +6,6 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-libp2p = { version = "0.13", default-features = false }
-lp2p = { path = "../lp2p" }
 log = "0.4"
+libp2p = { version = "0.13", default-features = false }
+futures = "0.1"

@@ -1,63 +1,86 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
+use std::collections::HashMap;
+use std::time::Instant;
+
+use futures::sync::mpsc::UnboundedSender;
 use libp2p::core::{either::EitherOutput, ConnectedPoint};
 use libp2p::swarm::{IntoProtocolsHandler, IntoProtocolsHandlerSelect, ProtocolsHandler};
 use libp2p::swarm::{NetworkBehaviour, NetworkBehaviourAction, PollParameters};
 use libp2p::{
-    floodsub::{Floodsub, FloodsubEvent, Topic},
+    floodsub::{Floodsub, FloodsubEvent, FloodsubMessage, Topic},
     kad::{record::store::MemoryStore, Kademlia},
     tokio_io::{AsyncRead, AsyncWrite},
     Multiaddr, PeerId,
 };
 use log::info;
+use serde::{Deserialize, Serialize};
 use tokio::prelude::Async;
 
 use crate::config;
+use crate::hello::Message as HelloMessage;
 
-pub struct Fil {}
+#[derive(Debug)]
+pub enum PeerState {
+    /// The peer misbehaved. If the PSM wants us to connect to this node, we will add an artificial
+    /// delay to the connection.
+    Banned {
+        /// Until when the node is banned.
+        until: Instant,
+    },
+
+    /// We are connected to this peer and the peerset has accepted it. The handler is in the
+    /// enabled state.
+    Enabled {
+        /// How we are connected to this peer.
+        connected_point: ConnectedPoint,
+        /// If true, we have a custom protocol open with this peer.
+        open: bool,
+    },
+}
+
 // We create a custom network behaviour that combines floodsub and kad.
 // In the future, we want to improve libp2p to make this easier to do.
 pub struct Behaviour<TSubstream> {
     pub floodsub: Floodsub<TSubstream>,
     pub kad: Kademlia<TSubstream, MemoryStore>,
-    fil: Fil,
-    events: Vec<Event>,
+    pub sender: UnboundedSender<Event>,
+    pub peers: HashMap<PeerId, PeerState>,
 }
 
-#[derive(Debug)]
-pub enum Msg {
-    Hello(HelloMsg),
-    FIL,
+#[derive(Debug, Serialize, Deserialize)]
+pub enum GenericMessage {
+    Hello(HelloMessage),
 }
 
 #[derive(Debug)]
 pub enum Event {
     Connecting(PeerId),
-}
-
-#[derive(Debug)]
-pub struct HelloMsg {
-    peer_id: PeerId,
+    Message(FloodsubMessage),
 }
 
 impl<TSubstream> Behaviour<TSubstream> {
-    pub fn new(local_peer_id: &PeerId) -> Self {
+    pub fn new(local_peer_id: &PeerId, sender: UnboundedSender<Event>) -> Self {
         let (cfg, store) = config::configure_kad(local_peer_id);
         let _cid = config::configure_genesis_hash();
 
         Behaviour {
             floodsub: Floodsub::new(local_peer_id.clone()),
             kad: Kademlia::with_config(local_peer_id.clone(), store, cfg),
-            fil: Fil {},
-            events: Vec::new(),
+            sender,
+            peers: HashMap::new(),
         }
     }
 
-    pub fn send(&mut self, topic: Topic, _msg: &Msg) {
+    pub fn send(&mut self, topic: Topic, _msg: &GenericMessage) {
         // encode msg to Vec<u8>
         let mut data = Vec::<u8>::new();
         data.push(2);
         self.floodsub.publish(topic, data);
+    }
+
+    pub fn notify(&mut self, event: Event) {
+        let _ = self.sender.unbounded_send(event);
     }
 }
 
@@ -69,7 +92,7 @@ where
         <Floodsub<TSubstream> as NetworkBehaviour>::ProtocolsHandler,
         <Kademlia<TSubstream, MemoryStore> as NetworkBehaviour>::ProtocolsHandler,
     >;
-    type OutEvent = Msg;
+    type OutEvent = GenericMessage;
     fn new_handler(&mut self) -> Self::ProtocolsHandler {
         IntoProtocolsHandler::select(self.floodsub.new_handler(), self.kad.new_handler())
     }
@@ -81,14 +104,22 @@ where
     fn inject_connected(&mut self, peer_id: PeerId, endpoint: ConnectedPoint) {
         self.floodsub
             .inject_connected(peer_id.clone(), endpoint.clone());
-        self.kad.inject_connected(peer_id.clone(), endpoint);
+        self.kad.inject_connected(peer_id.clone(), endpoint.clone());
         info!("inject_connected, peer_id:{:?}", peer_id.clone());
-        self.floodsub.add_node_to_partial_view(peer_id);
+        self.floodsub.add_node_to_partial_view(peer_id.clone());
+        self.peers.insert(
+            peer_id,
+            PeerState::Enabled {
+                connected_point: endpoint,
+                open: true,
+            },
+        );
     }
 
     fn inject_disconnected(&mut self, peer_id: &PeerId, endpoint: ConnectedPoint) {
         self.floodsub.inject_disconnected(peer_id, endpoint.clone());
         self.kad.inject_disconnected(peer_id, endpoint);
+        self.peers.remove(peer_id);
     }
 
     fn inject_replaced(
@@ -166,14 +197,13 @@ where
             match self.floodsub.poll(params) {
                 Async::NotReady => break,
                 Async::Ready(NetworkBehaviourAction::GenerateEvent(ev)) => {
-                    info!("floodsub poll");
+                    info!("floodsub generate event: {:?}", ev);
                     match ev {
                         FloodsubEvent::Message(msg) => {
-                            info!("recv floodsub msg, msg:{:?}", msg);
+                            self.notify(Event::Message(msg));
                         }
                         FloodsubEvent::Subscribed { peer_id, .. } => {
-                            info!("recv subscribed msg, peer_id:{:?}", peer_id.clone());
-                            self.events.push(Event::Connecting(peer_id.clone()));
+                            self.notify(Event::Connecting(peer_id));
                         }
                         FloodsubEvent::Unsubscribed { .. } => {}
                     }
@@ -185,7 +215,10 @@ where
                     return Async::Ready(NetworkBehaviourAction::DialPeer { peer_id })
                 }
                 Async::Ready(NetworkBehaviourAction::SendEvent { peer_id, event }) => {
-                    info!("floodsub poll send event");
+                    info!(
+                        "floodsub poll send event, peer_id: {:?}, event: {:?}",
+                        peer_id, event
+                    );
                     return Async::Ready(NetworkBehaviourAction::SendEvent {
                         peer_id,
                         event: EitherOutput::First(event),
@@ -200,9 +233,8 @@ where
         loop {
             match self.kad.poll(params) {
                 Async::NotReady => break,
-                Async::Ready(NetworkBehaviourAction::GenerateEvent(_ev)) => {
-                    info!("kad poll");
-                    //return NetworkBehaviourAction::GenerateEvent(ev);
+                Async::Ready(NetworkBehaviourAction::GenerateEvent(ev)) => {
+                    info!("kad poll, kad generate event: {:?}", ev);
                 }
                 Async::Ready(NetworkBehaviourAction::DialAddress { address }) => {
                     return Async::Ready(NetworkBehaviourAction::DialAddress { address })
@@ -220,12 +252,6 @@ where
                     return Async::Ready(NetworkBehaviourAction::ReportObservedAddr { address })
                 }
             }
-        }
-
-        if let Some(Event::Connecting(peer_id)) = self.events.pop() {
-            let msg = Msg::Hello(HelloMsg { peer_id });
-            self.send(config::hello_topic(), &msg);
-            info!("send hello topic");
         }
 
         Async::NotReady

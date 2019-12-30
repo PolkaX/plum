@@ -6,6 +6,7 @@ use std::io::Write;
 
 use ansi_term::Colour;
 use lazy_static::lazy_static;
+use libp2p::core::Multiaddr;
 use log::info;
 use regex::Regex;
 use structopt::clap::AppSettings;
@@ -36,12 +37,26 @@ impl Plum {
     }
 }
 
-pub fn run_lp2p(peer_ip: Option<String>) {
+pub struct Client;
+
+impl chain::Client for Client {
+    fn info(&self) -> chain::Info {
+        chain::Info {
+            heaviest_tip_set: 101u8,
+            heaviest_tip_set_weight: 1000u128,
+            genesis_hash: 0u8,
+            best_hash: 88u8,
+        }
+    }
+}
+
+pub fn run_lp2p(peer_ip: Option<Multiaddr>) {
     let (exit_send, exit) = exit_future::signal();
     let mut runtime = Runtime::new().expect("failed to start runtime on current thread");
     let task_executor = runtime.executor();
     let network_state = lp2p::NetworkState::default();
-    lp2p::initialize(task_executor, network_state, peer_ip);
+    let client = Client;
+    lp2p::initialize(task_executor, network_state, peer_ip, client);
     let _ = runtime.block_on(exit);
     exit_send.fire();
 }
@@ -128,7 +143,7 @@ pub fn run() {
     let args = std::env::args().collect::<Vec<String>>();
 
     if args.len() == 1 {
-        init_logger(Some("".into()));
+        init_logger(None);
         run_lp2p(None);
     } else {
         let plum = Plum::from_iter(args.iter());

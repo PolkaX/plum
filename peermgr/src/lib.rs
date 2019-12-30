@@ -2,28 +2,102 @@
 
 use std::{collections::HashMap, time::Instant};
 
+use futures::sync::mpsc;
 use libp2p::{Multiaddr, PeerId};
+use log::{debug, warn};
 
-const MAX_FIL_PEERS: u32 = 32;
-const MIN_FIL_PEERS: u32 = 8;
+pub const MAX_FIL_PEERS: u32 = 32;
+pub const MIN_FIL_PEERS: u32 = 8;
 
-#[derive(Debug, Clone)]
-pub struct Node {}
-
-#[derive(Debug, Clone)]
-pub struct PeerMgr {
-    bootstrappers: Vec<Multiaddr>,
-    peers: HashMap<PeerId, Node>,
-    max_fil_peers: u32,
-    min_fil_peers: u32,
-    expanding: bool,
-    //   swarm: Swarm,
+#[derive(Debug)]
+pub enum Action {
+    AddPeer(PeerId),
+    RemovePeer(PeerId),
 }
 
-/*
-type Swarm =
-libp2p::swarm::ExpandedSwarm<impl std::clone::Clone+libp2p::core::transport::Transport, Behaviour<libp2p::core::muxing::SubstreamRef<std::sync::Arc<impl std::marker::Send+std::marker::Sync+libp2p::core::muxing::StreamMuxer>>>, libp2p::core::either::EitherOutput<libp2p::floodsub::protocol::FloodsubRpc, libp2p::kad::handler::KademliaHandlerIn<libp2p::kad::query::QueryId>>, libp2p::core::either::EitherOutput<libp2p::floodsub::layer::InnerMessage, libp2p::kad::handler::KademliaHandlerEvent<libp2p::kad::query::QueryId>>, libp2p::swarm::protocols_handler::select::IntoProtocolsHandlerSelect<libp2p::swarm::protocols_handler::one_shot::OneShotHandler<libp2p::core::muxing::SubstreamRef<std::sync::Arc<impl std::marker::Send+std::marker::Sync+libp2p::core::muxing::StreamMuxer>>, libp2p::floodsub::protocol::FloodsubConfig, libp2p::floodsub::protocol::FloodsubRpc, libp2p::floodsub::layer::InnerMessage>, libp2p::kad::handler::KademliaHandler<libp2p::core::muxing::SubstreamRef<std::sync::Arc<impl std::marker::Send+std::marker::Sync+libp2p::core::muxing::StreamMuxer>>, libp2p::kad::query::QueryId>>, libp2p::core::either::EitherError<libp2p::swarm::protocols_handler::ProtocolsHandlerUpgrErr<std::io::Error>, std::io::Error>>
-;*/
+/// Shared handle to the peer set manager (PSM). Distributed around the code.
+#[derive(Debug, Clone)]
+pub struct PeerMgrHandle {
+    tx: mpsc::UnboundedSender<Action>,
+}
 
-#[cfg(test)]
-mod tests {}
+impl PeerMgrHandle {
+    pub fn add_peer(&self, peer_id: PeerId) {
+        let _ = self.tx.unbounded_send(Action::AddPeer(peer_id));
+    }
+
+    pub fn remove_peer(&self, peer_id: PeerId) {
+        let _ = self.tx.unbounded_send(Action::RemovePeer(peer_id));
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ConnectionState {
+    Enabled,
+    NotConnected,
+}
+
+#[derive(Debug)]
+pub struct PeerMgr {
+    bootstrappers: Vec<Multiaddr>,
+    pub peers: HashMap<PeerId, ConnectionState>,
+    /// Receiver for messages from the `PeerMgrHandle` and from `tx`.
+    pub rx: mpsc::UnboundedReceiver<Action>,
+    /// Sending side of `rx`.
+    tx: mpsc::UnboundedSender<Action>,
+    pub max_fil_peers: u32,
+    pub min_fil_peers: u32,
+    expanding: bool,
+    created: Instant,
+}
+
+impl PeerMgr {
+    pub fn new() -> (Self, PeerMgrHandle) {
+        let (tx, rx) = mpsc::unbounded();
+
+        let peermgr = Self {
+            tx: tx.clone(),
+            rx,
+            created: Instant::now(),
+            bootstrappers: Vec::new(),
+            peers: Default::default(),
+            max_fil_peers: MAX_FIL_PEERS,
+            min_fil_peers: MIN_FIL_PEERS,
+            expanding: false,
+        };
+
+        let handle = PeerMgrHandle { tx };
+
+        (peermgr, handle)
+    }
+
+    pub fn get_peer_count(&self) -> usize {
+        self.peers.len()
+    }
+
+    pub fn on_add_peer(&mut self, peer_id: PeerId) {
+        if self.get_peer_count() < self.max_fil_peers as usize {
+            debug!(target: "peermgr", "[on_add_peer] a new peer added: {}", peer_id);
+            self.peers.insert(peer_id, ConnectionState::Enabled);
+        } else {
+            debug!(
+                target: "peermgr",
+                "[on_add_peer] max_fil_peers reached, new peer {} ignored",
+                peer_id
+            );
+        }
+    }
+
+    pub fn on_remove_peer(&mut self, peer_id: &PeerId) {
+        // TODO check min peers and do expand if neccessary.
+        self.peers.remove(peer_id);
+        if self.get_peer_count() < self.min_fil_peers as usize {
+            warn!(
+                target: "peermgr",
+                "[on_remove_peer] current peer count {:?} is less than the expected min_fil_peers: {:?}",
+                self.get_peer_count(),
+                self.min_fil_peers
+            );
+        }
+    }
+}
