@@ -1809,6 +1809,7 @@ version = "0.1.0"
 dependencies = [
  "address",
  "cli",
+ "util",
  "wallet",
 ]
 
@@ -2880,6 +2881,14 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
+]
+
+[[package]]
+name = "util"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "thiserror",
 ]
 
 [[package]]
