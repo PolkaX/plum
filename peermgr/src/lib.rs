@@ -4,7 +4,7 @@ use std::{collections::HashMap, time::Instant};
 
 use futures::sync::mpsc;
 use libp2p::{Multiaddr, PeerId};
-use log::info;
+use log::{debug, warn};
 
 pub const MAX_FIL_PEERS: u32 = 4;
 pub const MIN_FIL_PEERS: u32 = 2;
@@ -40,12 +40,11 @@ pub enum ConnectionState {
 #[derive(Debug)]
 pub struct PeerMgr {
     bootstrappers: Vec<Multiaddr>,
-    peers: HashMap<PeerId, ConnectionState>,
-    /// Receiver for messages from the `PeersetHandle` and from `tx`.
+    pub peers: HashMap<PeerId, ConnectionState>,
+    /// Receiver for messages from the `PeerMgrHandle` and from `tx`.
     pub rx: mpsc::UnboundedReceiver<Action>,
     /// Sending side of `rx`.
     tx: mpsc::UnboundedSender<Action>,
-    /// Queue of messages to be emitted when the `Peerset` is polled.
     pub max_fil_peers: u32,
     pub min_fil_peers: u32,
     expanding: bool,
@@ -78,11 +77,12 @@ impl PeerMgr {
 
     pub fn on_add_peer(&mut self, peer_id: PeerId) {
         if self.get_peer_count() < self.max_fil_peers as usize {
-            info!("[on_add_peer] a new peer added: {:?}", peer_id);
+            debug!(target: "peermgr", "[on_add_peer] a new peer added: {}", peer_id);
             self.peers.insert(peer_id, ConnectionState::Enabled);
         } else {
-            info!(
-                "[on_add_peer] max_fil_peers reached, new peer {:?} ignored",
+            debug!(
+                target: "peermgr",
+                "[on_add_peer] max_fil_peers reached, new peer {} ignored",
                 peer_id
             );
         }
@@ -92,8 +92,9 @@ impl PeerMgr {
         // TODO check min peers and do expand if neccessary.
         self.peers.remove(peer_id);
         if self.get_peer_count() < self.min_fil_peers as usize {
-            info!(
-                "[on_remove_peer] current peer count {:?} less than: {:?}",
+            warn!(
+                target: "peermgr",
+                "[on_remove_peer] current peer count {:?} is less than the expected min_fil_peers: {:?}",
                 self.get_peer_count(),
                 self.min_fil_peers
             );

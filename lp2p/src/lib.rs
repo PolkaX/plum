@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use futures::prelude::*;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use libp2p::{core::Multiaddr, PeerId, Swarm};
-use log::{debug, error, info, warn};
+use log::{debug, info, trace, warn};
 use tokio::runtime::TaskExecutor;
 use tokio::timer::Interval;
 
@@ -116,23 +116,18 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
 
                                     if genesis_hash != client.info().genesis_hash {
                                         warn!(
-                                            "Our genesis hash: {}, theirs: {}, sender: {:?}",
-                                            genesis_hash,
+                                            "Genesis hash mismatch, ours: {}, theirs: {}, peer: {} is banned",
                                             client.info().genesis_hash,
+                                            genesis_hash,
                                             sender,
                                         );
-                                        // TODO disconnect
-                                        // info!("ban peer_id: {:?}", sender);
-                                        // Swarm::ban_peer_id(&mut swarm, sender);
+                                        Swarm::ban_peer_id(&mut swarm, sender.clone());
                                         peermgr_handle.remove_peer(sender);
                                         return Ok(Async::NotReady);
                                     }
 
-                                    info!("we are on the same chain! {}", genesis_hash);
-
                                     // TODO: inform new head
 
-                                    // TODO: add to peermgr
                                     peermgr_handle.add_peer(sender);
                                 }
                             }
@@ -152,7 +147,7 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
                     break;
                 }
                 Async::Ready(Some(_)) => {
-                    info!("[kad_receiver] do swarm.kad.bootstrap...");
+                    debug!(target: "peermgr", "[kad_receiver] do swarm.kad.bootstrap...");
                     swarm.kad.bootstrap();
                 }
             }
@@ -161,7 +156,7 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
         loop {
             match swarm.poll().expect("Error while polling swarm") {
                 Async::Ready(Some(e)) => {
-                    info!("rcv event:{:?}", e);
+                    info!("recv event:{:?}", e);
                 }
                 Async::Ready(None) | Async::NotReady => {
                     if !network_state.listening {
@@ -182,7 +177,7 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
         loop {
             match peermgr.rx.poll() {
                 Ok(Async::Ready(Some(action))) => {
-                    info!("[peermgr.rx] poll");
+                    debug!(target: "peermgr", "[peermgr.rx] poll");
                     match action {
                         peermgr::Action::AddPeer(id) => peermgr.on_add_peer(id),
                         peermgr::Action::RemovePeer(id) => peermgr.on_remove_peer(&id),
@@ -198,30 +193,28 @@ pub fn initialize<C: 'static + Send + Sync + chain::Client>(
         loop {
             match peermgr_interval.poll() {
                 Ok(Async::Ready(Some(_instant))) => {
-                    info!("[peermgr_interval] poll");
+                    debug!(target: "peermgr", "[peermgr_interval] poll");
                     let peer_cnt = peermgr.get_peer_count();
                     if peer_cnt < peermgr.min_fil_peers as usize {
-                        info!(
+                        debug!(
+                            target: "peermgr",
                             "current peer count: {:?}, peermgr.min_fil_peers: {:?}, send bootstrap request",
                             peer_cnt, peermgr.min_fil_peers
                         );
-                        // TODO: use a timer delay
+                        // TODO: use a timer delay?
                         // if timer_id != -1
                         //  stop(timer_id)
                         // endif
                         // let timer_id = timer_start(30, { -> kad_sender.unbounded_send(true)});
                         let _ = kad_sender.unbounded_send(true);
                     } else if peer_cnt > peermgr.max_fil_peers as usize {
-                        info!(
+                        debug!(
+                            target: "peermgr",
                             "peermgr.max_fil_peers {} reached, current peer count: {}",
                             peermgr.max_fil_peers, peer_cnt
                         );
-                    } else {
-                        info!(
-                            "current peer count: {:?}, peermgr.min_fil_peers: {:?}, peermgr.max_fil_peers: {:?}",
-                            peer_cnt, peermgr.min_fil_peers, peermgr.max_fil_peers
-                        );
                     }
+                    trace!(target: "peermgr", "current peers: {:?}", peermgr.peers);
                 }
                 Ok(Async::Ready(None)) => break,
                 Ok(Async::NotReady) => break,
