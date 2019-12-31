@@ -4,31 +4,28 @@ use address;
 use std::io;
 use thiserror;
 
-/// Keystore error.
-#[derive(Debug, thiserror::Error, derive_more::From)]
-pub enum Error {
+/// Type alias to use this library's [`WalletError`] type in a `Result`.
+pub type Result<T> = std::result::Result<T, WalletError>;
+
+/// Errors generated from this library.
+#[derive(Debug, thiserror::Error)]
+pub enum WalletError {
     /// IO error.
     #[error("Invalid password")]
-    Io(io::Error),
+    Io(#[from] std::io::Error),
     /// JSON error.
-    #[error("Json error")]
-    Json(serde_json::Error),
-    #[error("address error")]
-    Address(address::error::Error),
+    #[error("JSON error")]
+    Json(#[from] serde_json::Error),
+    ///
+    #[error("Address error")]
+    Address(#[from] address::AddressError),
     /// Invalid password.
     #[error("Invalid password")]
     InvalidPassword,
+    ///
     #[error("Invalid Length")]
     InvalidLength,
-    /// Keystore unavailable
+    /// Keystore is unavailable.
     #[error("Keystore unavailable")]
     Unavailable,
-}
-
-impl From<std::convert::Infallible> for Error {
-    fn from(inf: std::convert::Infallible) -> Self {
-        match inf {
-            _ => Error::Unavailable,
-        }
-    }
 }

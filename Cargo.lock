@@ -7,13 +7,11 @@ dependencies = [
  "blake2-rfc",
  "bls-signatures",
  "data-encoding",
- "derive_more",
  "hex",
+ "integer-encoding",
  "libsecp256k1",
- "rand 0.7.2",
  "serde",
  "thiserror",
- "unsigned-varint",
 ]
 
 [[package]]
@@ -569,17 +567,6 @@ name = "data-encoding"
 version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4f47ca1860a761136924ddd2422ba77b2ea54fe8cc75b9040804a0d9d32ad97"
-
-[[package]]
-name = "derive_more"
-version = "0.99.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2159be042979966de68315bce7034bb000c775f22e3e834e1c52ff78f041cae8"
-dependencies = [
- "proc-macro2 1.0.6",
- "quote 1.0.2",
- "syn 1.0.11",
-]
 
 [[package]]
 name = "digest"
@@ -1374,9 +1361,9 @@ dependencies = [
 
 [[package]]
 name = "libsecp256k1"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0885ff5b8070cdafbf65b3d098a0b7daf4925a18a704d3c503996443b799cc2"
+checksum = "df6edf84fd62aad1c93932b39324eaeda3912c1d26bc18dfaee6293848e49a50"
 dependencies = [
  "arrayref",
  "crunchy",
@@ -2912,7 +2899,6 @@ version = "0.1.0"
 dependencies = [
  "address",
  "bls-signatures",
- "derive_more",
  "hex",
  "libsecp256k1",
  "parking_lot 0.9.0",

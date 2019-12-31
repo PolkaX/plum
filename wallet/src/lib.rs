@@ -1,36 +1,37 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-use address::{
-    keypair::{key_types, KeyTypeId},
-    Account, Address, Display, Network,
-};
-use error::Error;
-use keystore::Store;
-use std::convert::TryFrom;
-use std::convert::TryInto;
-use std::str::FromStr;
-use std::{
-    fs::{self, File},
-    io::Read,
-    path::PathBuf,
-};
+//!
+
+#![deny(missing_docs)]
 
 mod crypto;
 mod error;
+mod keypair;
 mod keystore;
 
+use std::{
+    convert::{TryFrom, TryInto},
+    fs::{self, File},
+    io::Read,
+    path::PathBuf,
+    str::FromStr,
+};
+
+use address::{Account, Address, KeyType, Network};
+
+use self::error::{Result, WalletError};
+use self::keystore::Store;
+
 const KEYSTORE_PATH: &str = "/.plum/keystore/";
-const NET_TYPE: Network = Network::Testnet;
+const NET_TYPE: Network = Network::Test;
 
-pub type Result<T> = std::result::Result<T, Error>;
-pub struct Wallet {}
-
+pub struct Wallet;
 impl Wallet {
     /// generate address by type
-    pub fn new_address(key_type: KeyTypeId) {
+    pub fn new_address(key_type: KeyType) {
         let store = check_keystore_path();
         let pair = store.generate_key(key_type).unwrap();
-        println!("{}\n", pair.to_string(key_type, NET_TYPE).unwrap());
+        println!("{}\n", pair.display(key_type, NET_TYPE).unwrap());
     }
 
     /// list all address-info in keystore
@@ -43,7 +44,7 @@ impl Wallet {
             match hex::decode(file_name.to_str().unwrap()) {
                 Ok(ref name) if name.len() > 4 => {
                     let type_name = std::str::from_utf8(&name[0..4]).unwrap();
-                    let key_type = KeyTypeId::try_from(type_name).unwrap();
+                    let key_type = KeyType::try_from(type_name).unwrap();
                     let public = &name[4..];
 
                     println!("{}", pubkey_to_address(public.to_vec(), key_type, NET_TYPE));
@@ -70,7 +71,7 @@ impl Wallet {
                             return;
                         }
                         let type_name = std::str::from_utf8(&hex_name[0..4]).unwrap();
-                        let key_type = KeyTypeId::try_from(type_name).unwrap();
+                        let key_type = KeyType::try_from(type_name).unwrap();
                         let public = &hex_name[4..];
                         let file = File::open(path.to_owned() + name).unwrap();
                         let mut file_copy = file.try_clone().unwrap();
@@ -89,26 +90,26 @@ impl Wallet {
         }
     }
 
-    /// inport account by type and private-key
-    pub fn import(key_type: KeyTypeId, privkey: String) {
+    /// import account by type and private-key
+    pub fn import(key_type: KeyType, privkey: String) {
         let store = check_keystore_path();
         let privkey = hex::decode(privkey).unwrap();
         let pair = store.import_key(key_type, privkey.as_slice()).unwrap();
-        println!("{}\n", pair.to_string(key_type, Network::Testnet).unwrap());
+        println!("{}\n", pair.display(key_type, Network::Test).unwrap());
     }
 }
 
-fn pubkey_to_address(pubkey: Vec<u8>, key_type: KeyTypeId, net: Network) -> String {
+fn pubkey_to_address(pubkey: Vec<u8>, key_type: KeyType, net: Network) -> String {
     match key_type {
         key_types::BLS => {
             let addr: Address = Account::BLS(pubkey).try_into().unwrap();
-            format!("address: {}\ntype: {}", addr.display(net).unwrap(), "bls")
+            format!("address: {}\ntype: {}", addr.encode(net).unwrap(), "bls")
         }
         key_types::SECP256K1 => {
             let addr: Address = Account::SECP256K1(pubkey).try_into().unwrap();
             format!(
                 "address: {}\ntype: {}",
-                addr.display(net).unwrap(),
+                addr.encode(net).unwrap(),
                 "secp256k1"
             )
         }

@@ -6,13 +6,14 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-bls = { package = "bls-signatures", version = "0.3" }
-libsecp256k1 = { version = "0.3.0" }
-derive_more = { version = "0.99.2"}
-serde_json = "1.0.41"
-parking_lot = "0.9.0"
+serde_json = "1.0"
+parking_lot = "0.9"
 hex = "0.4.0"
 thiserror = "1.0"
-tempfile = "3.1.0"
+bls = { package = "bls-signatures", version = "0.3" }
+libsecp256k1 = "0.3"
 
-address = {path = "../address"}
+address = { path = "../address" }
+
+[dev-dependencies]
+tempfile = "3.1"
