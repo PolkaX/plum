@@ -4,7 +4,7 @@
 pub type Result<T> = std::result::Result<T, AddressError>;
 
 /// Errors generated from this library.
-#[derive(Debug, thiserror::Error)]
+#[derive(PartialEq, Eq, Debug, thiserror::Error)]
 pub enum AddressError {
     /// Unknown network.
     #[error("Unknown network")]
@@ -14,13 +14,13 @@ pub enum AddressError {
     UnknownProtocol,
     /// Invalid address payload.
     #[error("Invalid address payload")]
-    InvalidAddrPayload,
+    InvalidPayload,
     /// Invalid address length.
     #[error("Invalid address length")]
-    InvalidAddrLength,
+    InvalidLength,
     /// Invalid address checksum.
     #[error("Invalid address checksum")]
-    InvalidAddrChecksum,
+    InvalidChecksum,
     /// Base32 decode error.
     #[error("Base32 decode error")]
     Base32Decode(#[from] data_encoding::DecodeError),

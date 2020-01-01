@@ -7,9 +7,9 @@ dependencies = [
  "blake2-rfc",
  "bls-signatures",
  "data-encoding",
- "hex",
  "integer-encoding",
  "libsecp256k1",
+ "rand 0.7.2",
  "serde",
  "thiserror",
 ]

@@ -71,7 +71,7 @@ pub struct Address {
 impl Address {
     /// Create an address using the ID protocol.
     pub fn new_id_addr(id: u64) -> Result<Self> {
-        let mut payload = vec![];
+        let mut payload = [0u8; MAX_U64_LEN];
         id.encode_var(&mut payload);
         let mut bytes = Vec::with_capacity(1 + payload.len());
         bytes.push(Protocol::ID as u8);
@@ -83,7 +83,7 @@ impl Address {
     pub fn new_secp256k1_addr(pubkey: &[u8]) -> Result<Self> {
         let payload = address_hash(pubkey);
         if payload.len() != constant::PAYLOAD_HASH_LEN {
-            return Err(AddressError::InvalidAddrLength);
+            return Err(AddressError::InvalidPayload);
         }
         let mut bytes = Vec::with_capacity(1 + constant::PAYLOAD_HASH_LEN);
         bytes.push(Protocol::SECP256K1 as u8);
@@ -95,7 +95,7 @@ impl Address {
     pub fn new_actor_addr(data: &[u8]) -> Result<Self> {
         let payload = address_hash(data);
         if payload.len() != constant::PAYLOAD_HASH_LEN {
-            return Err(AddressError::InvalidAddrLength);
+            return Err(AddressError::InvalidPayload);
         }
         let mut bytes = Vec::with_capacity(1 + constant::PAYLOAD_HASH_LEN);
         bytes.push(Protocol::Actor as u8);
@@ -107,12 +107,31 @@ impl Address {
     pub fn new_bls_addr(pubkey: &[u8]) -> Result<Self> {
         let payload = pubkey;
         if payload.len() != constant::BLS_PUBLIC_KEY_LEN {
-            return Err(AddressError::InvalidAddrLength);
+            return Err(AddressError::InvalidPayload);
         }
         let mut bytes = Vec::with_capacity(1 + constant::BLS_PUBLIC_KEY_LEN);
         bytes.push(Protocol::BLS as u8);
         bytes.extend_from_slice(payload);
         Ok(Address { bytes })
+    }
+
+    /// Create an address represented by the bytes `addr` (protocol + payload).
+    pub fn new_from_bytes(addr: &[u8]) -> Result<Self> {
+        if addr.len() <= 1 {
+            return Err(AddressError::InvalidLength);
+        }
+        match Protocol::try_from(addr[0])? {
+            Protocol::ID => {
+                let (id, len) = u64::decode_var(&addr[1..]);
+                if len != (&addr[1..]).len() {
+                    return Err(AddressError::InvalidPayload);
+                }
+                Self::new_id_addr(id)
+            }
+            Protocol::SECP256K1 => Self::new_secp256k1_addr(&addr[1..]),
+            Protocol::Actor => Self::new_actor_addr(&addr[1..]),
+            Protocol::BLS => Self::new_bls_addr(&addr[1..]),
+        }
     }
 
     /// Return the protocol of the address.
@@ -164,7 +183,7 @@ impl Address {
     /// Decode the addr string into the address.
     pub fn decode(addr: &str) -> Result<Address> {
         if addr.len() < 3 || addr.len() > constant::MAX_ADDRESS_STRING_LEN {
-            return Err(AddressError::InvalidAddrLength);
+            return Err(AddressError::InvalidLength);
         }
 
         let network = addr.chars().nth(0).expect("The length of addr >= 3");
@@ -184,11 +203,11 @@ impl Address {
         match protocol {
             Protocol::ID => {
                 if raw_addr.len() > MAX_U64_LEN {
-                    return Err(AddressError::InvalidAddrLength);
+                    return Err(AddressError::InvalidLength);
                 }
                 match raw_addr.parse::<u64>() {
                     Ok(id) => Self::new_id_addr(id),
-                    Err(_) => Err(AddressError::InvalidAddrPayload),
+                    Err(_) => Err(AddressError::InvalidPayload),
                 }
             }
             Protocol::SECP256K1 => Self::new_with_check(
@@ -214,14 +233,14 @@ impl Address {
         let decoded = base32_decode(raw_addr)?;
         let (payload, checksum) = decoded.split_at(decoded.len() - constant::CHECKSUM_HASH_LEN);
         if payload.len() != payload_size {
-            return Err(AddressError::InvalidAddrLength);
+            return Err(AddressError::InvalidPayload);
         }
 
         let mut bytes = Vec::with_capacity(1 + payload_size);
         bytes.push(protocol as u8);
         bytes.extend_from_slice(payload);
         if !validate_checksum(&bytes, checksum) {
-            return Err(AddressError::InvalidAddrChecksum);
+            return Err(AddressError::InvalidChecksum);
         }
         Ok(Address { bytes })
     }
