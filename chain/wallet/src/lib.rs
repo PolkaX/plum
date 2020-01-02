@@ -9,5 +9,5 @@ mod keystore;
 mod wallet;
 
 pub use self::error::{Result, WalletError};
-pub use self::keystore::{KeyInfo, KeyStore, KeyType, Signature};
+pub use self::keystore::*;
 pub use self::wallet::Wallet;

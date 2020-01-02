@@ -2,11 +2,12 @@
 
 use std::collections::HashMap;
 
-use address::{Address, Network};
 use blake2_rfc::blake2b::blake2b;
 
+use address::{Address, Network};
+use types::{KeyType, KeyInfo, KeyStore, Signature};
+
 use crate::error::{Result, WalletError};
-use crate::keystore::{KeyInfo, KeyStore, KeyType, Signature};
 
 const NETWORK: Network = Network::Test;
 const KNAME_PREFIX: &str = "wallet-";
