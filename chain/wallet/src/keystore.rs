@@ -1,18 +1,56 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-//! Keystore (and session key management) for ed25519 based chains like Polkadot.
+const KEYSTORE_PATH: &str = "/.plum/keystore/";
 
+///
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub enum KeyType {
+    ///
+    SECP256K1,
+    ///
+    BLS,
+}
+
+/// KeyInfo is used for storing keys in KeyStore.
+#[derive(Clone, Debug)]
+pub struct KeyInfo {
+    /// The key type.
+    pub ty: KeyType,
+    /// The private key corresponding to key type.
+    pub privkey: Vec<u8>,
+}
+
+/// KeyStore is used for storing secret keys.
+pub trait KeyStore {
+    /// The error type that keystore operations may return.
+    type Error;
+
+    /// List lists all the keys stored in the KeyStore.
+    fn list(&self) -> Result<Vec<String>, Self::Error>;
+    /// Get gets a key out of keystore and returns KeyInfo corresponding to named key.
+    fn get(&self, _: &str) -> Result<KeyInfo, Self::Error>;
+    /// Put saves a key info under given name.
+    fn put(&mut self, _: String, _: KeyInfo) -> Result<(), Self::Error>;
+    /// Delete removes a key from keystore.
+    fn delete(&mut self, _: String) -> Result<(), Self::Error>;
+}
+
+///
+#[derive(PartialEq, Eq, Clone)]
+pub struct Signature {
+    ///
+    pub ty: KeyType,
+    ///
+    pub data: Vec<u8>,
+}
+
+/*
 use std::{
     fs::{self, File},
     io::Write,
     path::PathBuf,
-    sync::Arc,
+    sync::{Arc, RwLock},
 };
-
-use address::{KeyPair, KeyType};
-use parking_lot::RwLock;
-
-use crate::error::{Result, WalletError};
 
 /// Keystore pointer
 pub type KeyStorePtr = Arc<RwLock<Store>>;
@@ -89,3 +127,4 @@ mod tests {
         println!("{}\n", secp_addr.encode(Network::Test).unwrap());
     }
 }
+*/

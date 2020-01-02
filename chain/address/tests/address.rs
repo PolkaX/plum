@@ -8,7 +8,7 @@ fn test_random_id_address() {
     let addr = Address::new_id_addr(id).unwrap();
     assert_eq!(addr.protocol(), Protocol::ID);
 
-    let encoded = addr.encode(Network::Test).unwrap();
+    let encoded = addr.encode(Network::Test);
     let decoded = Address::decode(&encoded).unwrap();
     assert_eq!(decoded, addr);
 }
@@ -30,7 +30,7 @@ fn test_id_address() {
     for (id, expect) in test_cases {
         let addr = Address::new_id_addr(id).unwrap();
         assert_eq!(addr.protocol(), Protocol::ID);
-        assert_eq!(addr.encode(Network::Test).unwrap(), expect);
+        assert_eq!(addr.encode(Network::Test), expect);
     }
 }
 
@@ -41,7 +41,7 @@ fn test_random_secp256k1_address() {
     let addr = Address::new_secp256k1_addr(&pubkey.serialize()).unwrap();
     assert_eq!(addr.protocol(), Protocol::SECP256K1);
 
-    let encoded = addr.encode(Network::Test).unwrap();
+    let encoded = addr.encode(Network::Test);
     let decoded = Address::decode(&encoded).unwrap();
     assert_eq!(decoded, addr);
 }
@@ -108,7 +108,7 @@ fn test_secp256k1_address() {
     for (pubkey, expect) in test_cases {
         let addr = Address::new_secp256k1_addr(&pubkey).unwrap();
         assert_eq!(addr.protocol(), Protocol::SECP256K1);
-        assert_eq!(addr.encode(Network::Test).unwrap(), expect);
+        assert_eq!(addr.encode(Network::Test), expect);
     }
 }
 
@@ -118,7 +118,7 @@ fn test_random_actor_address() {
     let addr = Address::new_actor_addr(&data).unwrap();
     assert_eq!(addr.protocol(), Protocol::Actor);
 
-    let encoded = addr.encode(Network::Test).unwrap();
+    let encoded = addr.encode(Network::Test);
     let decoded = Address::decode(&encoded).unwrap();
     assert_eq!(decoded, addr);
 }
@@ -166,7 +166,7 @@ fn test_actor_address() {
     for (data, expect) in test_cases {
         let addr = Address::new_actor_addr(&data).unwrap();
         assert_eq!(addr.protocol(), Protocol::Actor);
-        assert_eq!(addr.encode(Network::Test).unwrap(), expect);
+        assert_eq!(addr.encode(Network::Test), expect);
     }
 }
 
@@ -178,7 +178,7 @@ fn test_random_bls_address() {
     let addr = Address::new_bls_addr(&pubkey.as_bytes()).unwrap();
     assert_eq!(addr.protocol(), Protocol::BLS);
 
-    let encoded = addr.encode(Network::Test).unwrap();
+    let encoded = addr.encode(Network::Test);
     let decoded = Address::decode(&encoded).unwrap();
     assert_eq!(decoded, addr);
 }
@@ -236,7 +236,7 @@ fn test_bls_address() {
     for (pubkey, expect) in test_cases {
         let addr = Address::new_bls_addr(&pubkey).unwrap();
         assert_eq!(addr.protocol(), Protocol::BLS);
-        assert_eq!(addr.encode(Network::Test).unwrap(), expect);
+        assert_eq!(addr.encode(Network::Test), expect);
     }
 }
 
@@ -335,10 +335,7 @@ fn test_checksum() {
     let checksum = checksum(data.as_bytes());
     assert_eq!(checksum.len(), constant::CHECKSUM_HASH_LEN);
     assert!(validate_checksum(data.as_bytes(), checksum.as_slice()));
-    assert!(!validate_checksum(
-        b"kittinmittins",
-        checksum.as_slice()
-    ));
+    assert!(!validate_checksum(b"kittinmittins", checksum.as_slice()));
 }
 
 /*

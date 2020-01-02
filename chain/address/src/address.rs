@@ -59,7 +59,7 @@ impl Network {
 }
 
 /// The general address structure.
-#[derive(PartialEq, Eq, Clone, Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Hash, Serialize, Deserialize)]
 pub struct Address {
     // ID protocol: payload is VarInt encoding.
     // SECP256K1 protocol: payload is pubkey (length = 20)
@@ -155,27 +155,17 @@ impl Address {
     }
 
     /// Return an address encoded as a string.
-    pub fn encode(&self, network: Network) -> Result<String> {
+    pub fn encode(&self, network: Network) -> String {
         match self.protocol() {
             Protocol::SECP256K1 | Protocol::Actor | Protocol::BLS => {
                 let mut payload_and_checksum = self.payload().to_vec();
                 payload_and_checksum.extend_from_slice(&self.checksum());
                 let base32 = base32_encode(payload_and_checksum);
-                Ok(format!(
-                    "{}{}{}",
-                    network.prefix(),
-                    self.protocol() as u8,
-                    base32
-                ))
+                format!("{}{}{}", network.prefix(), self.protocol() as u8, base32)
             }
             Protocol::ID => {
                 let (id, _) = u64::decode_var(&self.payload());
-                Ok(format!(
-                    "{}{}{}",
-                    network.prefix(),
-                    self.protocol() as u8,
-                    id
-                ))
+                format!("{}{}{}", network.prefix(), self.protocol() as u8, id)
             }
         }
     }

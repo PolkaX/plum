@@ -1,7 +1,5 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-pub mod types;
-
 pub type Cid = u8;
 
 pub struct Info {
@@ -14,6 +12,3 @@ pub struct Info {
 pub trait Client {
     fn info(&self) -> Info;
 }
-
-#[cfg(test)]
-mod tests {}
