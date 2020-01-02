@@ -20,10 +20,10 @@ wallet = { path = "chain/wallet" }
 [workspace]
 members = [
 	"chain/address",
-	"chain",
 	"chain/types",
+	"chain/wallet",
+	"chain",
 	"cli",
 	"lp2p",
 	"peermgr",
-	"chain/wallet",
 ]
