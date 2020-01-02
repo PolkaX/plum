@@ -20,5 +20,5 @@ lazy_static = "1.4.0"
 
 lp2p = { path = "../lp2p" }
 chain = { path = "../chain" }
-wallet = { path = "../chain/wallet" }
+#wallet = { path = "../chain/wallet" }
 address = { path = "../chain/address" }
