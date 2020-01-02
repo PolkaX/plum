@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 /// Type alias to use this library's [`WalletError`] type in a `Result`.
 pub type Result<T> = std::result::Result<T, WalletError>;

@@ -1,3 +1,5 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 // use cid::Cid;
 use libp2p::PeerId;
 use serde::{Deserialize, Serialize};
