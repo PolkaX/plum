@@ -1,11 +1,9 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 use libp2p::core::Multiaddr;
-use structopt::clap::arg_enum;
 use structopt::StructOpt;
 
 use crate::run_lp2p;
-use address::keypair::key_types;
 
 #[derive(StructOpt, Debug, Clone)]
 pub enum Auth {
@@ -174,6 +172,7 @@ pub enum Sync {
     Status,
 }
 
+/*
 arg_enum! {
     #[derive(Debug, Clone)]
     pub enum KeyType {
@@ -239,6 +238,7 @@ impl Wallet {
         }
     }
 }
+*/
 
 #[derive(StructOpt, Debug, Clone)]
 pub enum Command {
@@ -269,9 +269,11 @@ pub enum Command {
     /// Interact with and query filecoin chain state
     #[structopt(name = "state")]
     State(State),
+    /*
     /// Manage wallet
     #[structopt(name = "wallet")]
     Wallet(Wallet),
+    */
     /// Send funds between accounts
     #[structopt(name = "transfer")]
     Transfer {

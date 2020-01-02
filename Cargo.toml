@@ -13,16 +13,17 @@ name = "plum-node"
 path = "src/bin/main.rs"
 
 [dependencies]
+address = { path = "chain/address" }
 cli = { path = "./cli" }
-wallet = { path = "./wallet" }
-address = { path = "./address" }
+wallet = { path = "chain/wallet" }
 
 [workspace]
 members = [
+	"chain/address",
+	"chain/types",
+	"chain/wallet",
 	"chain",
 	"cli",
 	"lp2p",
 	"peermgr",
-	"wallet",
-	"address",
 ]
