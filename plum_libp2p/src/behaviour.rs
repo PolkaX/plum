@@ -25,7 +25,7 @@ pub struct Behaviour<TSubstream: AsyncRead + AsyncWrite> {
 }
 
 pub enum BehaviourEvent {
-    Hello(PeerId),
+    HelloSubscribed(PeerId),
     DiscoveredPeer(PeerId),
     ExpiredPeer(PeerId),
     GossipMessage {
@@ -79,7 +79,7 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<GossipsubE
             }
             GossipsubEvent::Subscribed { peer_id, topic } => {
                 if topic == TopicHash::from_raw("/fil/hello") {
-                    self.events.push(BehaviourEvent::Hello(peer_id));
+                    self.events.push(BehaviourEvent::HelloSubscribed(peer_id));
                 }
             }
             GossipsubEvent::Unsubscribed { .. } => {}

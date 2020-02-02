@@ -63,7 +63,7 @@ pub fn run_lp2p(peer_ip: Option<Multiaddr>) {
     if let Some(peer) = peer_ip {
         network_config.bootnodes.push(peer);
     }
-    let network_service = network::service::NetworkService::new(&network_config, &task_executor);
+    let network_service = network::service::Service::new(&network_config, &task_executor);
 
     let _ = runtime.block_on(exit);
     exit_send.fire();

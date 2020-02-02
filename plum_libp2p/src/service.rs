@@ -47,7 +47,7 @@ impl Libp2pService {
                 Ok(()) => {
                     info!("Dialing libp2p peer address: {}", multiaddr);
                 }
-                Err(err) => debug!(
+                Err(err) => error!(
                     "Could not connect to peer, address {}, error: {:?}",
                     multiaddr, err
                 ),
@@ -80,7 +80,7 @@ impl Stream for Libp2pService {
                     BehaviourEvent::DiscoveredPeer(peer) => {
                         libp2p::Swarm::dial(&mut self.swarm, peer);
                     }
-                    BehaviourEvent::Hello(peer) => {
+                    BehaviourEvent::HelloSubscribed(peer) => {
                         // TODO: say hello
                         println!("----- hello message from network: {:?}", peer);
                         return Ok(Async::Ready(Option::from(Libp2pEvent::Hello(peer))));

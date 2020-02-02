@@ -11,7 +11,7 @@ pub struct MessageHandler;
 /// Types of messages the handler can receive.
 #[derive(Debug)]
 pub enum HandlerMessage {
-    Hello(PeerId),
+    SayHello(PeerId),
     // PubsubMessage(MessageId, PeerId, PubsubMessage),
 }
 
@@ -42,7 +42,7 @@ impl MessageHandler {
     fn handle_message(&mut self, message: HandlerMessage) {
         match message {
             // A peer has disconnected
-            HandlerMessage::Hello(peer_id) => {
+            HandlerMessage::SayHello(peer_id) => {
                 println!("============== handle_message hello");
             }
         }

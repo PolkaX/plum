@@ -1,30 +1,24 @@
 use futures::stream::Stream;
 use futures::{Async, Future};
 use libp2p::gossipsub::Topic;
+use log::warn;
 use plum_libp2p::config::Libp2pConfig;
 use plum_libp2p::service::{Libp2pEvent, Libp2pService};
-use slog::{warn, Logger};
 use std::sync::{Arc, Mutex};
 use tokio::runtime::TaskExecutor;
 use tokio::sync::mpsc;
 
 use crate::message_handler::{HandlerMessage, MessageHandler};
 
-/// Ingress events to the NetworkService
 pub enum NetworkMessage {
     PubsubMessage { topics: Topic, message: Vec<u8> },
 }
 
-/// Receives commands through a channel which communicates with Libp2p.
-/// It also listens to the Libp2p service for messages.
-pub struct NetworkService {
-    /// Libp2p instance
+pub struct Service {
     pub libp2p: Arc<Mutex<Libp2pService>>,
 }
 
-impl NetworkService {
-    /// Starts a Libp2pService with a given config, UnboundedSender, and tokio executor.
-    /// Returns an UnboundedSender channel so messages can come in.
+impl Service {
     pub fn new(
         config: &Libp2pConfig,
         executor: &TaskExecutor,
@@ -48,7 +42,7 @@ impl NetworkService {
         );
 
         (
-            NetworkService {
+            Self {
                 libp2p: libp2p_service,
             },
             network_send,
@@ -57,9 +51,7 @@ impl NetworkService {
     }
 }
 
-enum Error {}
-
-/// Spawns the NetworkService service.
+/// Spawn the network service.
 fn spawn_service(
     libp2p_service: Arc<Mutex<Libp2pService>>,
     network_recv: mpsc::UnboundedReceiver<NetworkMessage>,
@@ -76,6 +68,8 @@ fn spawn_service(
 
     network_exit
 }
+
+enum Error {}
 
 fn network_service(
     libp2p_service: Arc<Mutex<Libp2pService>>,
@@ -133,10 +127,10 @@ fn network_service(
                     Libp2pEvent::Hello(peer) => {
                         log::info!("------------ hello -----------");
                         if message_handler_send
-                            .try_send(HandlerMessage::Hello(peer))
+                            .try_send(HandlerMessage::SayHello(peer))
                             .is_err()
                         {
-                            log::warn!("Cant handle hello message");
+                            warn!("Cant handle hello message");
                         }
                     }
                 },
