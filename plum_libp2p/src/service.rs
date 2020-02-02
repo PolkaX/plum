@@ -10,7 +10,7 @@ use libp2p::{
     identity::{ed25519, Keypair},
     mplex, secio, yamux, Multiaddr, PeerId, Swarm, Transport,
 };
-use slog::{debug, error, info, trace, Logger};
+use log::{debug, error, info, trace};
 use std::io::{Error, ErrorKind};
 use std::time::Duration;
 
@@ -28,25 +28,28 @@ impl Libp2pService {
         let net_keypair = get_keypair();
         let peer_id = PeerId::from(net_keypair.public());
 
-        log::info!("Local peer id: {:?}", peer_id);
+        info!("Local peer id: {:?}", peer_id);
 
         let transport = build_transport(net_keypair.clone());
 
         let mut swarm = {
-            let be = Behaviour::new(&net_keypair);
-            Swarm::new(transport, be, peer_id)
+            let behaviour = Behaviour::new(&net_keypair);
+            Swarm::new(transport, behaviour, peer_id.clone())
         };
+
+        swarm
+            .kad
+            .add_address(&peer_id, config.listen_address.clone());
 
         // helper closure for dialing peers
         let mut dial_addr = |multiaddr: Multiaddr| {
             match Swarm::dial_addr(&mut swarm, multiaddr.clone()) {
                 Ok(()) => {
-                    log::info!("Dialing libp2p peer address: {}", multiaddr);
+                    info!("Dialing libp2p peer address: {}", multiaddr);
                 }
-                Err(err) => log::debug!(
+                Err(err) => debug!(
                     "Could not connect to peer, address {}, error: {:?}",
-                    multiaddr,
-                    err
+                    multiaddr, err
                 ),
             };
         };
@@ -55,14 +58,7 @@ impl Libp2pService {
             dial_addr(node);
         }
 
-        Swarm::listen_on(
-            &mut swarm,
-            config
-                .listening_multiaddr
-                .parse()
-                .expect("Incorrect MultiAddr Format"),
-        )
-        .unwrap();
+        Swarm::listen_on(&mut swarm, config.listen_address.clone()).unwrap();
 
         for topic in config.pubsub_topics.clone() {
             swarm.subscribe(topic);

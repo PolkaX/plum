@@ -1,11 +1,10 @@
-use crate::service::NetworkMessage;
 use anyhow::Result;
 use futures::future::Future;
 use futures::stream::Stream;
 use plum_libp2p::PeerId;
 use tokio::sync::mpsc;
 
-// use crate::message_processor::MessageProcessor;
+use crate::service::NetworkMessage;
 
 pub struct MessageHandler;
 

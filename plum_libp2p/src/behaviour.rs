@@ -3,20 +3,21 @@ use libp2p::core::identity::Keypair;
 use libp2p::core::PeerId;
 use libp2p::gossipsub::{Gossipsub, GossipsubConfig, GossipsubEvent, Topic, TopicHash};
 use libp2p::identify::{Identify, IdentifyEvent};
+use libp2p::kad::{record::store::MemoryStore, Kademlia, KademliaConfig, KademliaEvent};
 use libp2p::mdns::{Mdns, MdnsEvent};
-use libp2p::ping::{
-    handler::{PingFailure, PingSuccess},
-    Ping, PingEvent,
-};
+use libp2p::ping::{Ping, PingEvent};
 use libp2p::swarm::{NetworkBehaviourAction, NetworkBehaviourEventProcess};
 use libp2p::tokio_io::{AsyncRead, AsyncWrite};
 use libp2p::NetworkBehaviour;
+use log::debug;
 
 #[derive(NetworkBehaviour)]
 #[behaviour(out_event = "BehaviourEvent", poll_method = "poll")]
 pub struct Behaviour<TSubstream: AsyncRead + AsyncWrite> {
     pub gossipsub: Gossipsub<TSubstream>,
+    // FIXME: kad or mdns?
     pub mdns: Mdns<TSubstream>,
+    pub kad: Kademlia<TSubstream, MemoryStore>,
     pub ping: Ping<TSubstream>,
     pub identify: Identify<TSubstream>,
     #[behaviour(ignore)]
@@ -41,7 +42,6 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<MdnsEvent>
         match event {
             MdnsEvent::Discovered(list) => {
                 for (peer, _) in list {
-                    println!("-----------discovered peer: {:?}", peer);
                     self.events.push(BehaviourEvent::DiscoveredPeer(peer))
                 }
             }
@@ -53,6 +53,15 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<MdnsEvent>
                 }
             }
         }
+    }
+}
+
+impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<KademliaEvent>
+    for Behaviour<TSubstream>
+{
+    fn inject_event(&mut self, event: KademliaEvent) {
+        log::debug!("=============== inject KademliaEvent: {:?}", event);
+        // TODO: PeerDiscovered
     }
 }
 
@@ -94,12 +103,12 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<IdentifyEv
                 info,
                 observed_addr,
             } => {
-                log::debug!("Identified Peer {:?}", peer_id);
-                log::debug!("protocol_version {:}?", info.protocol_version);
-                log::debug!("agent_version {:?}", info.agent_version);
-                log::debug!("listening_ addresses {:?}", info.listen_addrs);
-                log::debug!("observed_address {:?}", observed_addr);
-                log::debug!("protocols {:?}", info.protocols);
+                debug!("Identified Peer {:?}", peer_id);
+                debug!("protocol_version {:}?", info.protocol_version);
+                debug!("agent_version {:?}", info.agent_version);
+                debug!("listening_ addresses {:?}", info.listen_addrs);
+                debug!("observed_address {:?}", observed_addr);
+                debug!("protocols {:?}", info.protocols);
             }
             IdentifyEvent::Sent { .. } => (),
             IdentifyEvent::Error { .. } => (),
@@ -119,15 +128,24 @@ impl<TSubstream: AsyncRead + AsyncWrite> Behaviour<TSubstream> {
     }
 }
 
+fn generate_kad_config(peer_id: &PeerId) -> (KademliaConfig, MemoryStore) {
+    let mut cfg = KademliaConfig::default();
+    cfg.set_query_timeout(std::time::Duration::from_secs(5 * 60));
+    let store = MemoryStore::new(peer_id.clone());
+    (cfg, store)
+}
+
 impl<TSubstream: AsyncRead + AsyncWrite> Behaviour<TSubstream> {
     pub fn new(local_key: &Keypair) -> Self {
         let local_peer_id = local_key.public().into_peer_id();
+        let (kad_cfg, kad_store) = generate_kad_config(&local_peer_id);
         let gossipsub_config = GossipsubConfig::default();
         Self {
-            gossipsub: Gossipsub::new(local_peer_id, gossipsub_config),
+            gossipsub: Gossipsub::new(local_peer_id.clone(), gossipsub_config),
             mdns: Mdns::new().expect("Failed to create mDNS service"),
             ping: Ping::default(),
-            identify: Identify::new("forest/libp2p".into(), "0.0.1".into(), local_key.public()),
+            kad: Kademlia::with_config(local_peer_id, kad_store, kad_cfg),
+            identify: Identify::new("plum/libp2p".into(), "0.0.1".into(), local_key.public()),
             events: vec![],
         }
     }
