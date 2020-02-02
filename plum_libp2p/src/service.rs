@@ -73,7 +73,7 @@ impl Libp2pService {
 }
 
 impl Stream for Libp2pService {
-    type Item = NetworkEvent;
+    type Item = Libp2pEvent;
     type Error = ();
 
     /// Continuously polls the Libp2p swarm to get events
@@ -86,6 +86,8 @@ impl Stream for Libp2pService {
                     }
                     BehaviourEvent::Hello(peer) => {
                         // TODO: say hello
+                        println!("----- hello message from network: {:?}", peer);
+                        return Ok(Async::Ready(Option::from(Libp2pEvent::Hello(peer))));
                     }
                     BehaviourEvent::ExpiredPeer(_) => {}
                     BehaviourEvent::GossipMessage {
@@ -97,7 +99,7 @@ impl Stream for Libp2pService {
                             "----- received gossipsub source:{:?}, topics:{:?}, message: {:?}",
                             source, topics, message
                         );
-                        return Ok(Async::Ready(Option::from(NetworkEvent::PubsubMessage {
+                        return Ok(Async::Ready(Option::from(Libp2pEvent::PubsubMessage {
                             source,
                             topics,
                             message,
@@ -115,12 +117,13 @@ impl Stream for Libp2pService {
 
 /// Events emitted by this Service to be listened by the NetworkService.
 #[derive(Clone)]
-pub enum NetworkEvent {
+pub enum Libp2pEvent {
     PubsubMessage {
         source: PeerId,
         topics: Vec<TopicHash>,
         message: Vec<u8>,
     },
+    Hello(PeerId),
 }
 
 pub fn build_transport(local_key: Keypair) -> Boxed<(PeerId, StreamMuxerBox), Error> {

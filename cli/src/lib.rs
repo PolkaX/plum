@@ -59,14 +59,11 @@ pub fn run_lp2p(peer_ip: Option<Multiaddr>) {
     let network_state = lp2p::NetworkState::default();
     let client = Client;
 
-    let (tx, _rx) = mpsc::unbounded_channel::<plum_libp2p::service::NetworkEvent>();
-
     let mut network_config = plum_libp2p::Libp2pConfig::default();
     if let Some(peer) = peer_ip {
         network_config.bootnodes.push(peer);
     }
-    let network_service =
-        network::service::NetworkService::new(&network_config, tx, &task_executor);
+    let network_service = network::service::NetworkService::new(&network_config, &task_executor);
 
     let _ = runtime.block_on(exit);
     exit_send.fire();
