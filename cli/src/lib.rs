@@ -6,12 +6,14 @@ use std::io::Write;
 
 use ansi_term::Colour;
 use lazy_static::lazy_static;
-use libp2p::core::Multiaddr;
+// use libp2p::core::Multiaddr;
 use log::info;
+use plum_libp2p::Multiaddr;
 use regex::Regex;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
+use tokio::sync::mpsc;
 
 use self::cmd::Command;
 
@@ -56,7 +58,16 @@ pub fn run_lp2p(peer_ip: Option<Multiaddr>) {
     let task_executor = runtime.executor();
     let network_state = lp2p::NetworkState::default();
     let client = Client;
-    lp2p::initialize(task_executor, network_state, peer_ip, client);
+
+    let (tx, _rx) = mpsc::unbounded_channel::<plum_libp2p::service::NetworkEvent>();
+
+    let mut network_config = plum_libp2p::Libp2pConfig::default();
+    if let Some(peer) = peer_ip {
+        network_config.bootnodes.push(peer);
+    }
+    let network_service =
+        network::service::NetworkService::new(&network_config, tx, &task_executor);
+
     let _ = runtime.block_on(exit);
     exit_send.fire();
 }

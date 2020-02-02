@@ -1,6 +1,7 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
-use libp2p::core::Multiaddr;
+// use libp2p::core::Multiaddr;
+use plum_libp2p::Multiaddr;
 use structopt::StructOpt;
 
 use crate::run_lp2p;
