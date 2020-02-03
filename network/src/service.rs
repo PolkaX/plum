@@ -1,7 +1,7 @@
 use futures::stream::Stream;
 use futures::{Async, Future};
 use libp2p::gossipsub::Topic;
-use log::warn;
+use log::{debug, warn};
 use plum_libp2p::config::Libp2pConfig;
 use plum_libp2p::service::{Libp2pEvent, Libp2pService};
 use std::sync::{Arc, Mutex};
@@ -12,6 +12,7 @@ use crate::message_handler::{HandlerMessage, MessageHandler};
 
 pub enum NetworkMessage {
     PubsubMessage { topics: Topic, message: Vec<u8> },
+    HelloMessage(Vec<u8>),
 }
 
 pub struct Service {
@@ -30,7 +31,7 @@ impl Service {
         let (network_send, network_recv) = mpsc::unbounded_channel::<NetworkMessage>();
 
         let message_handler_send = MessageHandler::spawn(network_send.clone(), executor)
-            .expect("Fail to spawn message handler thread");
+            .expect("Failed to spawn message handler thread");
 
         let libp2p_service = Arc::new(Mutex::new(Libp2pService::new(config)));
 
@@ -51,7 +52,6 @@ impl Service {
     }
 }
 
-/// Spawn the network service.
 fn spawn_service(
     libp2p_service: Arc<Mutex<Libp2pService>>,
     network_recv: mpsc::UnboundedReceiver<NetworkMessage>,
@@ -81,16 +81,19 @@ fn network_service(
             match network_recv.poll() {
                 Ok(Async::Ready(Some(event))) => match event {
                     NetworkMessage::PubsubMessage { topics, message } => {
-                        log::info!(
-                            "----------- network_recv received topics: {:?}, message: {:?}",
-                            topics,
-                            message
+                        debug!(
+                            "Publishing NetworkMessage, topics: {:?}, message: {:?}",
+                            topics, message
                         );
                         libp2p_service
                             .lock()
                             .unwrap()
                             .swarm
                             .publish(&topics, message);
+                    }
+                    NetworkMessage::HelloMessage(message) => {
+                        debug!("Publishing HelloMessage, message: {:?}", message);
+                        libp2p_service.lock().unwrap().swarm.publish_hello(message);
                     }
                 },
                 Ok(Async::NotReady) => break,
@@ -101,36 +104,36 @@ fn network_service(
             match libp2p_service.lock().unwrap().poll() {
                 Ok(Async::Ready(Some(event))) => match event {
                     Libp2pEvent::PubsubMessage {
+                        id,
                         source,
                         topics,
-                        message,
+                        data,
                     } => {
                         log::info!(
                             "----------- libp2p_service received source: {:?}, topics: {:?}, message: {:?}",
                             source,
                             topics,
-                            message
+                            data
                         );
-                        /*
+
                         if message_handler_send
                             .try_send(HandlerMessage::PubsubMessage {
+                                id,
                                 source,
                                 topics,
-                                message,
+                                data,
                             })
                             .is_err()
                         {
-                            log::warn!("Cant handle message");
+                            warn!("Failed to handle PubsubMessage");
                         }
-                        */
                     }
-                    Libp2pEvent::Hello(peer) => {
-                        log::info!("------------ hello -----------");
+                    Libp2pEvent::HelloSubscribed(peer) => {
                         if message_handler_send
-                            .try_send(HandlerMessage::SayHello(peer))
+                            .try_send(HandlerMessage::SayHello(peer.clone()))
                             .is_err()
                         {
-                            warn!("Cant handle hello message");
+                            warn!("Failed to say hello to {}", peer);
                         }
                     }
                 },
