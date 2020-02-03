@@ -1,8 +1,8 @@
 use anyhow::Result;
 use futures::future::Future;
 use futures::stream::Stream;
-use log::debug;
-use plum_libp2p::{MessageId, PeerId, TopicHash};
+use log::{debug, error};
+use plum_libp2p::{config::HELLO_TOPIC, MessageId, PeerId, TopicHash};
 use tokio::sync::mpsc;
 
 use crate::service::NetworkMessage;
@@ -47,12 +47,19 @@ impl MessageHandler {
 
     fn handle_message(&mut self, message: HandlerMessage) {
         match message {
-            HandlerMessage::SayHello(peer_id) => {
-                println!("============== handle_message hello");
-                // TODO: get current status of local node
-                self.network_send.try_send(NetworkMessage::HelloMessage(
-                    b"hello message sent on say hello".to_vec(),
-                ));
+            HandlerMessage::SayHello(_peer_id) => {
+                // TODO:
+                // 1. get current status of local node
+                // 2. publish the hello message
+                if self
+                    .network_send
+                    .try_send(NetworkMessage::HelloMessage(
+                        b"hello message sent on say hello".to_vec(),
+                    ))
+                    .is_err()
+                {
+                    error!("Failed to send HelloMessage");
+                }
             }
             HandlerMessage::PubsubMessage {
                 id,
@@ -60,7 +67,16 @@ impl MessageHandler {
                 topics,
                 data,
             } => {
-                println!("============== handle pubsub message id: {:?}, source: {:?}, topics: {:?}, data: {:?}", id, source, topics, data);
+                debug!(
+                    "handle PubsubMessage, id: {:?}, source: {:?}, topics: {:?}, data: {:?}",
+                    id, source, topics, data
+                );
+                // TODO: Dispatch hello/blocks/messages message
+                for topic in topics {
+                    if topic == TopicHash::from_raw(HELLO_TOPIC) {
+                        // TODO: handle hello message, send the sync request if all checks passed.
+                    }
+                }
             }
         }
     }

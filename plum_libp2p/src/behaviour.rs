@@ -62,7 +62,7 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<MdnsEvent>
 impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<KademliaEvent>
     for Behaviour<TSubstream>
 {
-    fn inject_event(&mut self, event: KademliaEvent) {
+    fn inject_event(&mut self, _event: KademliaEvent) {
         // TODO: PeerDiscovered
     }
 }
@@ -81,7 +81,7 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<GossipsubE
                 })
             }
             GossipsubEvent::Subscribed { peer_id, topic } => {
-                if topic == TopicHash::from_raw("/fil/hello") {
+                if topic == TopicHash::from_raw(HELLO_TOPIC) {
                     self.events.push(BehaviourEvent::HelloSubscribed(peer_id));
                 }
             }
