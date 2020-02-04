@@ -3,9 +3,11 @@
 use super::methods::*;
 use crate::rpc::{
     codec::{
-        base::{BaseInboundCodec, BaseOutboundCodec},
-        ssz::{SSZInboundCodec, SSZOutboundCodec},
-        InboundCodec, OutboundCodec,
+        // base::{BaseInboundCodec, BaseOutboundCodec},
+        // ssz::{SSZInboundCodec, SSZOutboundCodec},
+        // InboundCodec,
+        MyInboundCodec,
+        MyOutboundCodec, // , OutboundCodec,
     },
     methods::ResponseTermination,
 };
@@ -14,6 +16,7 @@ use futures::{
     sink, stream, Sink, Stream,
 };
 use libp2p::core::{upgrade, InboundUpgrade, OutboundUpgrade, ProtocolName, UpgradeInfo};
+use serde::{Deserialize, Serialize};
 use std::io;
 use std::time::Duration;
 use tokio::codec::Framed;
@@ -105,7 +108,8 @@ impl ProtocolName for ProtocolId {
 // handler to respond to once ready.
 
 pub type InboundOutput<TSocket> = (RPCRequest, InboundFramed<TSocket>);
-pub type InboundFramed<TSocket> = Framed<TimeoutStream<upgrade::Negotiated<TSocket>>, InboundCodec>;
+pub type InboundFramed<TSocket> =
+    Framed<TimeoutStream<upgrade::Negotiated<TSocket>>, MyInboundCodec>;
 type FnAndThen<TSocket> = fn(
     (Option<RPCRequest>, InboundFramed<TSocket>),
 ) -> FutureResult<InboundOutput<TSocket>, RPCError>;
@@ -134,8 +138,9 @@ where
     ) -> Self::Future {
         match protocol.encoding.as_str() {
             "ssz" | _ => {
-                let ssz_codec = BaseInboundCodec::new(SSZInboundCodec::new(protocol, MAX_RPC_SIZE));
-                let codec = InboundCodec::SSZ(ssz_codec);
+                // let ssz_codec = BaseInboundCodec::new(SSZInboundCodec::new(protocol, MAX_RPC_SIZE));
+                // let codec = InboundCodec::SSZ(ssz_codec);
+                let codec = MyInboundCodec;
                 let mut timed_socket = TimeoutStream::new(socket);
                 timed_socket.set_read_timeout(Some(Duration::from_secs(TTFB_TIMEOUT)));
                 Framed::new(timed_socket, codec)
@@ -160,7 +165,7 @@ where
 // Combines all the RPC requests into a single enum to implement `UpgradeInfo` and
 // `OutboundUpgrade`
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum RPCRequest {
     Status(StatusMessage),
     Goodbye(GoodbyeReason),
@@ -232,7 +237,7 @@ impl RPCRequest {
 
 /* Outbound upgrades */
 
-pub type OutboundFramed<TSocket> = Framed<upgrade::Negotiated<TSocket>, OutboundCodec>;
+pub type OutboundFramed<TSocket> = Framed<upgrade::Negotiated<TSocket>, MyOutboundCodec>;
 
 impl<TSocket> OutboundUpgrade<TSocket> for RPCRequest
 where
@@ -248,9 +253,10 @@ where
     ) -> Self::Future {
         match protocol.encoding.as_str() {
             "ssz" | _ => {
-                let ssz_codec =
-                    BaseOutboundCodec::new(SSZOutboundCodec::new(protocol, MAX_RPC_SIZE));
-                let codec = OutboundCodec::SSZ(ssz_codec);
+                // let ssz_codec =
+                // BaseOutboundCodec::new(SSZOutboundCodec::new(protocol, MAX_RPC_SIZE));
+                // let codec = OutboundCodec::SSZ(ssz_codec);
+                let codec = MyOutboundCodec;
                 Framed::new(socket, codec).send(self)
             }
         }

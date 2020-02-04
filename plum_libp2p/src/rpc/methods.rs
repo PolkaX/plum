@@ -1,5 +1,6 @@
 //! Available RPC methods types and ids.
 
+use serde::{Deserialize, Serialize};
 use ssz_derive::{Decode, Encode};
 // use types::{Epoch, Hash256, Slot};
 
@@ -10,7 +11,7 @@ use ssz_derive::{Decode, Encode};
 pub type RequestId = usize;
 
 /// The STATUS request/response handshake message.
-#[derive(Encode, Decode, Clone, Debug, PartialEq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct StatusMessage {
     /// The fork version of the chain we are broadcasting.
     pub fork_version: [u8; 4],
@@ -34,7 +35,7 @@ pub struct StatusMessage {
 /// Note: any unknown `u64::into(n)` will resolve to `Goodbye::Unknown` for any unknown `n`,
 /// however `GoodbyeReason::Unknown.into()` will go into `0_u64`. Therefore de-serializing then
 /// re-serializing may not return the same bytes.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum GoodbyeReason {
     /// This node has shutdown.
     ClientShutdown = 1,
@@ -100,7 +101,7 @@ impl ssz::Decode for GoodbyeReason {
 }
 
 /// Request a number of beacon block roots from a peer.
-#[derive(Encode, Decode, Clone, Debug, PartialEq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BlocksByRangeRequest {
     /// The hash tree root of a block on the requested chain.
     // pub head_block_root: Hash256,
@@ -120,7 +121,7 @@ pub struct BlocksByRangeRequest {
 }
 
 /// Request a number of beacon block bodies from a peer.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BlocksByRootRequest {
     /// The list of beacon block bodies being requested.
     // pub block_roots: Vec<Hash256>,
@@ -130,7 +131,7 @@ pub struct BlocksByRootRequest {
 /* RPC Handling and Grouping */
 // Collection of enums and structs used by the Codecs to encode/decode RPC messages
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum RPCResponse {
     /// A HELLO message.
     Status(StatusMessage),
@@ -144,7 +145,7 @@ pub enum RPCResponse {
 }
 
 /// Indicates which response is being terminated by a stream termination response.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ResponseTermination {
     /// Blocks by range stream termination.
     BlocksByRange,
@@ -153,7 +154,7 @@ pub enum ResponseTermination {
     BlocksByRoot,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum RPCErrorResponse {
     /// The response is a successful.
     Success(RPCResponse),
@@ -226,7 +227,7 @@ impl RPCErrorResponse {
     }
 }
 
-#[derive(Encode, Decode, Debug)]
+#[derive(Encode, Decode, Debug, Serialize, Deserialize)]
 pub struct ErrorMessage {
     /// The UTF-8 encoded Error message string.
     pub error_message: Vec<u8>,
