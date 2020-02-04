@@ -12,15 +12,12 @@ use libp2p::NetworkBehaviour;
 use log::debug;
 
 use crate::config::HELLO_TOPIC;
-use crate::rpc::RPCEvent;
-use crate::rpc::RPCMessage;
-use crate::rpc::RPC;
+use crate::rpc::{RPCEvent, RPCMessage, RPC};
 
 #[derive(NetworkBehaviour)]
 #[behaviour(out_event = "BehaviourEvent", poll_method = "poll")]
 pub struct Behaviour<TSubstream: AsyncRead + AsyncWrite> {
     pub gossipsub: Gossipsub<TSubstream>,
-    // FIXME: kad or mdns?
     pub mdns: Mdns<TSubstream>,
     pub kad: Kademlia<TSubstream, MemoryStore>,
     pub ping: Ping<TSubstream>,
@@ -186,6 +183,7 @@ impl<TSubstream: AsyncRead + AsyncWrite> Behaviour<TSubstream> {
         self.gossipsub.publish(topic, data);
     }
 
+    /// Publish hello message via gossipsub.
     pub fn publish_hello(&mut self, data: impl Into<Vec<u8>>) {
         self.gossipsub
             .publish(&Topic::new(HELLO_TOPIC.into()), data);

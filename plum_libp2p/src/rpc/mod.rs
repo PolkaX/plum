@@ -16,7 +16,6 @@ pub use methods::{
     ErrorMessage, RPCErrorResponse, RPCResponse, RequestId, ResponseTermination, StatusMessage,
 };
 pub use protocol::{RPCError, RPCProtocol, RPCRequest};
-use slog::o;
 use std::marker::PhantomData;
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
@@ -67,18 +66,13 @@ pub struct RPC<TSubstream> {
     events: Vec<NetworkBehaviourAction<RPCEvent, RPCMessage>>,
     /// Pins the generic substream.
     marker: PhantomData<TSubstream>,
-    /// Slog logger for RPC behaviour.
-    log: slog::Logger,
 }
 
 impl<TSubstream> RPC<TSubstream> {
     pub fn new() -> Self {
-        let drain = slog::Discard;
-        let log = slog::Logger::root(drain, slog::o!());
         RPC {
             events: Vec::new(),
             marker: PhantomData,
-            log,
         }
     }
 
@@ -101,11 +95,7 @@ where
     type OutEvent = RPCMessage;
 
     fn new_handler(&mut self) -> Self::ProtocolsHandler {
-        RPCHandler::new(
-            SubstreamProtocol::new(RPCProtocol),
-            Duration::from_secs(30),
-            &self.log,
-        )
+        RPCHandler::new(SubstreamProtocol::new(RPCProtocol), Duration::from_secs(30))
     }
 
     // handled by discovery

@@ -1,10 +1,6 @@
 #![allow(clippy::type_complexity)]
 #![allow(clippy::cognitive_complexity)]
 
-use super::methods::{ErrorMessage, RPCErrorResponse, RequestId, ResponseTermination};
-use super::protocol::{RPCError, RPCProtocol, RPCRequest};
-use super::RPCEvent;
-use crate::rpc::protocol::{InboundFramed, OutboundFramed};
 use core::marker::PhantomData;
 use fnv::FnvHashMap;
 use futures::prelude::*;
@@ -12,12 +8,17 @@ use libp2p::core::upgrade::{InboundUpgrade, OutboundUpgrade, UpgradeError};
 use libp2p::swarm::protocols_handler::{
     KeepAlive, ProtocolsHandler, ProtocolsHandlerEvent, ProtocolsHandlerUpgrErr, SubstreamProtocol,
 };
-use slog::{crit, debug, error};
+use log::{debug, error};
 use smallvec::SmallVec;
 use std::collections::hash_map::Entry;
 use std::time::{Duration, Instant};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::timer::{delay_queue, DelayQueue};
+
+use super::methods::{ErrorMessage, RPCErrorResponse, RequestId, ResponseTermination};
+use super::protocol::{RPCError, RPCProtocol, RPCRequest};
+use super::RPCEvent;
+use crate::rpc::protocol::{InboundFramed, OutboundFramed};
 
 //TODO: Implement close() on the substream types to improve the poll code.
 //TODO: Implement check_timeout() on the substream types
@@ -88,9 +89,6 @@ where
     /// Try to negotiate the outbound upgrade a few times if there is an IO error before reporting the request as failed.
     /// This keeps track of the number of attempts.
     outbound_io_error_retries: u8,
-
-    /// Logger for handling RPC streams
-    log: slog::Logger,
 
     /// Marker to pin the generic stream.
     _phantom: PhantomData<TSubstream>,
@@ -192,7 +190,6 @@ where
     pub fn new(
         listen_protocol: SubstreamProtocol<RPCProtocol>,
         inactive_timeout: Duration,
-        log: &slog::Logger,
     ) -> Self {
         RPCHandler {
             listen_protocol,
@@ -210,7 +207,6 @@ where
             keep_alive: KeepAlive::Yes,
             inactive_timeout,
             outbound_io_error_retries: 0,
-            log: log.clone(),
             _phantom: PhantomData,
         }
     }
@@ -373,23 +369,29 @@ where
                             }
                             InboundSubstreamState::Closing(substream) => {
                                 *substream_state = InboundSubstreamState::Closing(substream);
-                                debug!(self.log, "Response not sent. Stream is closing"; "response" => format!("{}",response));
+                                debug!(
+                                    "Response not sent. Stream is closing, response: {}",
+                                    response
+                                );
                             }
                             InboundSubstreamState::ResponsePendingSend { substream, .. } => {
                                 *substream_state = InboundSubstreamState::ResponsePendingSend {
                                     substream,
                                     closing: true,
                                 };
-                                error!(self.log, "Attempted sending multiple responses to a single response request");
+                                error!("Attempted sending multiple responses to a single response request");
                             }
                             InboundSubstreamState::Poisoned => {
-                                crit!(self.log, "Poisoned inbound substream");
+                                error!("Poisoned inbound substream");
                                 unreachable!("Coding error: Poisoned substream");
                             }
                         }
                     }
                     None => {
-                        debug!(self.log, "Stream has expired. Response not sent"; "response" => format!("{}",response));
+                        debug!(
+                            "Stream has expired. Response not sent, response: {}",
+                            response
+                        );
                     }
                 };
             }
@@ -424,7 +426,7 @@ where
         if self.pending_error.is_none() {
             self.pending_error = Some((request_id, error));
         } else {
-            crit!(self.log, "Couldn't add error");
+            error!("Couldn't add error");
         }
     }
 
@@ -448,14 +450,17 @@ where
                     // TODO: We currently will not drop the peer, for maximal compatibility with
                     // other clients testing their software. In the future, we will need to decide
                     // which protocols are a bare minimum to support before kicking the peer.
-                    error!(self.log, "Peer doesn't support the RPC protocol"; "protocol" => protocol_string);
+                    error!("Peer doesn't support the RPC protocol: {}", protocol_string);
                     return Ok(Async::Ready(ProtocolsHandlerEvent::Custom(
                         RPCEvent::Error(request_id, RPCError::InvalidProtocol(protocol_string)),
                     )));
                 }
                 ProtocolsHandlerUpgrErr::Timeout | ProtocolsHandlerUpgrErr::Timer => {
                     // negotiation timeout, mark the request as failed
-                    debug!(self.log, "Active substreams before timeout"; "len" => self.outbound_substreams.len());
+                    debug!(
+                        "Active substreams before timeout, len: {}",
+                        self.outbound_substreams.len()
+                    );
                     return Ok(Async::Ready(ProtocolsHandlerEvent::Custom(
                         RPCEvent::Error(
                             request_id,
@@ -602,7 +607,7 @@ where
                                 }
                             }
                             InboundSubstreamState::Poisoned => {
-                                crit!(self.log, "Poisoned outbound substream");
+                                error!("Poisoned outbound substream");
                                 unreachable!("Coding Error: Inbound Substream is poisoned");
                             }
                         };
@@ -705,7 +710,7 @@ where
                             }
                         },
                         OutboundSubstreamState::Poisoned => {
-                            crit!(self.log, "Poisoned outbound substream");
+                            error!("Poisoned outbound substream");
                             unreachable!("Coding Error: Outbound substream is poisoned")
                         }
                     }

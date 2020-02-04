@@ -2,7 +2,7 @@
 
 use super::methods::*;
 use crate::rpc::{
-    codec::{MyInboundCodec, MyOutboundCodec},
+    codec::{InboundCodec, OutboundCodec},
     methods::ResponseTermination,
 };
 use futures::{
@@ -11,6 +11,7 @@ use futures::{
 };
 use libp2p::core::{upgrade, InboundUpgrade, OutboundUpgrade, ProtocolName, UpgradeInfo};
 use serde::{Deserialize, Serialize};
+use serde_cbor::Error;
 use std::io;
 use std::time::Duration;
 use tokio::codec::Framed;
@@ -102,8 +103,7 @@ impl ProtocolName for ProtocolId {
 // handler to respond to once ready.
 
 pub type InboundOutput<TSocket> = (RPCRequest, InboundFramed<TSocket>);
-pub type InboundFramed<TSocket> =
-    Framed<TimeoutStream<upgrade::Negotiated<TSocket>>, MyInboundCodec>;
+pub type InboundFramed<TSocket> = Framed<TimeoutStream<upgrade::Negotiated<TSocket>>, InboundCodec>;
 type FnAndThen<TSocket> = fn(
     (Option<RPCRequest>, InboundFramed<TSocket>),
 ) -> FutureResult<InboundOutput<TSocket>, RPCError>;
@@ -132,7 +132,7 @@ where
     ) -> Self::Future {
         match protocol.encoding.as_str() {
             "ssz" | _ => {
-                let codec = MyInboundCodec;
+                let codec = InboundCodec;
                 let mut timed_socket = TimeoutStream::new(socket);
                 timed_socket.set_read_timeout(Some(Duration::from_secs(TTFB_TIMEOUT)));
                 Framed::new(timed_socket, codec)
@@ -229,7 +229,7 @@ impl RPCRequest {
 
 /* Outbound upgrades */
 
-pub type OutboundFramed<TSocket> = Framed<upgrade::Negotiated<TSocket>, MyOutboundCodec>;
+pub type OutboundFramed<TSocket> = Framed<upgrade::Negotiated<TSocket>, OutboundCodec>;
 
 impl<TSocket> OutboundUpgrade<TSocket> for RPCRequest
 where
@@ -245,7 +245,7 @@ where
     ) -> Self::Future {
         match protocol.encoding.as_str() {
             "ssz" | _ => {
-                let codec = MyOutboundCodec;
+                let codec = OutboundCodec;
                 Framed::new(socket, codec).send(self)
             }
         }
@@ -258,7 +258,7 @@ pub enum RPCError {
     /// Error when reading the packet from the socket.
     ReadError(upgrade::ReadOneError),
     /// Error when decoding the raw buffer from ssz.
-    SSZDecodeError(ssz::DecodeError),
+    CborDecodeError(serde_cbor::Error),
     /// Invalid Protocol ID.
     InvalidProtocol(&'static str),
     /// IO Error.
@@ -278,10 +278,10 @@ impl From<upgrade::ReadOneError> for RPCError {
     }
 }
 
-impl From<ssz::DecodeError> for RPCError {
+impl From<serde_cbor::Error> for RPCError {
     #[inline]
-    fn from(err: ssz::DecodeError) -> Self {
-        RPCError::SSZDecodeError(err)
+    fn from(err: serde_cbor::Error) -> Self {
+        RPCError::CborDecodeError(err)
     }
 }
 impl<T> From<tokio::timer::timeout::Error<T>> for RPCError {
@@ -311,7 +311,7 @@ impl std::fmt::Display for RPCError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
             RPCError::ReadError(ref err) => write!(f, "Error while reading from socket: {}", err),
-            RPCError::SSZDecodeError(ref err) => write!(f, "Error while decoding ssz: {:?}", err),
+            RPCError::CborDecodeError(ref err) => write!(f, "Error while decoding cbor: {:?}", err),
             RPCError::InvalidProtocol(ref err) => write!(f, "Invalid Protocol: {}", err),
             RPCError::IoError(ref err) => write!(f, "IO Error: {}", err),
             RPCError::RPCErrorResponse => write!(f, "RPC Response Error"),
@@ -325,7 +325,7 @@ impl std::error::Error for RPCError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
             RPCError::ReadError(ref err) => Some(err),
-            RPCError::SSZDecodeError(_) => None,
+            RPCError::CborDecodeError(_) => None,
             RPCError::InvalidProtocol(_) => None,
             RPCError::IoError(ref err) => Some(err),
             RPCError::StreamTimeout => None,
