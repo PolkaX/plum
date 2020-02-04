@@ -3,7 +3,9 @@ use futures::{Async, Future};
 use libp2p::gossipsub::Topic;
 use log::{debug, warn};
 use plum_libp2p::config::Libp2pConfig;
+use plum_libp2p::rpc::RPCEvent;
 use plum_libp2p::service::{Libp2pEvent, Libp2pService};
+use plum_libp2p::PeerId;
 use std::sync::{Arc, Mutex};
 use tokio::runtime::TaskExecutor;
 use tokio::sync::mpsc;
@@ -13,6 +15,7 @@ use crate::message_handler::{HandlerMessage, MessageHandler};
 pub enum NetworkMessage {
     PubsubMessage { topics: Topic, message: Vec<u8> },
     HelloMessage(Vec<u8>),
+    RPC(PeerId, RPCEvent),
 }
 
 pub struct Service {
@@ -80,6 +83,17 @@ fn network_service(
         loop {
             match network_recv.poll() {
                 Ok(Async::Ready(Some(event))) => match event {
+                    NetworkMessage::RPC(peer_id, rpc_event) => {
+                        debug!(
+                            "Sending RPC, peer_id: {:?}, rpc_event: {:?}",
+                            peer_id, rpc_event
+                        );
+                        libp2p_service
+                            .lock()
+                            .unwrap()
+                            .swarm
+                            .send_rpc(peer_id, rpc_event);
+                    }
                     NetworkMessage::PubsubMessage { topics, message } => {
                         debug!(
                             "Publishing NetworkMessage, topics: {:?}, message: {:?}",
@@ -126,6 +140,14 @@ fn network_service(
                             .is_err()
                         {
                             warn!("Failed to handle PubsubMessage");
+                        }
+                    }
+                    Libp2pEvent::RPC(peer, rpc_event) => {
+                        if message_handler_send
+                            .try_send(HandlerMessage::RPC(peer.clone(), rpc_event))
+                            .is_err()
+                        {
+                            warn!("Failed to handle RPC message {}", peer);
                         }
                     }
                     Libp2pEvent::HelloSubscribed(peer) => {

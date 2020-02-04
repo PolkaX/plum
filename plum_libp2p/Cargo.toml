@@ -13,3 +13,9 @@ tokio = "0.1.22"
 serde = {version = "1.0", features = ["derive"]}
 libp2p =  { git = "https://github.com/SigP/rust-libp2p", rev = "776d13ef046358964c7d64cda3295a3a3cb24743" }
 futures = "0.1.29"
+eth2_ssz = "0.1.2"
+eth2_ssz_derive = "0.1.0"
+fnv = "1.0.6"
+smallvec = "1.0.0"
+unsigned-varint = "0.2.3"
+tokio-io-timeout = "0.3.1"

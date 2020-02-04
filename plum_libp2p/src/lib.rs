@@ -1,5 +1,6 @@
 pub mod behaviour;
 pub mod config;
+pub mod rpc;
 pub mod service;
 
 pub use config::Libp2pConfig;

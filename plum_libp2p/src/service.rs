@@ -14,6 +14,8 @@ use log::{error, info};
 use std::io::{Error, ErrorKind};
 use std::time::Duration;
 
+use crate::rpc::RPCEvent;
+
 type Libp2pStream = Boxed<(PeerId, StreamMuxerBox), Error>;
 type Libp2pBehaviour = Behaviour<Substream<StreamMuxerBox>>;
 
@@ -83,6 +85,9 @@ impl Stream for Libp2pService {
                     BehaviourEvent::HelloSubscribed(peer) => {
                         return Ok(Async::Ready(Some(Libp2pEvent::HelloSubscribed(peer))));
                     }
+                    BehaviourEvent::RPC(peer, rpc_event) => {
+                        return Ok(Async::Ready(Some(Libp2pEvent::RPC(peer, rpc_event))));
+                    }
                     BehaviourEvent::ExpiredPeer(_) => {}
                     BehaviourEvent::GossipMessage {
                         id,
@@ -108,7 +113,7 @@ impl Stream for Libp2pService {
 }
 
 /// Libp2p event that will be passed to the NetworkService.
-#[derive(Clone)]
+// #[derive(Clone)]
 pub enum Libp2pEvent {
     PubsubMessage {
         id: MessageId,
@@ -117,6 +122,7 @@ pub enum Libp2pEvent {
         data: Vec<u8>,
     },
     HelloSubscribed(PeerId),
+    RPC(PeerId, RPCEvent),
 }
 
 pub fn build_transport(local_key: Keypair) -> Boxed<(PeerId, StreamMuxerBox), Error> {

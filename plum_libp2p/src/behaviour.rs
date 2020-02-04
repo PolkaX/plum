@@ -12,6 +12,9 @@ use libp2p::NetworkBehaviour;
 use log::debug;
 
 use crate::config::HELLO_TOPIC;
+use crate::rpc::RPCEvent;
+use crate::rpc::RPCMessage;
+use crate::rpc::RPC;
 
 #[derive(NetworkBehaviour)]
 #[behaviour(out_event = "BehaviourEvent", poll_method = "poll")]
@@ -22,11 +25,13 @@ pub struct Behaviour<TSubstream: AsyncRead + AsyncWrite> {
     pub kad: Kademlia<TSubstream, MemoryStore>,
     pub ping: Ping<TSubstream>,
     pub identify: Identify<TSubstream>,
+    pub rpc: RPC<TSubstream>,
     #[behaviour(ignore)]
     events: Vec<BehaviourEvent>,
 }
 
 pub enum BehaviourEvent {
+    RPC(PeerId, RPCEvent),
     HelloSubscribed(PeerId),
     DiscoveredPeer(PeerId),
     ExpiredPeer(PeerId),
@@ -36,6 +41,24 @@ pub enum BehaviourEvent {
         topics: Vec<TopicHash>,
         data: Vec<u8>,
     },
+}
+
+impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<RPCMessage>
+    for Behaviour<TSubstream>
+{
+    fn inject_event(&mut self, event: RPCMessage) {
+        match event {
+            RPCMessage::PeerDialed(peer_id) => {
+                // self.events.push(BehaviourEvent::PeerDialed(peer_id))
+            }
+            RPCMessage::PeerDisconnected(peer_id) => {
+                // self.events.push(BehaviourEvent::PeerDisconnected(peer_id))
+            }
+            RPCMessage::RPC(peer_id, rpc_event) => {
+                self.events.push(BehaviourEvent::RPC(peer_id, rpc_event))
+            }
+        }
+    }
 }
 
 impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<MdnsEvent>
@@ -146,10 +169,16 @@ impl<TSubstream: AsyncRead + AsyncWrite> Behaviour<TSubstream> {
             gossipsub: Gossipsub::new(local_peer_id.clone(), GossipsubConfig::default()),
             mdns: Mdns::new().expect("Failed to create mDNS service"),
             ping: Ping::default(),
+            rpc: RPC::new(),
             kad: Kademlia::with_config(local_peer_id, kad_store, kad_cfg),
             identify: Identify::new("plum/libp2p".into(), "0.0.1".into(), local_key.public()),
             events: vec![],
         }
+    }
+
+    /// Sends an RPC Request/Response via the RPC protocol.
+    pub fn send_rpc(&mut self, peer_id: PeerId, rpc_event: RPCEvent) {
+        self.rpc.send_rpc(peer_id, rpc_event);
     }
 
     /// Publish gossipsub topic.
