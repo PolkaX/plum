@@ -8,7 +8,7 @@ use libp2p::core::upgrade::{InboundUpgrade, OutboundUpgrade, UpgradeError};
 use libp2p::swarm::protocols_handler::{
     KeepAlive, ProtocolsHandler, ProtocolsHandlerEvent, ProtocolsHandlerUpgrErr, SubstreamProtocol,
 };
-use log::{debug, error};
+use log::{debug, error, trace};
 use smallvec::SmallVec;
 use std::collections::hash_map::Entry;
 use std::time::{Duration, Instant};
@@ -341,7 +341,7 @@ where
                             InboundSubstreamState::ResponseIdle(substream) => {
                                 // close the stream if there is no response
                                 if let RPCErrorResponse::StreamTermination(_) = response {
-                                    //trace!(self.log, "Stream termination sent. Ending the stream");
+                                    trace!("Stream termination sent. Ending the stream");
                                     *substream_state = InboundSubstreamState::Closing(substream);
                                 } else {
                                     // send the response
@@ -593,7 +593,7 @@ where
                             InboundSubstreamState::Closing(mut substream) => {
                                 match substream.close() {
                                     Ok(Async::Ready(())) | Err(_) => {
-                                        //trace!(self.log, "Inbound stream dropped");
+                                        trace!("Inbound stream dropped");
                                         if let Some(delay_key) = &entry.get().1 {
                                             self.inbound_substreams_delay.remove(delay_key);
                                         }
@@ -642,7 +642,7 @@ where
                                 } else {
                                     // either this is a single response request or we received an
                                     // error
-                                    //trace!(self.log, "Closing single stream request");
+                                    trace!("Closing single stream request");
                                     // only expect a single response, close the stream
                                     entry.get_mut().0 = OutboundSubstreamState::Closing(substream);
                                 }
@@ -655,7 +655,8 @@ where
                                 // stream closed
                                 // if we expected multiple streams send a stream termination,
                                 // else report the stream terminating only.
-                                //trace!(self.log, "RPC Response - stream closed by remote");
+                                trace!("RPC Response - stream closed by remote");
+
                                 // drop the stream
                                 let delay_key = &entry.get().1;
                                 self.outbound_substreams_delay.remove(delay_key);
@@ -699,7 +700,7 @@ where
                         },
                         OutboundSubstreamState::Closing(mut substream) => match substream.close() {
                             Ok(Async::Ready(())) | Err(_) => {
-                                //trace!(self.log, "Outbound stream dropped");
+                                trace!("Outbound stream dropped");
                                 // drop the stream
                                 let delay_key = &entry.get().1;
                                 self.outbound_substreams_delay.remove(delay_key);

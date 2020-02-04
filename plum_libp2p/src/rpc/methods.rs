@@ -1,8 +1,6 @@
 //! Available RPC methods types and ids.
 
 use serde::{Deserialize, Serialize};
-use ssz_derive::{Decode, Encode};
-// use types::{Epoch, Hash256, Slot};
 
 /* Request/Response data structures for RPC methods */
 
@@ -11,23 +9,10 @@ use ssz_derive::{Decode, Encode};
 pub type RequestId = usize;
 
 /// The STATUS request/response handshake message.
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct StatusMessage {
     /// The fork version of the chain we are broadcasting.
     pub fork_version: [u8; 4],
-    /*
-    /// Latest finalized root.
-    pub finalized_root: Hash256,
-
-    /// Latest finalized epoch.
-    pub finalized_epoch: Epoch,
-
-    /// The latest block root.
-    pub head_root: Hash256,
-
-    /// The slot associated with the latest block root.
-    pub head_slot: Slot,
-    */
 }
 
 /// The reason given for a `Goodbye` message.
@@ -67,45 +52,9 @@ impl Into<u64> for GoodbyeReason {
     }
 }
 
-impl ssz::Encode for GoodbyeReason {
-    fn is_ssz_fixed_len() -> bool {
-        <u64 as ssz::Encode>::is_ssz_fixed_len()
-    }
-
-    fn ssz_fixed_len() -> usize {
-        <u64 as ssz::Encode>::ssz_fixed_len()
-    }
-
-    // fn ssz_bytes_len(&self) -> usize {
-    // 0_u64.ssz_bytes_len()
-    // }
-
-    fn ssz_append(&self, buf: &mut Vec<u8>) {
-        let conv: u64 = self.clone().into();
-        conv.ssz_append(buf)
-    }
-}
-
-impl ssz::Decode for GoodbyeReason {
-    fn is_ssz_fixed_len() -> bool {
-        <u64 as ssz::Decode>::is_ssz_fixed_len()
-    }
-
-    fn ssz_fixed_len() -> usize {
-        <u64 as ssz::Decode>::ssz_fixed_len()
-    }
-
-    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, ssz::DecodeError> {
-        u64::from_ssz_bytes(bytes).and_then(|n| Ok(n.into()))
-    }
-}
-
 /// Request a number of beacon block roots from a peer.
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BlocksByRangeRequest {
-    /// The hash tree root of a block on the requested chain.
-    // pub head_block_root: Hash256,
-
     /// The starting slot to request blocks.
     pub start_slot: u64,
 
@@ -227,7 +176,7 @@ impl RPCErrorResponse {
     }
 }
 
-#[derive(Encode, Decode, Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ErrorMessage {
     /// The UTF-8 encoded Error message string.
     pub error_message: Vec<u8>,

@@ -1,5 +1,3 @@
-#![allow(clippy::type_complexity)]
-
 use super::methods::*;
 use crate::rpc::{
     codec::{InboundCodec, OutboundCodec},
@@ -11,7 +9,6 @@ use futures::{
 };
 use libp2p::core::{upgrade, InboundUpgrade, OutboundUpgrade, ProtocolName, UpgradeInfo};
 use serde::{Deserialize, Serialize};
-use serde_cbor::Error;
 use std::io;
 use std::time::Duration;
 use tokio::codec::Framed;
@@ -21,10 +18,11 @@ use tokio::timer::timeout;
 use tokio::util::FutureExt;
 use tokio_io_timeout::TimeoutStream;
 
+// TODO: limited size
 /// The maximum bytes that can be sent across the RPC.
 const MAX_RPC_SIZE: usize = 4_194_304; // 4M
 /// The protocol prefix the RPC protocol id.
-const PROTOCOL_PREFIX: &str = "/eth2/beacon_chain/req";
+const PROTOCOL_PREFIX: &str = "/fil/plum/req";
 /// Time allowed for the first byte of a request to arrive before we time out (Time To First Byte).
 const TTFB_TIMEOUT: u64 = 5;
 /// The number of seconds to wait for the first bytes of a request once a protocol has been
@@ -37,9 +35,11 @@ pub const RPC_STATUS: &str = "status";
 /// The Goodbye protocol name.
 pub const RPC_GOODBYE: &str = "goodbye";
 /// The `BlocksByRange` protocol name.
-pub const RPC_BLOCKS_BY_RANGE: &str = "beacon_blocks_by_range";
+pub const RPC_BLOCKS_BY_RANGE: &str = "plum_blocks_by_range";
 /// The `BlocksByRoot` protocol name.
-pub const RPC_BLOCKS_BY_ROOT: &str = "beacon_blocks_by_root";
+pub const RPC_BLOCKS_BY_ROOT: &str = "plum_blocks_by_root";
+
+const CBOR: &str = "cbor";
 
 #[derive(Debug, Clone)]
 pub struct RPCProtocol;
@@ -50,10 +50,10 @@ impl UpgradeInfo for RPCProtocol {
 
     fn protocol_info(&self) -> Self::InfoIter {
         vec![
-            ProtocolId::new(RPC_STATUS, "1", "ssz"),
-            ProtocolId::new(RPC_GOODBYE, "1", "ssz"),
-            ProtocolId::new(RPC_BLOCKS_BY_RANGE, "1", "ssz"),
-            ProtocolId::new(RPC_BLOCKS_BY_ROOT, "1", "ssz"),
+            ProtocolId::new(RPC_STATUS, "1", CBOR),
+            ProtocolId::new(RPC_GOODBYE, "1", CBOR),
+            ProtocolId::new(RPC_BLOCKS_BY_RANGE, "1", CBOR),
+            ProtocolId::new(RPC_BLOCKS_BY_ROOT, "1", CBOR),
         ]
     }
 }
@@ -131,11 +131,10 @@ where
         protocol: ProtocolId,
     ) -> Self::Future {
         match protocol.encoding.as_str() {
-            "ssz" | _ => {
-                let codec = InboundCodec;
+            CBOR | _ => {
                 let mut timed_socket = TimeoutStream::new(socket);
                 timed_socket.set_read_timeout(Some(Duration::from_secs(TTFB_TIMEOUT)));
-                Framed::new(timed_socket, codec)
+                Framed::new(timed_socket, InboundCodec)
                     .into_future()
                     .timeout(Duration::from_secs(REQUEST_TIMEOUT))
                     .map_err(RPCError::from as FnMapErr<TSocket>)
@@ -180,10 +179,10 @@ impl RPCRequest {
     pub fn supported_protocols(&self) -> Vec<ProtocolId> {
         match self {
             // add more protocols when versions/encodings are supported
-            RPCRequest::Status(_) => vec![ProtocolId::new(RPC_STATUS, "1", "ssz")],
-            RPCRequest::Goodbye(_) => vec![ProtocolId::new(RPC_GOODBYE, "1", "ssz")],
-            RPCRequest::BlocksByRange(_) => vec![ProtocolId::new(RPC_BLOCKS_BY_RANGE, "1", "ssz")],
-            RPCRequest::BlocksByRoot(_) => vec![ProtocolId::new(RPC_BLOCKS_BY_ROOT, "1", "ssz")],
+            RPCRequest::Status(_) => vec![ProtocolId::new(RPC_STATUS, "1", CBOR)],
+            RPCRequest::Goodbye(_) => vec![ProtocolId::new(RPC_GOODBYE, "1", CBOR)],
+            RPCRequest::BlocksByRange(_) => vec![ProtocolId::new(RPC_BLOCKS_BY_RANGE, "1", CBOR)],
+            RPCRequest::BlocksByRoot(_) => vec![ProtocolId::new(RPC_BLOCKS_BY_ROOT, "1", CBOR)],
         }
     }
 
@@ -244,10 +243,7 @@ where
         protocol: Self::Info,
     ) -> Self::Future {
         match protocol.encoding.as_str() {
-            "ssz" | _ => {
-                let codec = OutboundCodec;
-                Framed::new(socket, codec).send(self)
-            }
+            CBOR | _ => Framed::new(socket, OutboundCodec).send(self),
         }
     }
 }
