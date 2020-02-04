@@ -2,13 +2,7 @@
 
 use super::methods::*;
 use crate::rpc::{
-    codec::{
-        // base::{BaseInboundCodec, BaseOutboundCodec},
-        // ssz::{SSZInboundCodec, SSZOutboundCodec},
-        // InboundCodec,
-        MyInboundCodec,
-        MyOutboundCodec, // , OutboundCodec,
-    },
+    codec::{MyInboundCodec, MyOutboundCodec},
     methods::ResponseTermination,
 };
 use futures::{
@@ -138,8 +132,6 @@ where
     ) -> Self::Future {
         match protocol.encoding.as_str() {
             "ssz" | _ => {
-                // let ssz_codec = BaseInboundCodec::new(SSZInboundCodec::new(protocol, MAX_RPC_SIZE));
-                // let codec = InboundCodec::SSZ(ssz_codec);
                 let codec = MyInboundCodec;
                 let mut timed_socket = TimeoutStream::new(socket);
                 timed_socket.set_read_timeout(Some(Duration::from_secs(TTFB_TIMEOUT)));
@@ -253,9 +245,6 @@ where
     ) -> Self::Future {
         match protocol.encoding.as_str() {
             "ssz" | _ => {
-                // let ssz_codec =
-                // BaseOutboundCodec::new(SSZOutboundCodec::new(protocol, MAX_RPC_SIZE));
-                // let codec = OutboundCodec::SSZ(ssz_codec);
                 let codec = MyOutboundCodec;
                 Framed::new(socket, codec).send(self)
             }

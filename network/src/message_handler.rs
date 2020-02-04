@@ -70,6 +70,20 @@ impl MessageHandler {
                         "---------------- handle rpc event Request: id: {}, request: {:?}",
                         id, request
                     );
+                    match request {
+                        RPCRequest::Status(s) => {
+                            println!("---- handle status ");
+                        }
+                        RPCRequest::Goodbye(s) => {
+                            println!("---- handle goodbye ");
+                        }
+                        RPCRequest::BlocksByRoot(s) => {
+                            println!("---- handle blocks by root ");
+                        }
+                        RPCRequest::BlocksByRange(req) => {
+                            println!("------ handle BlocksByRange: {:?}", req);
+                        }
+                    }
                 }
                 _ => {
                     println!("---------------- handle rpc event other Request");
