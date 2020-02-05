@@ -1,3 +1,5 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 use libp2p::gossipsub::Topic;
 use libp2p::Multiaddr;
 

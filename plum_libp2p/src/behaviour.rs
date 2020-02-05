@@ -1,3 +1,5 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 use futures::Async;
 use libp2p::core::identity::Keypair;
 use libp2p::core::PeerId;
@@ -45,10 +47,10 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<RPCMessage
 {
     fn inject_event(&mut self, event: RPCMessage) {
         match event {
-            RPCMessage::PeerDialed(peer_id) => {
+            RPCMessage::PeerDialed(_peer_id) => {
                 // self.events.push(BehaviourEvent::PeerDialed(peer_id))
             }
-            RPCMessage::PeerDisconnected(peer_id) => {
+            RPCMessage::PeerDisconnected(_peer_id) => {
                 // self.events.push(BehaviourEvent::PeerDisconnected(peer_id))
             }
             RPCMessage::RPC(peer_id, rpc_event) => {
@@ -83,7 +85,7 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<KademliaEv
     for Behaviour<TSubstream>
 {
     fn inject_event(&mut self, _event: KademliaEvent) {
-        // TODO: PeerDiscovered
+        // TODO: PeerDiscovered via kad bootstrap.
     }
 }
 

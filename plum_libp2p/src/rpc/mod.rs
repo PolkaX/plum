@@ -1,8 +1,4 @@
-//! The Ethereum 2.0 Wire Protocol
-//!
-//! This protocol is a purpose built Ethereum 2.0 libp2p protocol. It's role is to facilitate
-//! direct peer-to-peer communication primarily for sending/receiving chain information for
-//! syncing.
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use futures::prelude::*;
 use handler::RPCHandler;
@@ -12,18 +8,19 @@ use libp2p::swarm::{
     SubstreamProtocol,
 };
 use libp2p::{Multiaddr, PeerId};
-pub use methods::{
-    ErrorMessage, RPCErrorResponse, RPCResponse, RequestId, ResponseTermination, StatusMessage,
-};
-pub use protocol::{RPCError, RPCProtocol, RPCRequest};
 use std::marker::PhantomData;
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 
-pub(crate) mod codec;
+mod codec;
 mod handler;
 pub mod methods;
 mod protocol;
+
+pub use methods::{
+    ErrorMessage, RPCErrorResponse, RPCResponse, RequestId, ResponseTermination, StatusMessage,
+};
+pub use protocol::{RPCError, RPCProtocol, RPCRequest};
 
 /// The return type used in the behaviour and the resultant event from the protocols handler.
 #[derive(Debug)]

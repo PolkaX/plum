@@ -1,8 +1,5 @@
-use super::methods::*;
-use crate::rpc::{
-    codec::{InboundCodec, OutboundCodec},
-    methods::ResponseTermination,
-};
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 use futures::{
     future::{self, FutureResult},
     sink, stream, Sink, Stream,
@@ -17,6 +14,12 @@ use tokio::prelude::*;
 use tokio::timer::timeout;
 use tokio::util::FutureExt;
 use tokio_io_timeout::TimeoutStream;
+
+use super::methods::*;
+use crate::rpc::{
+    codec::{InboundCodec, OutboundCodec},
+    methods::ResponseTermination,
+};
 
 // TODO: limited size
 /// The maximum bytes that can be sent across the RPC.

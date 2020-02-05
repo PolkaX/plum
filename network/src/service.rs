@@ -1,7 +1,9 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 use futures::stream::Stream;
 use futures::{Async, Future};
 use libp2p::gossipsub::Topic;
-use log::{debug, warn};
+use log::{debug, info, warn};
 use plum_libp2p::config::Libp2pConfig;
 use plum_libp2p::rpc::RPCEvent;
 use plum_libp2p::service::{Libp2pEvent, Libp2pService};
@@ -23,7 +25,7 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn new(
+    pub fn spawn(
         config: &Libp2pConfig,
         executor: &TaskExecutor,
     ) -> (
@@ -123,11 +125,9 @@ fn network_service(
                         topics,
                         data,
                     } => {
-                        log::info!(
-                            "----------- libp2p_service received source: {:?}, topics: {:?}, message: {:?}",
-                            source,
-                            topics,
-                            data
+                        info!(
+                            "libp2p_service received PubsubMessage, source: {:?}, topics: {:?}, message: {:?}",
+                            source, topics, data
                         );
 
                         if message_handler_send
@@ -139,7 +139,7 @@ fn network_service(
                             })
                             .is_err()
                         {
-                            warn!("Failed to handle PubsubMessage");
+                            warn!("Failed to send PubsubMessage");
                         }
                     }
                     Libp2pEvent::RPC(peer, rpc_event) => {
@@ -147,7 +147,7 @@ fn network_service(
                             .try_send(HandlerMessage::RPC(peer.clone(), rpc_event))
                             .is_err()
                         {
-                            warn!("Failed to handle RPC message {}", peer);
+                            warn!("Failed to send RPC HandlerMessage from {}", peer);
                         }
                     }
                     Libp2pEvent::HelloSubscribed(peer) => {
@@ -155,7 +155,7 @@ fn network_service(
                             .try_send(HandlerMessage::SayHello(peer.clone()))
                             .is_err()
                         {
-                            warn!("Failed to say hello to {}", peer);
+                            warn!("Failed to send SayHello HandlerMessage from {}", peer);
                         }
                     }
                 },

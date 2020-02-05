@@ -1,8 +1,17 @@
-use libp2p::bytes::{BufMut, BytesMut};
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
+use libp2p::bytes::BytesMut;
 use tokio::codec::{Decoder, Encoder};
 
 use crate::rpc::protocol::RPCError;
 use crate::rpc::{RPCErrorResponse, RPCRequest};
+
+fn encode_to<T: serde::Serialize>(item: T, dst: &mut BytesMut) -> Result<(), serde_cbor::Error> {
+    let encoded = serde_cbor::to_vec(&item)?;
+    dst.clear();
+    dst.extend_from_slice(&encoded);
+    Ok(())
+}
 
 pub struct InboundCodec;
 
@@ -11,12 +20,7 @@ impl Encoder for InboundCodec {
     type Error = RPCError;
 
     fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
-        let encoded = serde_cbor::to_vec(&item)?;
-        // TODO: opotimize?
-        for u in encoded {
-            dst.put(u);
-        }
-        Ok(())
+        encode_to(item, dst).map_err(Into::into)
     }
 }
 
@@ -37,11 +41,7 @@ impl Encoder for OutboundCodec {
     type Error = RPCError;
 
     fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
-        let encoded = serde_cbor::to_vec(&item)?;
-        for u in encoded {
-            dst.put(u);
-        }
-        Ok(())
+        encode_to(item, dst).map_err(Into::into)
     }
 }
 

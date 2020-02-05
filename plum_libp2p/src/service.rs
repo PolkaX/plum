@@ -1,5 +1,5 @@
-use super::behaviour::{Behaviour, BehaviourEvent};
-use super::config::Libp2pConfig;
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 use futures::{Async, Stream};
 use libp2p::{
     core,
@@ -14,6 +14,8 @@ use log::{error, info};
 use std::io::{Error, ErrorKind};
 use std::time::Duration;
 
+use crate::behaviour::{Behaviour, BehaviourEvent};
+use crate::config::Libp2pConfig;
 use crate::rpc::RPCEvent;
 
 type Libp2pStream = Boxed<(PeerId, StreamMuxerBox), Error>;
@@ -67,7 +69,7 @@ impl Libp2pService {
             swarm.subscribe(topic);
         }
 
-        Libp2pService { swarm }
+        Self { swarm }
     }
 }
 
@@ -112,8 +114,7 @@ impl Stream for Libp2pService {
     }
 }
 
-/// Libp2p event that will be passed to the NetworkService.
-// #[derive(Clone)]
+/// Libp2p event that will be delivered to the NetworkService.
 pub enum Libp2pEvent {
     PubsubMessage {
         id: MessageId,

@@ -1,3 +1,5 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 #![allow(clippy::type_complexity)]
 #![allow(clippy::cognitive_complexity)]
 

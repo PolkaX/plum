@@ -1,23 +1,19 @@
 [package]
 name = "plum_libp2p"
 version = "0.1.0"
-authors = ["Liu-Cheng Xu <xuliuchengxlc@gmail.com>"]
+authors = ["The PolkaX Authors"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "GPL-3.0"
 
 [dependencies]
 log = "0.4.8"
-slog = "2.5.2"
+fnv = "1.0.6"
 tokio = "0.1.22"
 serde = {version = "1.0", features = ["derive"]}
 libp2p =  { git = "https://github.com/SigP/rust-libp2p", rev = "776d13ef046358964c7d64cda3295a3a3cb24743" }
 futures = "0.1.29"
-eth2_ssz = "0.1.2"
-eth2_ssz_derive = "0.1.0"
-fnv = "1.0.6"
 smallvec = "1.0.0"
+serde_cbor = { git = "https://github.com/PolkaX/cbor", branch = "f64ser-hack", features = ["tags"] }
+serde_bytes = { version = "0.11" }
 unsigned-varint = "0.2.3"
 tokio-io-timeout = "0.3.1"
-serde_bytes = { version = "0.11" }
-serde_cbor = { git = "https://github.com/PolkaX/cbor", branch = "f64ser-hack", features = ["tags"] }
