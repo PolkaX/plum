@@ -5,7 +5,7 @@ use libp2p::core::identity::Keypair;
 use libp2p::core::PeerId;
 use libp2p::gossipsub::{Gossipsub, GossipsubConfig, GossipsubEvent, MessageId, Topic, TopicHash};
 use libp2p::identify::{Identify, IdentifyEvent};
-use libp2p::kad::{record::store::MemoryStore, Kademlia, KademliaConfig, KademliaEvent};
+use libp2p::kad::{record::store::MemoryStore, Kademlia, KademliaEvent};
 use libp2p::mdns::{Mdns, MdnsEvent};
 use libp2p::ping::{Ping, PingEvent};
 use libp2p::swarm::{NetworkBehaviourAction, NetworkBehaviourEventProcess};
@@ -13,18 +13,18 @@ use libp2p::tokio_io::{AsyncRead, AsyncWrite};
 use libp2p::NetworkBehaviour;
 use log::debug;
 
-use crate::config::HELLO_TOPIC;
+use crate::config::{generate_kad_config, HELLO_TOPIC};
 use crate::rpc::{RPCEvent, RPCMessage, RPC};
 
 #[derive(NetworkBehaviour)]
 #[behaviour(out_event = "BehaviourEvent", poll_method = "poll")]
 pub struct Behaviour<TSubstream: AsyncRead + AsyncWrite> {
-    pub gossipsub: Gossipsub<TSubstream>,
-    pub mdns: Mdns<TSubstream>,
+    pub rpc: RPC<TSubstream>,
     pub kad: Kademlia<TSubstream, MemoryStore>,
     pub ping: Ping<TSubstream>,
+    pub mdns: Mdns<TSubstream>,
     pub identify: Identify<TSubstream>,
-    pub rpc: RPC<TSubstream>,
+    pub gossipsub: Gossipsub<TSubstream>,
     #[behaviour(ignore)]
     events: Vec<BehaviourEvent>,
 }
@@ -153,25 +153,18 @@ impl<TSubstream: AsyncRead + AsyncWrite> Behaviour<TSubstream> {
     }
 }
 
-fn generate_kad_config(peer_id: &PeerId) -> (KademliaConfig, MemoryStore) {
-    let mut cfg = KademliaConfig::default();
-    cfg.set_query_timeout(std::time::Duration::from_secs(5 * 60));
-    let store = MemoryStore::new(peer_id.clone());
-    (cfg, store)
-}
-
 impl<TSubstream: AsyncRead + AsyncWrite> Behaviour<TSubstream> {
     pub fn new(local_key: &Keypair) -> Self {
         let local_peer_id = local_key.public().into_peer_id();
         let (kad_cfg, kad_store) = generate_kad_config(&local_peer_id);
         Self {
-            gossipsub: Gossipsub::new(local_peer_id.clone(), GossipsubConfig::default()),
-            mdns: Mdns::new().expect("Failed to create mDNS service"),
-            ping: Ping::default(),
             rpc: RPC::new(),
-            kad: Kademlia::with_config(local_peer_id, kad_store, kad_cfg),
-            identify: Identify::new("plum/libp2p".into(), "0.0.1".into(), local_key.public()),
+            kad: Kademlia::with_config(local_peer_id.clone(), kad_store, kad_cfg),
+            ping: Ping::default(),
+            mdns: Mdns::new().expect("Failed to create mDNS service"),
             events: vec![],
+            identify: Identify::new("plum/libp2p".into(), "0.0.1".into(), local_key.public()),
+            gossipsub: Gossipsub::new(local_peer_id, GossipsubConfig::default()),
         }
     }
 

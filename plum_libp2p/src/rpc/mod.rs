@@ -67,7 +67,7 @@ pub struct RPC<TSubstream> {
 
 impl<TSubstream> RPC<TSubstream> {
     pub fn new() -> Self {
-        RPC {
+        Self {
             events: Vec::new(),
             marker: PhantomData,
         }

@@ -6,7 +6,10 @@ use futures::stream::Stream;
 use log::{debug, error};
 use plum_libp2p::rpc::methods::BlockSyncRequest;
 use plum_libp2p::rpc::{RPCEvent, RPCRequest, RequestId, StatusMessage};
-use plum_libp2p::{config::HELLO_TOPIC, MessageId, PeerId, TopicHash};
+use plum_libp2p::{
+    config::{BLOCKS_TOPIC, HELLO_TOPIC, MESSAGES_TOPIC},
+    MessageId, PeerId, TopicHash,
+};
 use tokio::sync::mpsc;
 
 use crate::service::NetworkMessage;
@@ -37,6 +40,8 @@ impl MessageHandler {
 
         // generate the Message handler
         let mut handler = MessageHandler { network_send };
+
+        // TODO: spawn another sync thread
 
         // spawn handler task and move the message handler instance into the spawned thread
         executor.spawn(
@@ -115,6 +120,14 @@ impl MessageHandler {
         }
     }
 
+    fn process_blocks_message(&mut self, _id: MessageId, _source: PeerId, _data: Vec<u8>) {
+        unimplemented!()
+    }
+
+    fn process_messages_message(&mut self, _id: MessageId, _source: PeerId, _data: Vec<u8>) {
+        unimplemented!()
+    }
+
     fn on_pubsub_message(
         &mut self,
         id: MessageId,
@@ -130,6 +143,12 @@ impl MessageHandler {
         for topic in topics {
             if topic == TopicHash::from_raw(HELLO_TOPIC) {
                 self.process_hello_message(id.clone(), source.clone(), data.clone());
+            } else if topic == TopicHash::from_raw(BLOCKS_TOPIC) {
+                self.process_blocks_message(id.clone(), source.clone(), data.clone());
+            } else if topic == TopicHash::from_raw(MESSAGES_TOPIC) {
+                self.process_messages_message(id.clone(), source.clone(), data.clone());
+            } else {
+                error!("Unknown topic in the PubsubMessage: {}", topic);
             }
         }
     }

@@ -2,7 +2,10 @@
 
 use cid::{Cid, Codec, Version};
 use libp2p::gossipsub::Topic;
-use libp2p::Multiaddr;
+use libp2p::kad::{record::store::MemoryStore, KademliaConfig};
+use libp2p::{Multiaddr, PeerId};
+
+pub const GENESIS: &[u8] = b"filecoin plum";
 
 pub const HELLO_TOPIC: &str = "/fil/hello";
 pub const BLOCKS_TOPIC: &str = "/fil/blocks";
@@ -30,6 +33,13 @@ impl Default for Libp2pConfig {
 }
 
 pub fn genesis_hash() -> Cid {
-    let h = multihash::encode(multihash::Hash::SHA2256, b"filecoin plum").unwrap();
+    let h = multihash::encode(multihash::Hash::SHA2256, GENESIS).unwrap();
     Cid::new(Version::V1, Codec::DagProtobuf, h)
+}
+
+pub fn generate_kad_config(peer_id: &PeerId) -> (KademliaConfig, MemoryStore) {
+    let mut cfg = KademliaConfig::default();
+    cfg.set_query_timeout(std::time::Duration::from_secs(5 * 60));
+    let store = MemoryStore::new(peer_id.clone());
+    (cfg, store)
 }
