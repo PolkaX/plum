@@ -151,7 +151,7 @@ where
         // The stream termination type is irrelevant, this will terminate the
         // stream
         let stream_termination =
-            RPCErrorResponse::StreamTermination(ResponseTermination::BlocksByRange);
+            RPCErrorResponse::StreamTermination(ResponseTermination::BlockSyncRequest);
 
         match std::mem::replace(self, InboundSubstreamState::Poisoned) {
             InboundSubstreamState::ResponsePendingSend { substream, closing } => {

@@ -72,16 +72,16 @@ pub enum RPCResponse {
     /// A HELLO message.
     Status(StatusMessage),
 
-    /// A response to a get BLOCKS_BY_RANGE request. A None response signifies the end of the
+    /// A response to a get BLOCK_SYNC_REQUEST request. A None response signifies the end of the
     /// batch.
-    BlocksByRange(Vec<u8>),
+    BlockSyncRequest(Vec<u8>),
 }
 
 /// Indicates which response is being terminated by a stream termination response.
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ResponseTermination {
-    /// Blocks by range stream termination.
-    BlocksByRange,
+    /// Block sync request stream termination.
+    BlockSyncRequest,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -136,7 +136,7 @@ impl RPCErrorResponse {
         match self {
             RPCErrorResponse::Success(resp) => match resp {
                 RPCResponse::Status(_) => false,
-                RPCResponse::BlocksByRange(_) => true,
+                RPCResponse::BlockSyncRequest(_) => true,
             },
             RPCErrorResponse::InvalidRequest(_) => true,
             RPCErrorResponse::ServerError(_) => true,
@@ -178,7 +178,7 @@ impl std::fmt::Display for RPCResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             RPCResponse::Status(status) => write!(f, "{}", status),
-            RPCResponse::BlocksByRange(_) => write!(f, "<BlocksByRange>"),
+            RPCResponse::BlockSyncRequest(_) => write!(f, "<BlockSyncRequest>"),
         }
     }
 }

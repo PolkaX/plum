@@ -37,8 +37,8 @@ const REQUEST_TIMEOUT: u64 = 15;
 pub const RPC_STATUS: &str = "status";
 /// The Goodbye protocol name.
 pub const RPC_GOODBYE: &str = "goodbye";
-/// The `BlocksByRange` protocol name.
-pub const RPC_BLOCKS_BY_RANGE: &str = "plum_blocks_by_range";
+/// The `BlockSyncRequest` protocol name.
+pub const RPC_BLOCK_SYNC_REQUEST: &str = "plum_block_sync_request";
 
 const CBOR: &str = "cbor";
 
@@ -53,7 +53,7 @@ impl UpgradeInfo for RPCProtocol {
         vec![
             ProtocolId::new(RPC_STATUS, "1", CBOR),
             ProtocolId::new(RPC_GOODBYE, "1", CBOR),
-            ProtocolId::new(RPC_BLOCKS_BY_RANGE, "1", CBOR),
+            ProtocolId::new(RPC_BLOCK_SYNC_REQUEST, "1", CBOR),
         ]
     }
 }
@@ -160,7 +160,7 @@ where
 pub enum RPCRequest {
     Status(StatusMessage),
     Goodbye(GoodbyeReason),
-    BlocksByRange(BlockSyncRequest),
+    BlockSyncRequest(BlockSyncRequest),
 }
 
 impl UpgradeInfo for RPCRequest {
@@ -180,7 +180,9 @@ impl RPCRequest {
             // add more protocols when versions/encodings are supported
             RPCRequest::Status(_) => vec![ProtocolId::new(RPC_STATUS, "1", CBOR)],
             RPCRequest::Goodbye(_) => vec![ProtocolId::new(RPC_GOODBYE, "1", CBOR)],
-            RPCRequest::BlocksByRange(_) => vec![ProtocolId::new(RPC_BLOCKS_BY_RANGE, "1", CBOR)],
+            RPCRequest::BlockSyncRequest(_) => {
+                vec![ProtocolId::new(RPC_BLOCK_SYNC_REQUEST, "1", CBOR)]
+            }
         }
     }
 
@@ -192,7 +194,7 @@ impl RPCRequest {
         match self {
             RPCRequest::Status(_) => true,
             RPCRequest::Goodbye(_) => false,
-            RPCRequest::BlocksByRange(_) => true,
+            RPCRequest::BlockSyncRequest(_) => true,
         }
     }
 
@@ -202,7 +204,7 @@ impl RPCRequest {
         match self {
             RPCRequest::Status(_) => false,
             RPCRequest::Goodbye(_) => false,
-            RPCRequest::BlocksByRange(_) => true,
+            RPCRequest::BlockSyncRequest(_) => true,
         }
     }
 
@@ -212,7 +214,7 @@ impl RPCRequest {
         match self {
             // this only gets called after `multiple_responses()` returns true. Therefore, only
             // variants that have `multiple_responses()` can have values.
-            RPCRequest::BlocksByRange(_) => ResponseTermination::BlocksByRange,
+            RPCRequest::BlockSyncRequest(_) => ResponseTermination::BlockSyncRequest,
             RPCRequest::Status(_) => unreachable!(),
             RPCRequest::Goodbye(_) => unreachable!(),
         }
@@ -331,7 +333,7 @@ impl std::fmt::Display for RPCRequest {
         match self {
             RPCRequest::Status(status) => write!(f, "Status Message: {}", status),
             RPCRequest::Goodbye(reason) => write!(f, "Goodbye: {}", reason),
-            RPCRequest::BlocksByRange(req) => write!(f, "Blocks by range: {}", req),
+            RPCRequest::BlockSyncRequest(req) => write!(f, "Block sync request: {}", req),
         }
     }
 }

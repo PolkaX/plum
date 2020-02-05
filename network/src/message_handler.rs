@@ -64,10 +64,10 @@ impl MessageHandler {
                     peer, id, goodbye
                 );
             }
-            RPCRequest::BlocksByRange(blocks_by_range) => {
+            RPCRequest::BlockSyncRequest(block_sync_request) => {
                 debug!(
-                    "handling RPC BlocksByRange message, peer:{:?}, id: {}, request: {:?}",
-                    peer, id, blocks_by_range
+                    "handling RPC BlockSyncRequest message, peer:{:?}, id: {}, request: {:?}",
+                    peer, id, block_sync_request
                 );
             }
         }
@@ -90,7 +90,7 @@ impl MessageHandler {
         // TODO:
         // https://github.com/filecoin-project/lotus/blob/e7a1be4dde/node/hello/hello.go#L62
 
-        let dummy_request = RPCRequest::BlocksByRange(BlockSyncRequest {
+        let dummy_request = RPCRequest::BlockSyncRequest(BlockSyncRequest {
             start: Vec::new(),
             length: 777u64,
             options: 111u64,
