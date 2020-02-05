@@ -16,7 +16,6 @@ use crate::message_handler::{HandlerMessage, MessageHandler};
 
 pub enum NetworkMessage {
     PubsubMessage { topics: Topic, message: Vec<u8> },
-    HelloMessage(Vec<u8>),
     RPC(PeerId, RPCEvent),
 }
 
@@ -106,11 +105,6 @@ fn network_service(
                             .unwrap()
                             .swarm
                             .publish(&topics, message);
-                    }
-                    NetworkMessage::HelloMessage(message) => {
-                        // FIXME: we might want to use RPC status message instead of publishing it.
-                        debug!("Publishing HelloMessage, message: {:?}", message);
-                        libp2p_service.lock().unwrap().swarm.publish_hello(message);
                     }
                 },
                 Ok(Async::NotReady) => break,

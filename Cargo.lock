@@ -2281,6 +2281,7 @@ dependencies = [
  "futures",
  "libp2p 0.13.2",
  "log",
+ "parity-multihash 0.2.1",
  "rust-cid",
  "serde",
  "serde_bytes",

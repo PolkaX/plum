@@ -1,5 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use cid::{Cid, Codec, Version};
 use libp2p::gossipsub::Topic;
 use libp2p::Multiaddr;
 
@@ -26,4 +27,9 @@ impl Default for Libp2pConfig {
             ],
         }
     }
+}
+
+pub fn genesis_hash() -> Cid {
+    let h = multihash::encode(multihash::Hash::SHA2256, b"filecoin plum").unwrap();
+    Cid::new(Version::V1, Codec::DagProtobuf, h)
 }

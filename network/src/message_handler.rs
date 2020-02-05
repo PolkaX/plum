@@ -5,7 +5,7 @@ use futures::future::Future;
 use futures::stream::Stream;
 use log::{debug, error};
 use plum_libp2p::rpc::methods::BlockSyncRequest;
-use plum_libp2p::rpc::{RPCEvent, RPCRequest, RequestId};
+use plum_libp2p::rpc::{RPCEvent, RPCRequest, RequestId, StatusMessage};
 use plum_libp2p::{config::HELLO_TOPIC, MessageId, PeerId, TopicHash};
 use tokio::sync::mpsc;
 
@@ -75,14 +75,21 @@ impl MessageHandler {
 
     fn on_say_hello(&mut self, peer: PeerId) {
         // TODO: https://github.com/filecoin-project/lotus/blob/e7a1be4dde/node/hello/hello.go#L114
+        let dummy_status_msg = StatusMessage {
+            heaviest_tip_set: Vec::new(),
+            heaviest_tip_set_weight: 8888u128,
+            genesis_hash: plum_libp2p::config::genesis_hash(),
+        };
+
         if self
             .network_send
-            .try_send(NetworkMessage::HelloMessage(
-                b"dummy hello message sent on say hello".to_vec(),
+            .try_send(NetworkMessage::RPC(
+                peer,
+                RPCEvent::Request(0usize, RPCRequest::Status(dummy_status_msg)),
             ))
             .is_err()
         {
-            error!("Failed to send HelloMessage to {:?}", peer);
+            error!("Failed to send RPC Block Request message");
         }
     }
 

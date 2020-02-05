@@ -185,12 +185,6 @@ impl<TSubstream: AsyncRead + AsyncWrite> Behaviour<TSubstream> {
         self.gossipsub.publish(topic, data);
     }
 
-    /// Publish hello message via gossipsub.
-    pub fn publish_hello(&mut self, data: impl Into<Vec<u8>>) {
-        self.gossipsub
-            .publish(&Topic::new(HELLO_TOPIC.into()), data);
-    }
-
     /// Subscribe gossipsub topic.
     pub fn subscribe(&mut self, topic: Topic) -> bool {
         self.gossipsub.subscribe(topic)
