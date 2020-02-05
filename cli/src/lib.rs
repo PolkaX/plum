@@ -6,14 +6,14 @@ use std::io::Write;
 
 use ansi_term::Colour;
 use lazy_static::lazy_static;
-use libp2p::core::Multiaddr;
 use log::info;
+use plum_libp2p::Multiaddr;
 use regex::Regex;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use self::cmd::Command;
+use crate::cmd::Command;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(name = "plum")]
@@ -54,9 +54,17 @@ pub fn run_lp2p(peer_ip: Option<Multiaddr>) {
     let (exit_send, exit) = exit_future::signal();
     let mut runtime = Runtime::new().expect("failed to start runtime on current thread");
     let task_executor = runtime.executor();
-    let network_state = lp2p::NetworkState::default();
-    let client = Client;
-    lp2p::initialize(task_executor, network_state, peer_ip, client);
+
+    // TODO: mock client and intergate with network service.
+    let _client = Client;
+
+    let mut network_config = plum_libp2p::Libp2pConfig::default();
+    if let Some(peer) = peer_ip {
+        network_config.bootnodes.push(peer);
+    }
+
+    let _network_service = network::service::Service::spawn(&network_config, &task_executor);
+
     let _ = runtime.block_on(exit);
     exit_send.fire();
 }

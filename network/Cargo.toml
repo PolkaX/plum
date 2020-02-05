@@ -1,0 +1,14 @@
+[package]
+name = "network"
+version = "0.1.0"
+authors = ["The PolkaX Authors"]
+edition = "2018"
+license = "GPL-3.0"
+
+[dependencies]
+log = "0.4.8"
+tokio = "0.1.22"
+anyhow = "1.0"
+libp2p =  { git = "https://github.com/SigP/rust-libp2p", rev = "776d13ef046358964c7d64cda3295a3a3cb24743" }
+futures = "0.1.29"
+plum_libp2p = { path = "../plum_libp2p", package = "plum_libp2p" }
