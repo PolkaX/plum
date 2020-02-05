@@ -4,7 +4,7 @@ use anyhow::Result;
 use futures::future::Future;
 use futures::stream::Stream;
 use log::{debug, error};
-use plum_libp2p::rpc::methods::BlocksByRangeRequest;
+use plum_libp2p::rpc::methods::BlockSyncRequest;
 use plum_libp2p::rpc::{RPCEvent, RPCRequest, RequestId};
 use plum_libp2p::{config::HELLO_TOPIC, MessageId, PeerId, TopicHash};
 use tokio::sync::mpsc;
@@ -64,12 +64,6 @@ impl MessageHandler {
                     peer, id, goodbye
                 );
             }
-            RPCRequest::BlocksByRoot(blocks_by_root) => {
-                debug!(
-                    "handling RPC BlocksByRoot message, peer:{:?}, id: {}, request: {:?}",
-                    peer, id, blocks_by_root
-                );
-            }
             RPCRequest::BlocksByRange(blocks_by_range) => {
                 debug!(
                     "handling RPC BlocksByRange message, peer:{:?}, id: {}, request: {:?}",
@@ -96,10 +90,10 @@ impl MessageHandler {
         // TODO:
         // https://github.com/filecoin-project/lotus/blob/e7a1be4dde/node/hello/hello.go#L62
 
-        let dummy_request = RPCRequest::BlocksByRange(BlocksByRangeRequest {
-            start_slot: 666u64,
-            count: 777u64,
-            step: 111u64,
+        let dummy_request = RPCRequest::BlocksByRange(BlockSyncRequest {
+            start: Vec::new(),
+            length: 777u64,
+            options: 111u64,
         });
 
         if self

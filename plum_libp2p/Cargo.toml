@@ -8,6 +8,7 @@ license = "GPL-3.0"
 [dependencies]
 log = "0.4.8"
 fnv = "1.0.6"
+cid = { git = "https://github.com/PolkaX/rust-ipfs", package = "rust-cid", branch = "develop", features = ["serde_support"] }
 tokio = "0.1.22"
 serde = {version = "1.0", features = ["derive"]}
 libp2p =  { git = "https://github.com/SigP/rust-libp2p", rev = "776d13ef046358964c7d64cda3295a3a3cb24743" }

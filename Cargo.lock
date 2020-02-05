@@ -2281,6 +2281,7 @@ dependencies = [
  "futures",
  "libp2p 0.13.2",
  "log",
+ "rust-cid",
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1",
@@ -2613,6 +2614,41 @@ dependencies = [
  "untrusted",
  "web-sys",
  "winapi 0.3.8",
+]
+
+[[package]]
+name = "rust-cid"
+version = "0.1.0"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#b003400f8ce11ec5de9314144b63c98d190bcf3c"
+dependencies = [
+ "integer-encoding",
+ "rust-multibase",
+ "rust-multihash",
+ "serde",
+ "serde_bytes",
+ "serde_cbor 0.11.1",
+ "thiserror",
+]
+
+[[package]]
+name = "rust-multibase"
+version = "0.1.0"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#b003400f8ce11ec5de9314144b63c98d190bcf3c"
+dependencies = [
+ "bs58 0.3.0",
+ "data-encoding",
+ "lazy_static",
+]
+
+[[package]]
+name = "rust-multihash"
+version = "0.1.0"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#b003400f8ce11ec5de9314144b63c98d190bcf3c"
+dependencies = [
+ "blake2",
+ "bytes 0.5.4",
+ "parity-multihash 0.2.1",
+ "unsigned-varint 0.3.0",
 ]
 
 [[package]]

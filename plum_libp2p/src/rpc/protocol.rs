@@ -39,8 +39,6 @@ pub const RPC_STATUS: &str = "status";
 pub const RPC_GOODBYE: &str = "goodbye";
 /// The `BlocksByRange` protocol name.
 pub const RPC_BLOCKS_BY_RANGE: &str = "plum_blocks_by_range";
-/// The `BlocksByRoot` protocol name.
-pub const RPC_BLOCKS_BY_ROOT: &str = "plum_blocks_by_root";
 
 const CBOR: &str = "cbor";
 
@@ -56,7 +54,6 @@ impl UpgradeInfo for RPCProtocol {
             ProtocolId::new(RPC_STATUS, "1", CBOR),
             ProtocolId::new(RPC_GOODBYE, "1", CBOR),
             ProtocolId::new(RPC_BLOCKS_BY_RANGE, "1", CBOR),
-            ProtocolId::new(RPC_BLOCKS_BY_ROOT, "1", CBOR),
         ]
     }
 }
@@ -163,8 +160,7 @@ where
 pub enum RPCRequest {
     Status(StatusMessage),
     Goodbye(GoodbyeReason),
-    BlocksByRange(BlocksByRangeRequest),
-    BlocksByRoot(BlocksByRootRequest),
+    BlocksByRange(BlockSyncRequest),
 }
 
 impl UpgradeInfo for RPCRequest {
@@ -185,7 +181,6 @@ impl RPCRequest {
             RPCRequest::Status(_) => vec![ProtocolId::new(RPC_STATUS, "1", CBOR)],
             RPCRequest::Goodbye(_) => vec![ProtocolId::new(RPC_GOODBYE, "1", CBOR)],
             RPCRequest::BlocksByRange(_) => vec![ProtocolId::new(RPC_BLOCKS_BY_RANGE, "1", CBOR)],
-            RPCRequest::BlocksByRoot(_) => vec![ProtocolId::new(RPC_BLOCKS_BY_ROOT, "1", CBOR)],
         }
     }
 
@@ -198,7 +193,6 @@ impl RPCRequest {
             RPCRequest::Status(_) => true,
             RPCRequest::Goodbye(_) => false,
             RPCRequest::BlocksByRange(_) => true,
-            RPCRequest::BlocksByRoot(_) => true,
         }
     }
 
@@ -209,7 +203,6 @@ impl RPCRequest {
             RPCRequest::Status(_) => false,
             RPCRequest::Goodbye(_) => false,
             RPCRequest::BlocksByRange(_) => true,
-            RPCRequest::BlocksByRoot(_) => true,
         }
     }
 
@@ -220,7 +213,6 @@ impl RPCRequest {
             // this only gets called after `multiple_responses()` returns true. Therefore, only
             // variants that have `multiple_responses()` can have values.
             RPCRequest::BlocksByRange(_) => ResponseTermination::BlocksByRange,
-            RPCRequest::BlocksByRoot(_) => ResponseTermination::BlocksByRoot,
             RPCRequest::Status(_) => unreachable!(),
             RPCRequest::Goodbye(_) => unreachable!(),
         }
@@ -340,7 +332,6 @@ impl std::fmt::Display for RPCRequest {
             RPCRequest::Status(status) => write!(f, "Status Message: {}", status),
             RPCRequest::Goodbye(reason) => write!(f, "Goodbye: {}", reason),
             RPCRequest::BlocksByRange(req) => write!(f, "Blocks by range: {}", req),
-            RPCRequest::BlocksByRoot(req) => write!(f, "Blocks by root: {:?}", req),
         }
     }
 }
