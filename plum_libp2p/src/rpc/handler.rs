@@ -193,7 +193,7 @@ where
         listen_protocol: SubstreamProtocol<RPCProtocol>,
         inactive_timeout: Duration,
     ) -> Self {
-        RPCHandler {
+        Self {
             listen_protocol,
             pending_error: None,
             events_out: SmallVec::new(),
