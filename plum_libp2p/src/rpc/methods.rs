@@ -10,11 +10,13 @@ use serde::{Deserialize, Serialize};
 
 pub type RequestId = usize;
 
+// TODO: HelloMessage, https://github.com/filecoin-project/lotus/blob/e7a1be4dde/node/hello/hello.go#L30
 /// The STATUS request/response handshake message.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct StatusMessage {
-    /// The fork version of the chain we are broadcasting.
-    pub fork_version: [u8; 4],
+    pub heaviest_tip_set: Vec<cid::Cid>,
+    pub heaviest_tip_set_weight: u128,
+    pub genesis_hash: cid::Cid,
 }
 
 /// The reason given for a `Goodbye` message.
@@ -54,7 +56,7 @@ impl Into<u64> for GoodbyeReason {
     }
 }
 
-// https://github.com/filecoin-project/lotus/blob/e7a1be4dde/chain/blocksync/blocksync.go#L34
+// TODO: https://github.com/filecoin-project/lotus/blob/e7a1be4dde/chain/blocksync/blocksync.go#L34
 /// Request a number of fil block from a peer.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BlockSyncRequest {
@@ -66,7 +68,7 @@ pub struct BlockSyncRequest {
 /* RPC Handling and Grouping */
 // Collection of enums and structs used by the Codecs to encode/decode RPC messages
 
-// https://github.com/filecoin-project/lotus/blob/e7a1be4dde/chain/blocksync/blocksync.go#L67
+// TODO: https://github.com/filecoin-project/lotus/blob/e7a1be4dde/chain/blocksync/blocksync.go#L67
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum RPCResponse {
     /// A HELLO message.
@@ -103,6 +105,7 @@ pub enum RPCErrorResponse {
 }
 
 impl RPCErrorResponse {
+    // TODO: https://github.com/filecoin-project/lotus/blob/e7a1be4dde/chain/blocksync/blocksync.go#L58
     /// Used to encode the response in the codec.
     pub fn as_u8(&self) -> Option<u8> {
         match self {
@@ -170,7 +173,11 @@ impl ErrorMessage {
 
 impl std::fmt::Display for StatusMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Status Message: Fork Version: {:?}, Finalized Root: , Finalized Epoch: , Head Root: Head Slot: ", self.fork_version)
+        write!(
+            f,
+            "Status Message: heaviest_tip_set: {:?}, heaviest_tip_set_weight: {}, genesis_hash: {}",
+            self.heaviest_tip_set, self.heaviest_tip_set_weight, self.genesis_hash
+        )
     }
 }
 
