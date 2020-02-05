@@ -50,7 +50,7 @@ impl MessageHandler {
         Ok(handler_send)
     }
 
-    fn on_request(&self, peer: PeerId, id: RequestId, request: RPCRequest) {
+    fn process_request(&self, peer: PeerId, id: RequestId, request: RPCRequest) {
         match request {
             RPCRequest::Status(status) => {
                 debug!(
@@ -79,11 +79,8 @@ impl MessageHandler {
         }
     }
 
-    fn on_hello_message(&mut self, peer: PeerId) {
-        // TODO:
-        // 1. get current status of local node
-        // 2. publish the hello message
-
+    fn on_say_hello(&mut self, peer: PeerId) {
+        // TODO: https://github.com/filecoin-project/lotus/blob/e7a1be4dde/node/hello/hello.go#L114
         if self
             .network_send
             .try_send(NetworkMessage::HelloMessage(
@@ -92,6 +89,28 @@ impl MessageHandler {
             .is_err()
         {
             error!("Failed to send HelloMessage to {:?}", peer);
+        }
+    }
+
+    fn process_hello_message(&mut self, _id: MessageId, source: PeerId, _data: Vec<u8>) {
+        // TODO:
+        // https://github.com/filecoin-project/lotus/blob/e7a1be4dde/node/hello/hello.go#L62
+
+        let dummy_request = RPCRequest::BlocksByRange(BlocksByRangeRequest {
+            start_slot: 666u64,
+            count: 777u64,
+            step: 111u64,
+        });
+
+        if self
+            .network_send
+            .try_send(NetworkMessage::RPC(
+                source,
+                RPCEvent::Request(0usize, dummy_request),
+            ))
+            .is_err()
+        {
+            error!("Failed to send RPC Block Request message");
         }
     }
 
@@ -106,36 +125,17 @@ impl MessageHandler {
             "handling PubsubMessage, id: {:?}, source: {:?}, topics: {:?}, data: {:?}",
             id, source, topics, data
         );
-        // TODO: Dispatch hello/blocks/messages message
+        // Dispatch hello/blocks/messages message
         for topic in topics {
             if topic == TopicHash::from_raw(HELLO_TOPIC) {
-                // TODO: handle hello message, send the sync request if all checks passed.
-                //
-                // send the sync service.
-                if self
-                    .network_send
-                    .try_send(NetworkMessage::RPC(
-                        source.clone(),
-                        RPCEvent::Request(
-                            0usize,
-                            RPCRequest::BlocksByRange(BlocksByRangeRequest {
-                                start_slot: 666u64,
-                                count: 777u64,
-                                step: 111u64,
-                            }),
-                        ),
-                    ))
-                    .is_err()
-                {
-                    error!("Failed to send RPC Block Request message");
-                }
+                self.process_hello_message(id.clone(), source.clone(), data.clone());
             }
         }
     }
 
-    fn on_rpc_message(&mut self, peer: PeerId, event: RPCEvent) {
+    fn on_rpc(&mut self, peer: PeerId, event: RPCEvent) {
         match event {
-            RPCEvent::Request(id, request) => self.on_request(peer, id, request),
+            RPCEvent::Request(id, request) => self.process_request(peer, id, request),
             RPCEvent::Response(id, err_response) => {
                 debug!(
                     "handling RPC Response message, peer:{:?}, id: {}, err_response: {:?}",
@@ -153,8 +153,8 @@ impl MessageHandler {
 
     fn handle_message(&mut self, message: HandlerMessage) {
         match message {
-            HandlerMessage::SayHello(peer) => self.on_hello_message(peer),
-            HandlerMessage::RPC(peer, rpc_event) => self.on_rpc_message(peer, rpc_event),
+            HandlerMessage::SayHello(peer) => self.on_say_hello(peer),
+            HandlerMessage::RPC(peer, rpc_event) => self.on_rpc(peer, rpc_event),
             HandlerMessage::PubsubMessage {
                 id,
                 source,
