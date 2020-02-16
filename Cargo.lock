@@ -331,6 +331,9 @@ name = "bytes"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "130aac562c0dd69c56b3b1cc8ffd2e17be31d0b6c25b61c96b76231aa23e39e1"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "c2-chacha"
@@ -1011,7 +1014,7 @@ dependencies = [
  "libp2p-websocket 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libp2p-yamux 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "parity-multiaddr 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "parity-multihash 0.2.1",
+ "parity-multihash 0.2.3",
  "parking_lot 0.9.0",
  "smallvec 0.6.13",
  "tokio-codec",
@@ -1076,7 +1079,7 @@ dependencies = [
  "log",
  "multistream-select 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "parity-multiaddr 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "parity-multihash 0.2.1",
+ "parity-multihash 0.2.3",
  "parking_lot 0.9.0",
  "protobuf",
  "quick-error",
@@ -1310,7 +1313,7 @@ dependencies = [
  "libp2p-swarm 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log",
  "parity-multiaddr 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "parity-multihash 0.2.1",
+ "parity-multihash 0.2.3",
  "protobuf",
  "rand 0.7.3",
  "sha2 0.8.1",
@@ -2125,7 +2128,7 @@ dependencies = [
  "byteorder 1.3.2",
  "bytes 0.4.12",
  "data-encoding",
- "parity-multihash 0.2.1",
+ "parity-multihash 0.2.3",
  "percent-encoding",
  "serde",
  "unsigned-varint 0.2.3",
@@ -2148,9 +2151,9 @@ dependencies = [
 
 [[package]]
 name = "parity-multihash"
-version = "0.2.1"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70a4d7b05e51bff5ae2c29c7b8c3d889985bbd8f4e15b3542fcc1f6f9666d292"
+checksum = "7a1cd2ba02391b81367bec529fb209019d718684fdc8ad6a712c2b536e46f775"
 dependencies = [
  "blake2",
  "bytes 0.5.4",
@@ -2281,7 +2284,7 @@ dependencies = [
  "futures",
  "libp2p 0.13.2",
  "log",
- "parity-multihash 0.2.1",
+ "parity-multihash 0.2.3",
  "rust-cid",
  "serde",
  "serde_bytes",
@@ -2618,13 +2621,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-block-format"
+version = "0.1.0"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#bd9c16f13532ba70753ec8e359bdc9620ea939a9"
+dependencies = [
+ "bytes 0.5.4",
+ "rust-cid",
+ "rust-ipfs-util",
+ "thiserror",
+]
+
+[[package]]
 name = "rust-cid"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#b003400f8ce11ec5de9314144b63c98d190bcf3c"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#bd9c16f13532ba70753ec8e359bdc9620ea939a9"
 dependencies = [
  "integer-encoding",
+ "parity-multihash 0.2.3",
  "rust-multibase",
- "rust-multihash",
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1",
@@ -2632,24 +2646,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-ipfs-util"
+version = "0.1.0"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#bd9c16f13532ba70753ec8e359bdc9620ea939a9"
+dependencies = [
+ "parity-multihash 0.2.3",
+]
+
+[[package]]
 name = "rust-multibase"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#b003400f8ce11ec5de9314144b63c98d190bcf3c"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#bd9c16f13532ba70753ec8e359bdc9620ea939a9"
 dependencies = [
  "bs58 0.3.0",
  "data-encoding",
  "lazy_static",
-]
-
-[[package]]
-name = "rust-multihash"
-version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#b003400f8ce11ec5de9314144b63c98d190bcf3c"
-dependencies = [
- "blake2",
- "bytes 0.5.4",
- "parity-multihash 0.2.1",
- "unsigned-varint 0.3.0",
 ]
 
 [[package]]
@@ -3361,7 +3372,13 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "address",
- "cid",
+ "anyhow",
+ "bytes 0.5.4",
+ "rust-block-format",
+ "rust-cid",
+ "serde",
+ "serde_cbor 0.11.1",
+ "thiserror",
 ]
 
 [[package]]

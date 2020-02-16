@@ -1,7 +1,9 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
+use serde::{Deserialize, Serialize};
+
 /// The type of key that store in keystore.
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum KeyType {
     /// SECP256K1 key.
     SECP256K1,
