@@ -65,8 +65,18 @@ impl Ord for BlockHeader {
     fn cmp(&self, other: &Self) -> Ordering {
         let my_last_ticket = self.last_ticket();
         let other_last_ticket = other.last_ticket();
-        if my_last_ticket == other_last_ticket {}
-        my_last_ticket.cmp(other_last_ticket)
+        match my_last_ticket.cmp(&other_last_ticket) {
+            Ordering::Greater => Ordering::Greater,
+            Ordering::Less => Ordering::Less,
+            Ordering::Equal => {
+                let x_cid = self.clone().cid();
+                let y_cid = other.clone().cid();
+                // FIXME
+                // log.Warnf("blocks have same ticket (%s %s)", blks[i].Miner, blks[j].Miner)
+                // return blks[i].Cid().KeyString() < blks[j].Cid().KeyString()
+                x_cid.to_string().cmp(&y_cid.to_string())
+            }
+        }
     }
 }
 

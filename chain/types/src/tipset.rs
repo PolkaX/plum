@@ -9,15 +9,11 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum TipSetError {
-    #[error("Cannot create TipSet with zero length array of blocks")]
+    #[error("zero length array of blocks")]
     EmptyBlocks,
-    #[error(
-        "Cannot create TipSet with mismatching heights (expected {expected:?}, found {found:?})"
-    )]
+    #[error("mismatching heights (expected {expected:?}, found {found:?})")]
     MismatchingHeights { expected: u64, found: u64 },
-    #[error(
-        "Cannot create TipSet with mismatching parents (expected {expected:?}, found {found:?})"
-    )]
+    #[error("mismatching parents (expected {expected:?}, found {found:?})")]
     MismatchingParents { expected: Cid, found: Cid },
 }
 
