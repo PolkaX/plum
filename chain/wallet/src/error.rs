@@ -1,5 +1,7 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
+use plum_address::AddressError;
+
 /// Type alias to use this library's [`WalletError`] type in a `Result`.
 pub type Result<T> = std::result::Result<T, WalletError>;
 
@@ -20,7 +22,7 @@ pub enum WalletError {
     BLS,
     /// Address error.
     #[error("Address error")]
-    Address(#[from] address::AddressError),
+    Address(#[from] AddressError),
     /// Key not found.
     #[error("Key not found")]
     KeyNotFound,

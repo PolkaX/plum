@@ -1,11 +1,9 @@
 [package]
-name = "types"
+name = "plum_hashing"
 version = "0.1.0"
 authors = ["The PolkaX Authors"]
 edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-cid = "0.3"
-
-plum_address = { path = "../address" }
+blake2-rfc = "0.2"
