@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 //! The general address the represents multiple protocols.
 
@@ -6,12 +6,11 @@
 
 mod address;
 mod error;
-
-pub use self::address::{checksum, validate_checksum, Address, Network, Protocol};
-pub use self::error::{AddressError, Result};
+mod network;
+mod protocol;
 
 /// Some constants used in this library.
-pub mod constant {
+mod constant {
     /// The length of a BLS signature.
     pub const BLS_SIGNATURE_LEN: usize = 96;
     /// The length of a BLS private key.
@@ -28,4 +27,13 @@ pub mod constant {
     pub const PAYLOAD_HASH_LEN: usize = 20;
     /// The hash length used for calculating address checksums.
     pub const CHECKSUM_HASH_LEN: usize = 4;
+
+    /// The length of MaxUint64 as a string.
+    pub(crate) const MAX_U64_LEN: usize = 20;
 }
+
+pub use self::address::{checksum, validate_checksum, Address};
+pub use self::constant::*;
+pub use self::error::AddressError;
+pub use self::network::{Network, NETWORK_DEFAULT};
+pub use self::protocol::Protocol;

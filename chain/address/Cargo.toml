@@ -1,18 +1,19 @@
 [package]
-name = "address"
+name = "plum_address"
 version = "0.1.0"
 authors = ["The PolkaX Authors"]
 edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
+data-encoding = "2.1"
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0"
-blake2-rfc = "0.2"
-integer-encoding = "1.0"
-data-encoding = "2.1"
+unsigned-varint = "0.3"
+
+plum_hashing = { path = "../../hashing" }
 
 [dev-dependencies]
-rand = "0.7"
 bls = { package = "bls-signatures", version = "0.3" }
 libsecp256k1 = "0.3"
+rand = "0.7"
