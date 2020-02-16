@@ -13,7 +13,7 @@ name = "plum-node"
 path = "src/bin/main.rs"
 
 [dependencies]
-address = { path = "chain/address" }
+plum_address = { path = "chain/address" }
 cli = { path = "./cli" }
 wallet = { path = "chain/wallet" }
 
@@ -24,6 +24,7 @@ members = [
 	"chain/wallet",
 	"chain",
 	"cli",
+	"hashing",
 	"lp2p",
 	"peermgr",
     "plum_libp2p",

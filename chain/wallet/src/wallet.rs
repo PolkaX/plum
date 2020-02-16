@@ -1,14 +1,14 @@
 // Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::collections::HashMap;
+use std::str::FromStr;
 
-use address::{Address, Network};
-use blake2_rfc::blake2b::blake2b;
+use plum_address::{Address, NETWORK_DEFAULT};
+use plum_hashing::blake2b_variable;
 
 use crate::error::{Result, WalletError};
 use crate::keystore::{KeyInfo, KeyStore, KeyType, Signature};
 
-const NETWORK: Network = Network::Test;
 const KNAME_PREFIX: &str = "wallet-";
 const KDEFAULT: &str = "default";
 
@@ -29,7 +29,7 @@ impl Key {
                 let pubkey = secp256k1::PublicKey::from_secret_key(&seckey)
                     .serialize()
                     .to_vec();
-                let address = Address::new_secp256k1_addr(&pubkey)?;
+                let address = Address::new_secp256k1_addr(NETWORK_DEFAULT, &pubkey)?;
                 Ok(Key {
                     info,
                     pubkey,
@@ -43,7 +43,7 @@ impl Key {
                     Err(_) => return Err(WalletError::BLS),
                 };
                 let pubkey = privkey.public_key().as_bytes();
-                let address = Address::new_bls_addr(&pubkey)?;
+                let address = Address::new_bls_addr(NETWORK_DEFAULT, &pubkey)?;
                 Ok(Key {
                     info,
                     pubkey,
@@ -86,8 +86,8 @@ impl<KS: KeyStore> Wallet<KS> {
         match key.info.ty {
             KeyType::SECP256K1 => {
                 let seckey = secp256k1::SecretKey::parse_slice(&key.info.privkey)?;
-                let blake2b_hash = blake2b(secp256k1::util::MESSAGE_SIZE, &[], msg);
-                let message = secp256k1::Message::parse_slice(blake2b_hash.as_bytes())?;
+                let blake2b_hash = blake2b_variable(msg, secp256k1::util::MESSAGE_SIZE);
+                let message = secp256k1::Message::parse_slice(&blake2b_hash)?;
                 let (signature, _) = secp256k1::sign(&message, &seckey);
                 Ok(Signature {
                     ty: KeyType::SECP256K1,
@@ -128,7 +128,7 @@ impl<KS: KeyStore> Wallet<KS> {
     pub fn generate_key(&mut self, key_type: KeyType) -> Result<Address> {
         let key = generate_key(key_type)?;
 
-        if let Err(_) = self.keystore.put(format!("{}{}", KNAME_PREFIX, key.address.encode(NETWORK)), key.info.clone()) {
+        if let Err(_) = self.keystore.put(format!("{}{}", KNAME_PREFIX, key.address), key.info.clone()) {
             return Err(WalletError::KeyStore);
         }
         let address = key.address.clone();
@@ -149,7 +149,7 @@ impl<KS: KeyStore> Wallet<KS> {
         let mut res = Vec::with_capacity(addresses.len());
         for address in &addresses {
             if address.starts_with(KNAME_PREFIX) {
-                let addr = Address::decode(address.trim_start_matches(KNAME_PREFIX))?;
+                let addr = Address::from_str(address.trim_start_matches(KNAME_PREFIX))?;
                 res.push(addr);
             }
         }
@@ -167,7 +167,7 @@ impl<KS: KeyStore> Wallet<KS> {
     pub fn import(&mut self, info: KeyInfo) -> Result<Address> {
         let key = Key::new(info)?;
         match self.keystore.put(
-            format!("{}{}", KNAME_PREFIX, key.address.encode(NETWORK)),
+            format!("{}{}", KNAME_PREFIX, key.address),
             key.info.clone(),
         ) {
             Ok(()) => Ok(key.address),
