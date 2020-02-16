@@ -14,4 +14,4 @@ thiserror = "1.0"
 serde_cbor = { git = "https://github.com/PolkaX/cbor", branch = "f64ser-hack", features = ["tags"] }
 block_format = { git = "https://github.com/PolkaX/rust-ipfs", package = "rust-block-format", branch = "develop" }
 
-plum_address = { path = "../address" }
+address = { path = "../address", package = "plum_address" }

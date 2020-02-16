@@ -11,10 +11,14 @@ use thiserror::Error;
 pub enum TipSetError {
     #[error("Cannot create TipSet with zero length array of blocks")]
     EmptyBlocks,
-    #[error("Cannot create TipSet with mismatching heights")]
-    MismatchingHeights,
-    #[error("Cannot create TipSet with mismatching parents")]
-    MismatchingParents,
+    #[error(
+        "Cannot create TipSet with mismatching heights (expected {expected:?}, found {found:?})"
+    )]
+    MismatchingHeights { expected: u64, found: u64 },
+    #[error(
+        "Cannot create TipSet with mismatching parents (expected {expected:?}, found {found:?})"
+    )]
+    MismatchingParents { expected: Cid, found: Cid },
 }
 
 #[derive(Eq, PartialEq, Debug, Clone)]
@@ -30,8 +34,8 @@ impl TipSet {
             return Err(TipSetError::EmptyBlocks);
         }
 
-        // TODO:
-        // sort.Slice(blks, tipsetSortFunc(blks))
+        let mut blks = blks;
+        blks.sort();
 
         let height = blks[0].height;
 
@@ -39,12 +43,18 @@ impl TipSet {
 
         for blk in blks.iter() {
             if blk.height != height {
-                return Err(TipSetError::MismatchingHeights);
+                return Err(TipSetError::MismatchingHeights {
+                    expected: height,
+                    found: blk.height,
+                });
             }
 
             for (i, cid) in blk.parents.iter().enumerate() {
                 if *cid != blks[0].parents[i] {
-                    return Err(TipSetError::MismatchingParents);
+                    return Err(TipSetError::MismatchingParents {
+                        expected: blks[0].parents[i].clone(),
+                        found: cid.clone(),
+                    });
                 }
                 cids.push(blk.clone().cid());
             }
