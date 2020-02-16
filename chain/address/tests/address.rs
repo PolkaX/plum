@@ -283,7 +283,6 @@ fn test_invalid_bytes_address() {
     let test_cases = vec![
         (vec![4, 4, 4], AddressError::UnknownProtocol),
         (vec![0], AddressError::InvalidLength),
-        /*
         (
             vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             AddressError::InvalidPayload,
@@ -304,7 +303,6 @@ fn test_invalid_bytes_address() {
             ],
             AddressError::InvalidPayload,
         ),
-        */
         (
             vec![
                 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
