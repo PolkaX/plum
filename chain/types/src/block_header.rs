@@ -9,8 +9,9 @@ use bytes::Bytes;
 use cid::{AsCidRef, Cid, Codec, Hash, Prefix};
 use core::convert::TryInto;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct Ticket {
     pub vrf_proof: Vec<u8>,
 }
@@ -60,9 +61,28 @@ impl TryInto<BasicBlock> for BlockHeader {
     }
 }
 
+impl Ord for BlockHeader {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let my_last_ticket = self.last_ticket();
+        let other_last_ticket = other.last_ticket();
+        if my_last_ticket == other_last_ticket {}
+        my_last_ticket.cmp(other_last_ticket)
+    }
+}
+
+impl PartialOrd for BlockHeader {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 impl BlockHeader {
     pub fn cid(self) -> Cid {
         let blk: BasicBlock = self.try_into().expect("TODO: Check this later");
         blk.cid().clone()
+    }
+
+    pub fn last_ticket(&self) -> &Ticket {
+        &self.ticket
     }
 }
