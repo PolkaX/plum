@@ -7,5 +7,5 @@ license = "GPL-3.0"
 
 [dependencies]
 log = "0.4"
-libp2p = { version = "0.13", default-features = false }
-futures = "0.1"
+libp2p-core = "0.16"
+futures = "0.3"
