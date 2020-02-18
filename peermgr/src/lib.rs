@@ -1,9 +1,10 @@
-// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use std::{collections::HashMap, time::Instant};
+use std::collections::HashMap;
+use std::time::Instant;
 
-use futures::sync::mpsc;
-use libp2p::{Multiaddr, PeerId};
+use futures::channel::mpsc;
+use libp2p_core::{Multiaddr, PeerId};
 use log::{debug, warn};
 
 pub const MAX_FIL_PEERS: u32 = 32;
