@@ -19,13 +19,12 @@ wallet = { path = "chain/wallet" }
 
 [workspace]
 members = [
-	"chain/address",
+    "chain/address",
 	"chain/types",
 	"chain/wallet",
 	"chain",
 	"cli",
 	"hashing",
-	"lp2p",
 	"peermgr",
     "plum_libp2p",
     "network",

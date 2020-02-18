@@ -1,4 +1,4 @@
-// Copyright 2019 PolkaX Authors. Licensed under GPL-3.0.
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 /// The type of key that store in keystore.
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
