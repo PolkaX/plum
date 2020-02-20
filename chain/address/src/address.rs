@@ -56,9 +56,9 @@ impl Address {
 
     /// Create an address using the ID protocol.
     pub fn new_id_addr(network: Network, id: u64) -> Result<Self, AddressError> {
-        let mut payload = unsigned_varint::encode::u64_buffer();
-        unsigned_varint::encode::u64(id, &mut payload);
-        Self::new(network, Protocol::ID, &payload[..])
+        let mut payload_buf = unsigned_varint::encode::u64_buffer();
+        let payload = unsigned_varint::encode::u64(id, &mut payload_buf);
+        Self::new(network, Protocol::ID, payload)
     }
 
     /// Create an address using the SECP256k1 protocol.
@@ -277,6 +277,12 @@ fn base32_decode(input: impl AsRef<[u8]>) -> Result<Vec<u8>, AddressError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_id_payload() {
+        let id_addr = Address::new_id_addr(Network::Test, 12512063u64).unwrap();
+        assert_eq!(id_addr.payload(), [191, 214, 251, 5]);
+    }
 
     #[test]
     fn test_checksum() {
