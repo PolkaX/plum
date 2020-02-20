@@ -1,9 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use address::Address;
-
 use crate::{bigint::BigInt, signature::Signature};
-
+use address::Address;
 use block_format::BasicBlock;
 use bytes::Bytes;
 use cid::{AsCidRef, Cid, Codec, Hash, Prefix};
@@ -29,8 +27,6 @@ pub struct EPostProof {
     pub post_rand: Vec<u8>,
     pub candidates: Vec<EPostTicket>,
 }
-
-pub type ElectionProof = Vec<u8>;
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct BlockHeader {
@@ -71,7 +67,7 @@ impl Ord for BlockHeader {
             Ordering::Equal => {
                 let x_cid = self.clone().cid();
                 let y_cid = other.clone().cid();
-                // FIXME
+                // FIXME: add test
                 // log.Warnf("blocks have same ticket (%s %s)", blks[i].Miner, blks[j].Miner)
                 // return blks[i].Cid().KeyString() < blks[j].Cid().KeyString()
                 x_cid.to_string().cmp(&y_cid.to_string())

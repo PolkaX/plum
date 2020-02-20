@@ -20,7 +20,7 @@ mod vmcontext;
 pub use self::actor::Actor;
 pub use self::ask::{SignedStorageAsk, StorageAsk};
 pub use self::bigint::BigInt;
-pub use self::block_header::{BlockHeader, ElectionProof, Ticket};
+pub use self::block_header::{BlockHeader, EPostProof, EPostTicket, Ticket};
 pub use self::block_msg::BlockMsg;
 pub use self::fil::{parse_fil, FIL};
 pub use self::full_block::FullBlock;

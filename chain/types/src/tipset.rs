@@ -4,6 +4,7 @@ use crate::{
     block_header::{BlockHeader, Ticket},
     Cid,
 };
+use serde::{Deserialize, Serialize};
 use std::result::Result;
 use thiserror::Error;
 
@@ -17,7 +18,7 @@ pub enum TipSetError {
     MismatchingParents { expected: Cid, found: Cid },
 }
 
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct TipSet {
     cids: Vec<Cid>,
     blks: Vec<BlockHeader>,
@@ -31,6 +32,8 @@ impl TipSet {
         }
 
         let mut blks = blks;
+
+        // TODO: add tests
         blks.sort();
 
         let height = blks[0].height;
