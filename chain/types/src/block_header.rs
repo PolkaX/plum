@@ -10,7 +10,7 @@ use log::warn;
 use serde::{ser::SerializeSeq, Deserialize, Deserializer, Serialize, Serializer};
 use std::cmp::Ordering;
 
-#[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd, Deserialize)]
+#[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd)]
 pub struct Ticket {
     pub vrf_proof: Vec<u8>,
 }
@@ -47,7 +47,18 @@ impl Serialize for Ticket {
         S: Serializer,
     {
         let value = serde_bytes::Bytes::new(&self.vrf_proof);
-        serializer.serialize_bytes(value)
+        let fxck = (value,);
+        fxck.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for Ticket {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error> where
+        D: Deserializer<'de> {
+        let out: (serde_bytes::ByteBuf,) = Deserialize::deserialize(deserializer)?;
+        Ok(Ticket {
+            vrf_proof: out.0.into_vec()
+        })
     }
 }
 
@@ -216,8 +227,13 @@ mod tests {
             129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48,
             118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48,
         ];
+        let out = serde_cbor::to_vec(&ticket).unwrap();
         println!("expected: {:?}", &expected[..]);
-        println!("ticket: {:?}", serde_cbor::to_vec(&ticket).unwrap());
+        println!("ticket: {:?}", out);
+        assert_eq!(out.as_slice(), &expected[..]);
+
+        let out = serde_cbor::from_slice(&out).unwrap();
+        assert_eq!(ticket, out);
     }
 
     #[test]
