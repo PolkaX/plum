@@ -41,37 +41,13 @@ mod my_serde {
     }
 }
 
-// Ticket
-//
-// vrf_proof 为 Vec<u8>
-//
-// rust:
-// 129 + cbor_encode_major_type() + vrf_proof
-// 129 + [88, 32] + vrf_proof
-//
-// serializer.serialize_bytes(&bytes)
-// [88, 35] + 129 + [88, 32] + vrf_proof
-//
-// go:
-// 129 + cbor_encode_major_type() + vrf_proof
-// 129 + [88, 32] + vrf_proof
-
 impl Serialize for Ticket {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        // lotus/chain/types/cbor_gen.go
-        let mut bytes = vec![];
-        bytes.push(129u8);
-        bytes.extend_from_slice(&crate::cbor_gen::cbor_encode_major_type(
-            crate::cbor_gen::MajByteString,
-            self.vrf_proof.len() as u64,
-        ));
-        bytes.extend_from_slice(&self.vrf_proof);
-
-        let value = serde_bytes::Bytes::new(&bytes);
-        serializer.serialize_bytes(&value)
+        let value = serde_bytes::Bytes::new(&self.vrf_proof);
+        serializer.serialize_bytes(value)
     }
 }
 
