@@ -66,7 +66,7 @@ impl TipSet {
         &self.cids
     }
 
-    pub fn blks(&self) -> &[BlockHeader] {
+    pub fn blocks(&self) -> &[BlockHeader] {
         &self.blks
     }
 
@@ -78,15 +78,27 @@ impl TipSet {
         &self.min_ticket_block().ticket
     }
 
-    pub fn min_ticket_block(&self) -> &BlockHeader {
-        &self.blks[0]
-    }
-
     pub fn min_timestamp(&self) -> u64 {
         self.blks
             .iter()
             .map(|blk| blk.timestamp)
             .min()
             .expect("Each created TipSet has non-empty blks; qed")
+    }
+
+    pub fn min_ticket_block(&self) -> &BlockHeader {
+        &self.blks[0]
+    }
+
+    pub fn parent_state(&self) -> &Cid {
+        &self.blks[0].parent_state_root
+    }
+
+    pub fn parent_weight(&self) -> u128 {
+        self.blks[0].parent_weight
+    }
+
+    pub fn contains(&self, cid: &Cid) -> bool {
+        self.cids.contains(cid)
     }
 }

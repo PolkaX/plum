@@ -2039,6 +2039,8 @@ dependencies = [
  "plum_hashing",
  "rand 0.7.3",
  "serde",
+ "serde_bytes",
+ "serde_cbor",
  "thiserror",
  "unsigned-varint 0.3.1",
 ]
@@ -3213,13 +3215,17 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "byteorder 1.3.4",
  "bytes 0.5.4",
+ "log",
  "plum_address",
  "rust-block-format",
  "rust-cid",
  "serde",
+ "serde_bytes",
  "serde_cbor",
  "thiserror",
+ "unsigned-varint 0.3.1",
 ]
 
 [[package]]

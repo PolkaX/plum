@@ -10,10 +10,12 @@ data-encoding = "2.1"
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0"
 unsigned-varint = "0.3"
+serde_bytes = "0.11"
 
 plum_hashing = { path = "../../hashing" }
 
 [dev-dependencies]
 bls = { package = "bls-signatures", version = "0.3" }
-libsecp256k1 = "0.3"
 rand = "0.7"
+serde_cbor = { git = "https://github.com/PolkaX/cbor", branch = "f64ser-hack", features = ["tags"] }
+libsecp256k1 = "0.3"
