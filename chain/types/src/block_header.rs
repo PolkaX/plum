@@ -7,38 +7,12 @@ use bytes::Bytes;
 use cid::{AsCidRef, Cid, Codec, Hash, Prefix};
 use core::convert::TryInto;
 use log::warn;
-use serde::{ser::SerializeSeq, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::cmp::Ordering;
 
 #[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd)]
 pub struct Ticket {
     pub vrf_proof: Vec<u8>,
-}
-
-mod my_serde {
-    use serde::private::ser::Error;
-    use serde::ser::{SerializeSeq, Serializer};
-
-    pub struct MySerializer;
-
-    impl Serializer for MySerializer {
-        type Ok = ();
-        type Error = Error;
-
-        fn serialize_bytes(self, v: &[u8]) -> Result<Self::Ok, Self::Error> {
-            let mut seq = self.serialize_seq(Some(v.len()))?;
-            for b in v {
-                seq.serialize_element(b)?;
-            }
-            seq.end()
-        }
-
-        serde::__serialize_unimplemented! {
-            bool i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 char str none some
-            unit unit_struct unit_variant newtype_struct newtype_variant
-            seq tuple tuple_struct tuple_variant map struct struct_variant
-        }
-    }
 }
 
 impl Serialize for Ticket {
@@ -47,40 +21,22 @@ impl Serialize for Ticket {
         S: Serializer,
     {
         let value = serde_bytes::Bytes::new(&self.vrf_proof);
-        let fxck = (value,);
-        fxck.serialize(serializer)
+        let to_ser = (value,);
+        to_ser.serialize(serializer)
     }
 }
 
 impl<'de> Deserialize<'de> for Ticket {
-    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error> where
-        D: Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
         let out: (serde_bytes::ByteBuf,) = Deserialize::deserialize(deserializer)?;
         Ok(Ticket {
-            vrf_proof: out.0.into_vec()
+            vrf_proof: out.0.into_vec(),
         })
     }
 }
-
-/*
-impl Serialize for Ticket {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        // lotus/chain/types/cbor_gen.go
-        let mut bytes = vec![];
-        bytes.push(129u8);
-        bytes.extend_from_slice(&crate::cbor_gen::cbor_encode_major_type(
-            crate::cbor_gen::MajByteString,
-            self.vrf_proof.len() as u64,
-        ));
-        bytes.extend_from_slice(&self.vrf_proof);
-        println!("bytes: {:?}", bytes);
-        serializer.serialize_bytes(&bytes)
-    }
-}
-*/
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct EPostTicket {
@@ -150,7 +106,6 @@ impl TryInto<BasicBlock> for BlockHeader {
     type Error = anyhow::Error;
     fn try_into(self) -> std::result::Result<BasicBlock, Self::Error> {
         let data = Bytes::from(serde_cbor::to_vec(&self)?);
-        println!("data: {:?}", data);
 
         let prefix = Prefix::new_prefix_v1(Codec::DagCBOR, Hash::Blake2b256);
         let cid = prefix.sum(&data)?;
@@ -163,7 +118,6 @@ impl TryInto<BasicBlock> for BlockHeader {
 impl BlockHeader {
     pub fn cid(self) -> Cid {
         let blk: BasicBlock = self.try_into().expect("TODO: Check this later");
-        println!("blk: {}", blk);
         blk.cid().clone()
     }
 
@@ -219,17 +173,11 @@ mod tests {
         let ticket = Ticket {
             vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
         };
-        println!(
-            "ticket vrf_proof: {:?}",
-            b"vrf proof0000000vrf proof0000000".to_vec()
-        );
         let expected = [
             129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48,
             118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48,
         ];
         let out = serde_cbor::to_vec(&ticket).unwrap();
-        println!("expected: {:?}", &expected[..]);
-        println!("ticket: {:?}", out);
         assert_eq!(out.as_slice(), &expected[..]);
 
         let out = serde_cbor::from_slice(&out).unwrap();
@@ -237,14 +185,40 @@ mod tests {
     }
 
     #[test]
+    fn epost_proof_serialization_should_work() {
+        let epost_proof = EPostProof {
+            proof: b"pruuf".to_vec(),
+            post_rand: b"random".to_vec(),
+            candidates: Vec::new(),
+        };
+        let expected = [
+            131, 69, 112, 114, 117, 117, 102, 70, 114, 97, 110, 100, 111, 109, 128,
+        ];
+    }
+
+    #[test]
     fn block_header_serialization_should_work() {
         let header = new_block_header();
+        let expected = [
+            141, 69, 0, 191, 214, 251, 5, 129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111, 102,
+            48, 48, 48, 48, 48, 48, 48, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48,
+            48, 48, 48, 131, 69, 112, 114, 117, 117, 102, 70, 114, 97, 110, 100, 111, 109, 128,
+            130, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161, 80, 48,
+            167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55, 160, 199,
+            184, 78, 250, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161,
+            80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55,
+            160, 199, 184, 78, 250, 70, 0, 28, 170, 212, 84, 68, 27, 0, 0, 0, 20, 1, 48, 116, 163,
+            216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161, 80, 48, 167, 49,
+            47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55, 160, 199, 184, 78,
+            250, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161, 80, 48,
+            167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55, 160, 199,
+            184, 78, 250, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161,
+            80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55,
+            160, 199, 184, 78, 250, 84, 2, 98, 111, 111, 33, 32, 105, 109, 32, 97, 32, 115, 105,
+            103, 110, 97, 116, 117, 114, 101, 0, 84, 2, 98, 111, 111, 33, 32, 105, 109, 32, 97, 32,
+            115, 105, 103, 110, 97, 116, 117, 114, 101, 0,
+        ];
         let data = Bytes::from(serde_cbor::to_vec(&header).unwrap());
-        println!("data: {:?}", serde_cbor::to_vec(&header).unwrap());
-
-        println!(
-            "miner addr: {:?}",
-            serde_cbor::to_vec(&header.miner).unwrap()
         );
     }
 
@@ -285,29 +259,5 @@ mod tests {
         blks.sort();
 
         assert_eq!(blks, vec![header1, header2, header4, header3]);
-        // println!("blks: {:#?}", blks);
-    }
-
-    #[test]
-    fn cbor_encode_test() {
-        use crate::cbor_gen::cbor_encode_major_type;
-        use crate::cbor_gen::MajByteString;
-
-        let addr_bytes = [0, 191, 214, 251, 5];
-        let encoded = cbor_encode_major_type(MajByteString, addr_bytes.len() as u64);
-        println!("cbor_encode_major_type: {:?}", encoded);
-
-        let encoded = cbor_encode_major_type(MajByteString, 32u64);
-        assert_eq!(encoded, [88, 32]);
-
-        let encoded = cbor_encode_major_type(MajByteString, 12345u64);
-        assert_eq!(encoded, [89, 48, 57]);
-
-        let encoded = cbor_encode_major_type(MajByteString, 123456u64);
-        assert_eq!(encoded, [90, 0, 1, 226, 64]);
-
-        let test_u64 = 4294967295u64 + 666u64;
-        let encoded = cbor_encode_major_type(MajByteString, test_u64);
-        assert_eq!(encoded, [91, 0, 0, 0, 1, 0, 0, 2, 153]);
     }
 }

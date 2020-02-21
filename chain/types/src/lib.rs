@@ -5,7 +5,6 @@ mod ask;
 mod bigint;
 mod block_header;
 mod block_msg;
-mod cbor_gen;
 mod fil;
 mod full_block;
 mod key_info;
