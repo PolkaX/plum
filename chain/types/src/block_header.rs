@@ -219,7 +219,6 @@ mod tests {
             115, 105, 103, 110, 97, 116, 117, 114, 101, 0,
         ];
         let data = Bytes::from(serde_cbor::to_vec(&header).unwrap());
-        );
     }
 
     #[test]
