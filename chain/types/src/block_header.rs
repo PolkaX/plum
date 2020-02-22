@@ -8,6 +8,7 @@ use cid::{AsCidRef, Cid, Codec, Hash, Prefix};
 use core::convert::TryInto;
 use log::warn;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use std::cmp::Ordering;
 
 #[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd)]
@@ -38,13 +39,14 @@ impl<'de> Deserialize<'de> for Ticket {
     }
 }
 
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
 pub struct EPostTicket {
     pub partial: Vec<u8>,
     pub sector_id: u64,
     pub challenge_index: u64,
 }
 
+/*
 impl Serialize for EPostTicket {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -69,13 +71,28 @@ impl<'de> Deserialize<'de> for EPostTicket {
         })
     }
 }
+*/
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
 pub struct EPostProof {
     pub proof: Vec<u8>,
     pub post_rand: Vec<u8>,
     pub candidates: Vec<EPostTicket>,
 }
+
+/*
+impl Serialize for EPostProof {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let proof = serde_bytes::Bytes::new(&self.proof);
+        let post_rand = serde_bytes::Bytes::new(&self.post_rand);
+        let to_ser = (proof, post_rand, &VecEPostTicket(&self.candidates));
+        to_ser.serialize(serializer)
+    }
+}
+*/
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct BlockHeader {
@@ -225,7 +242,7 @@ mod tests {
     }
 
     #[test]
-    fn epost_proof_serialization_should_work() {
+    fn epost_proof_serde_should_work() {
         let epost_proof = EPostProof {
             proof: b"pruuf".to_vec(),
             post_rand: b"random".to_vec(),
@@ -234,6 +251,10 @@ mod tests {
         let expected = [
             131, 69, 112, 114, 117, 117, 102, 70, 114, 97, 110, 100, 111, 109, 128,
         ];
+        let ser = serde_cbor::to_vec(&epost_proof).unwrap();
+        assert_eq!(ser, &expected[..]);
+        let de = serde_cbor::from_slice(&ser).unwrap();
+        assert_eq!(epost_proof, de);
     }
 
     #[test]

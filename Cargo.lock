@@ -2669,6 +2669,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_tuple"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04930140ce7febaa5fd80ccb0d7a5a20e951210f69817359e1b552b3930d0a1d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde",
+ "syn",
+]
+
+[[package]]
 name = "sha-1"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3224,6 +3236,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_cbor",
+ "serde_tuple",
  "thiserror",
  "unsigned-varint 0.3.1",
 ]
