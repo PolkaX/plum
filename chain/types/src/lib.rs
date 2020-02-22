@@ -33,4 +33,5 @@ pub use self::signature::{Signature, SIGNATURE_MAX_LENGTH};
 pub use self::signed_message::SignedMessage;
 pub use self::tipset::TipSet;
 
+pub use address::{self, Address};
 pub use cid::Cid;

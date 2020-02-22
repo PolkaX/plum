@@ -32,17 +32,42 @@ impl<'de> Deserialize<'de> for Ticket {
         D: Deserializer<'de>,
     {
         let out: (serde_bytes::ByteBuf,) = Deserialize::deserialize(deserializer)?;
-        Ok(Ticket {
+        Ok(Self {
             vrf_proof: out.0.into_vec(),
         })
     }
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 pub struct EPostTicket {
     pub partial: Vec<u8>,
     pub sector_id: u64,
     pub challenge_index: u64,
+}
+
+impl Serialize for EPostTicket {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let partial = serde_bytes::Bytes::new(&self.partial);
+        let to_ser = (partial, self.sector_id, self.challenge_index);
+        to_ser.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for EPostTicket {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let out: (serde_bytes::ByteBuf, u64, u64) = Deserialize::deserialize(deserializer)?;
+        Ok(Self {
+            partial: out.0.into_vec(),
+            sector_id: out.1,
+            challenge_index: out.2,
+        })
+    }
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
@@ -169,7 +194,7 @@ mod tests {
     }
 
     #[test]
-    fn ticket_cbor_serialization_should_work() {
+    fn ticket_serde_should_work() {
         let ticket = Ticket {
             vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
         };
@@ -177,11 +202,26 @@ mod tests {
             129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48,
             118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48,
         ];
-        let out = serde_cbor::to_vec(&ticket).unwrap();
-        assert_eq!(out.as_slice(), &expected[..]);
+        let ser = serde_cbor::to_vec(&ticket).unwrap();
+        assert_eq!(ser, &expected[..]);
+        let de = serde_cbor::from_slice(&ser).unwrap();
+        assert_eq!(ticket, de);
+    }
 
-        let out = serde_cbor::from_slice(&out).unwrap();
-        assert_eq!(ticket, out);
+    #[test]
+    fn epost_ticket_serde_should_work() {
+        let epost_ticket = EPostTicket {
+            partial: b"epost_ticket".to_vec(),
+            sector_id: 6,
+            challenge_index: 8,
+        };
+        let expected = [
+            131, 76, 101, 112, 111, 115, 116, 95, 116, 105, 99, 107, 101, 116, 6, 8,
+        ];
+        let ser = serde_cbor::to_vec(&epost_ticket).unwrap();
+        assert_eq!(ser, &expected[..]);
+        let de = serde_cbor::from_slice(&ser).unwrap();
+        assert_eq!(epost_ticket, de);
     }
 
     #[test]
