@@ -8,25 +8,23 @@ use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 pub const SIGNATURE_MAX_LENGTH: u32 = 200;
 
 /// The general signature structure.
-// #[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
 pub struct Signature {
     /// The key type.
     pub ty: KeyType,
     /// Tha actual signature data.
-    // #[serde(with = "serde_bytes")]
+    #[serde(with = "serde_bytes")]
     pub data: Vec<u8>,
 }
 
+/*
 impl Serialize for Signature {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
         let data = serde_bytes::Bytes::new(&self.data);
-        let ty_clone = vec![self.ty.clone() as u8];
-        let ty = serde_bytes::Bytes::new(&ty_clone);
-        let to_ser = (ty, data);
+        let to_ser = (self.ty.clone() as u8, data);
         to_ser.serialize(serializer)
     }
 }
@@ -43,6 +41,7 @@ impl<'de> Deserialize<'de> for Signature {
         })
     }
 }
+*/
 
 #[test]
 fn signature_serde_should_work() {
@@ -54,9 +53,6 @@ fn signature_serde_should_work() {
         84, 2, 98, 111, 111, 33, 32, 105, 109, 32, 97, 32, 115, 105, 103, 110, 97, 116, 117, 114,
         101,
     ];
-
-    let key_ty = KeyType::BLS;
-    println!("--- key_ty: {:?}", serde_cbor::to_vec(&key_ty).unwrap());
 
     let ser = serde_cbor::to_vec(&signature).unwrap();
     assert_eq!(ser, &expected[..]);
