@@ -1,14 +1,15 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use serde::{Deserialize, Serialize};
+use serde_repr::*;
 
 /// The type of key that store in keystore.
-#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Debug, Clone, Serialize_repr, Deserialize_repr)]
+#[repr(u8)]
 pub enum KeyType {
     /// SECP256K1 key.
-    SECP256K1,
+    SECP256K1 = 1,
     /// BLS key.
-    BLS,
+    BLS = 2,
 }
 
 /// KeyInfo is used for storing keys in KeyStore.

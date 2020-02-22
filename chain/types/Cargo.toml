@@ -16,6 +16,7 @@ byteorder = "1"
 serde_cbor = { git = "https://github.com/PolkaX/cbor", branch = "f64ser-hack", features = ["tags"] }
 serde_bytes = "0.11"
 serde_tuple = "0.4"
+serde_repr = "0.1"
 block_format = { git = "https://github.com/PolkaX/rust-ipfs", package = "rust-block-format", branch = "develop" }
 unsigned-varint = "0.3"
 

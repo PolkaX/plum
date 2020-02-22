@@ -11,8 +11,11 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use std::cmp::Ordering;
 
+// TODO: why Serialize_tuple does not work?
+// #[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd, Serialize_tuple, Deserialize_tuple)]
 #[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd)]
 pub struct Ticket {
+    // #[serde(with = "serde_bytes")]
     pub vrf_proof: Vec<u8>,
 }
 
@@ -41,58 +44,20 @@ impl<'de> Deserialize<'de> for Ticket {
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
 pub struct EPostTicket {
+    #[serde(with = "serde_bytes")]
     pub partial: Vec<u8>,
     pub sector_id: u64,
     pub challenge_index: u64,
 }
 
-/*
-impl Serialize for EPostTicket {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let partial = serde_bytes::Bytes::new(&self.partial);
-        let to_ser = (partial, self.sector_id, self.challenge_index);
-        to_ser.serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for EPostTicket {
-    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let out: (serde_bytes::ByteBuf, u64, u64) = Deserialize::deserialize(deserializer)?;
-        Ok(Self {
-            partial: out.0.into_vec(),
-            sector_id: out.1,
-            challenge_index: out.2,
-        })
-    }
-}
-*/
-
 #[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
 pub struct EPostProof {
+    #[serde(with = "serde_bytes")]
     pub proof: Vec<u8>,
+    #[serde(with = "serde_bytes")]
     pub post_rand: Vec<u8>,
     pub candidates: Vec<EPostTicket>,
 }
-
-/*
-impl Serialize for EPostProof {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let proof = serde_bytes::Bytes::new(&self.proof);
-        let post_rand = serde_bytes::Bytes::new(&self.post_rand);
-        let to_ser = (proof, post_rand, &VecEPostTicket(&self.candidates));
-        to_ser.serialize(serializer)
-    }
-}
-*/
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct BlockHeader {
