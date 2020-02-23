@@ -4,7 +4,7 @@ use std::convert::TryFrom;
 
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::key_info::KeyType;
+use crate::key_info::SignKeyType;
 
 /// The maximum length of signature.
 pub const SIGNATURE_MAX_LENGTH: u32 = 200;
@@ -13,7 +13,7 @@ pub const SIGNATURE_MAX_LENGTH: u32 = 200;
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub struct Signature {
     /// The key type.
-    pub ty: KeyType,
+    pub ty: SignKeyType,
     /// Tha actual signature data.
     pub data: Vec<u8>,
 }
@@ -37,7 +37,7 @@ impl<'de> Deserialize<'de> for Signature {
         D: Deserializer<'de>,
     {
         let buf = serde_bytes::ByteBuf::deserialize(deserializer)?;
-        let ty = KeyType::try_from(buf[0]).map_err(D::Error::custom)?;
+        let ty = SignKeyType::try_from(buf[0]).map_err(D::Error::custom)?;
         Ok(Self {
             ty,
             data: (&buf[1..]).to_vec(),
@@ -48,7 +48,7 @@ impl<'de> Deserialize<'de> for Signature {
 #[test]
 fn signature_serde_should_work() {
     let signature = Signature {
-        ty: KeyType::BLS,
+        ty: SignKeyType::BLS,
         data: b"boo! im a signature".to_vec(),
     };
     let expected = [

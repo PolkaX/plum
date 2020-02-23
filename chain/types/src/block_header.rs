@@ -138,7 +138,7 @@ impl BlockHeader {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::key_info::KeyType;
+    use crate::key_info::SignKeyType;
     use address::Network;
 
     fn new_block_header() -> BlockHeader {
@@ -162,7 +162,7 @@ mod tests {
             parents: vec![cid.clone(), cid.clone()],
             parent_message_receipts: cid.clone(),
             bls_aggregate: Signature {
-                ty: KeyType::BLS,
+                ty: SignKeyType::BLS,
                 data: b"boo! im a signature".to_vec(),
             },
             parent_weight: CborBigInt(123125126212u64.into()),
@@ -171,7 +171,7 @@ mod tests {
             parent_state_root: cid,
             timestamp: 0u64,
             block_sig: Signature {
-                ty: KeyType::BLS,
+                ty: SignKeyType::BLS,
                 data: b"boo! im a signature".to_vec(),
             },
             fork_signaling: 0u64,
