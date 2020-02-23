@@ -21,7 +21,7 @@ use crate::rpc::RPCEvent;
 type Libp2pStream = Boxed<(PeerId, StreamMuxerBox), Error>;
 type Libp2pBehaviour = Behaviour<Substream<StreamMuxerBox>>;
 
-/// The Libp2pService listens to events from the Libp2p swarm.
+/// The Libp2pService listens to events from the LIBP2P swarm.
 pub struct Libp2pService {
     pub swarm: Swarm<Libp2pStream, Libp2pBehaviour>,
 }
@@ -114,7 +114,7 @@ impl Stream for Libp2pService {
     }
 }
 
-/// Libp2p event that will be delivered to the NetworkService.
+/// LIBP2P event that will be delivered to the NetworkService.
 pub enum Libp2pEvent {
     PubsubMessage {
         id: MessageId,

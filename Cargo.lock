@@ -2467,7 +2467,7 @@ dependencies = [
 [[package]]
 name = "rust-block-format"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#d327695862ccb66c6750c5e24c2f22886b086900"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#0c389887b0f89cb8012f255b160e8e5d393ab933"
 dependencies = [
  "bytes 0.5.4",
  "rust-cid",
@@ -2478,7 +2478,7 @@ dependencies = [
 [[package]]
 name = "rust-cid"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#d327695862ccb66c6750c5e24c2f22886b086900"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#0c389887b0f89cb8012f255b160e8e5d393ab933"
 dependencies = [
  "integer-encoding",
  "parity-multihash 0.2.3",
@@ -2492,7 +2492,7 @@ dependencies = [
 [[package]]
 name = "rust-ipfs-util"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#d327695862ccb66c6750c5e24c2f22886b086900"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#0c389887b0f89cb8012f255b160e8e5d393ab933"
 dependencies = [
  "parity-multihash 0.2.3",
 ]
@@ -2500,7 +2500,7 @@ dependencies = [
 [[package]]
 name = "rust-ipld-cbor"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#d327695862ccb66c6750c5e24c2f22886b086900"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#0c389887b0f89cb8012f255b160e8e5d393ab933"
 dependencies = [
  "bytes 0.5.4",
  "either",
@@ -2520,7 +2520,7 @@ dependencies = [
 [[package]]
 name = "rust-ipld-format"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#d327695862ccb66c6750c5e24c2f22886b086900"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#0c389887b0f89cb8012f255b160e8e5d393ab933"
 dependencies = [
  "lazy_static",
  "parity-multihash 0.2.3",
@@ -2532,7 +2532,7 @@ dependencies = [
 [[package]]
 name = "rust-multibase"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#d327695862ccb66c6750c5e24c2f22886b086900"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#0c389887b0f89cb8012f255b160e8e5d393ab933"
 dependencies = [
  "base-x",
  "data-encoding",
@@ -2701,17 +2701,6 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "serde_repr"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd02c7587ec314570041b2754829f84d873ced14a96d1fd1823531e11db40573"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -3283,7 +3272,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_cbor",
- "serde_repr",
+ "serde_json",
  "serde_tuple",
  "thiserror",
  "unsigned-varint 0.3.1",

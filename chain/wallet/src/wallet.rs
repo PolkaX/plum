@@ -128,7 +128,10 @@ impl<KS: KeyStore> Wallet<KS> {
     pub fn generate_key(&mut self, key_type: KeyType) -> Result<Address> {
         let key = generate_key(key_type)?;
 
-        if let Err(_) = self.keystore.put(format!("{}{}", KNAME_PREFIX, key.address), key.info.clone()) {
+        if let Err(_) = self
+            .keystore
+            .put(format!("{}{}", KNAME_PREFIX, key.address), key.info.clone())
+        {
             return Err(WalletError::KeyStore);
         }
         let address = key.address.clone();
@@ -166,10 +169,10 @@ impl<KS: KeyStore> Wallet<KS> {
     /// Import address by key info.
     pub fn import(&mut self, info: KeyInfo) -> Result<Address> {
         let key = Key::new(info)?;
-        match self.keystore.put(
-            format!("{}{}", KNAME_PREFIX, key.address),
-            key.info.clone(),
-        ) {
+        match self
+            .keystore
+            .put(format!("{}{}", KNAME_PREFIX, key.address), key.info.clone())
+        {
             Ok(()) => Ok(key.address),
             Err(_) => Err(WalletError::KeyNotFound),
         }
@@ -181,7 +184,7 @@ impl<KS: KeyStore> Wallet<KS> {
     }
 
     /// Set the default
-    pub fn set_default(&mut self, address: Address) -> Result<()> {
+    pub fn set_default(&mut self, _address: Address) -> Result<()> {
         // TODO
         Ok(())
     }
