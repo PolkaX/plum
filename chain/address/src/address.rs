@@ -243,7 +243,8 @@ impl<'de> Deserialize<'de> for Address {
     where
         D: Deserializer<'de>,
     {
-        let mut bytes: Vec<u8> = Deserialize::deserialize(deserializer)?;
+        let bytes: serde_bytes::ByteBuf = Deserialize::deserialize(deserializer)?;
+        let mut bytes = bytes.into_vec();
         let protocol = Protocol::try_from(bytes.remove(0)).map_err(serde::de::Error::custom)?;
         Ok(Self::new(NETWORK_DEFAULT, protocol, bytes).map_err(serde::de::Error::custom)?)
     }
@@ -282,6 +283,15 @@ mod tests {
     fn test_id_payload() {
         let id_addr = Address::new_id_addr(Network::Test, 12512063u64).unwrap();
         assert_eq!(id_addr.payload(), [191, 214, 251, 5]);
+    }
+
+    #[test]
+    fn test_address_serde() {
+        let id_addr = Address::new_id_addr(Network::Test, 12512063u64).unwrap();
+        let ser = serde_cbor::to_vec(&id_addr).unwrap();
+        assert_eq!(ser, [69, 0, 191, 214, 251, 5]);
+        let de = serde_cbor::from_slice(&ser).unwrap();
+        assert_eq!(id_addr, de);
     }
 
     #[test]

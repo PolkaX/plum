@@ -288,7 +288,7 @@ pub enum Command {
     #[structopt(name = "fetch-param")]
     FetchParam {
         /// Only download the verified keys
-        #[structopt(name = "only-verify-keys")]
+        #[structopt(name = "only-verify-keys", long, short)]
         only_verify_keys: bool,
     },
 }
