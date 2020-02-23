@@ -243,7 +243,8 @@ impl<'de> Deserialize<'de> for Address {
     where
         D: Deserializer<'de>,
     {
-        let mut bytes: Vec<u8> = Deserialize::deserialize(deserializer)?;
+        let bytes: serde_bytes::ByteBuf = Deserialize::deserialize(deserializer)?;
+        let mut bytes = bytes.into_vec();
         let protocol = Protocol::try_from(bytes.remove(0)).map_err(serde::de::Error::custom)?;
         Ok(Self::new(NETWORK_DEFAULT, protocol, bytes).map_err(serde::de::Error::custom)?)
     }
