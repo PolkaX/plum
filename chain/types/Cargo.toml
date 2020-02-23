@@ -8,4 +8,4 @@ license = "GPL-3.0"
 [dependencies]
 cid = "0.3"
 
-plum_address = { path = "../address" }
+address = { path = "../address", package = "plum_address" }
