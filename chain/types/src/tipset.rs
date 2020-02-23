@@ -4,6 +4,7 @@ use crate::{
     block_header::{BlockHeader, Ticket},
     Cid,
 };
+use rust_ipld_cbor::bigint::CborBigInt;
 use serde::{Deserialize, Serialize};
 use std::result::Result;
 use thiserror::Error;
@@ -94,8 +95,8 @@ impl TipSet {
         &self.blks[0].parent_state_root
     }
 
-    pub fn parent_weight(&self) -> u128 {
-        self.blks[0].parent_weight
+    pub fn parent_weight(&self) -> CborBigInt {
+        self.blks[0].parent_weight.clone()
     }
 
     pub fn contains(&self, cid: &Cid) -> bool {

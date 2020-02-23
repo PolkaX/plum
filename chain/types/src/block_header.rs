@@ -1,21 +1,19 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::{bigint::BigInt, signature::Signature};
+use crate::signature::Signature;
 use address::Address;
 use block_format::BasicBlock;
 use bytes::Bytes;
 use cid::{AsCidRef, Cid, Codec, Hash, Prefix};
 use core::convert::TryInto;
 use log::warn;
+use rust_ipld_cbor::bigint::CborBigInt;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use std::cmp::Ordering;
 
-// TODO: why Serialize_tuple does not work?
-// #[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd, Serialize_tuple, Deserialize_tuple)]
 #[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd)]
 pub struct Ticket {
-    // #[serde(with = "serde_bytes")]
     pub vrf_proof: Vec<u8>,
 }
 
@@ -59,13 +57,13 @@ pub struct EPostProof {
     pub candidates: Vec<EPostTicket>,
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
 pub struct BlockHeader {
     pub miner: Address,
     pub ticket: Ticket,
     pub epost_proof: EPostProof,
     pub parents: Vec<Cid>,
-    pub parent_weight: BigInt,
+    pub parent_weight: CborBigInt,
     pub height: u64,
     pub parent_state_root: Cid,
     pub parent_message_receipts: Cid,
@@ -73,6 +71,7 @@ pub struct BlockHeader {
     pub bls_aggregate: Signature,
     pub timestamp: u64,
     pub block_sig: Signature,
+    pub fork_signaling: u64,
 }
 
 impl Ord for BlockHeader {
@@ -149,13 +148,13 @@ mod tests {
 
         BlockHeader {
             miner: addr,
+            ticket: Ticket {
+                vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
+            },
             epost_proof: EPostProof {
                 proof: b"pruuf".to_vec(),
                 post_rand: b"random".to_vec(),
                 candidates: Vec::new(),
-            },
-            ticket: Ticket {
-                vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
             },
             parents: vec![cid.clone(), cid.clone()],
             parent_message_receipts: cid.clone(),
@@ -163,7 +162,7 @@ mod tests {
                 ty: KeyType::BLS,
                 data: b"boo! im a signature".to_vec(),
             },
-            parent_weight: 123125126212,
+            parent_weight: CborBigInt(123125126212u64.into()),
             messages: cid.clone(),
             height: 85919298723,
             parent_state_root: cid,
@@ -172,6 +171,7 @@ mod tests {
                 ty: KeyType::BLS,
                 data: b"boo! im a signature".to_vec(),
             },
+            fork_signaling: 0u64,
         }
     }
 
@@ -223,7 +223,7 @@ mod tests {
     }
 
     #[test]
-    fn block_header_serialization_should_work() {
+    fn block_header_serde_should_work() {
         let header = new_block_header();
         let expected = [
             141, 69, 0, 191, 214, 251, 5, 129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111, 102,
@@ -244,7 +244,16 @@ mod tests {
             103, 110, 97, 116, 117, 114, 101, 0, 84, 2, 98, 111, 111, 33, 32, 105, 109, 32, 97, 32,
             115, 105, 103, 110, 97, 116, 117, 114, 101, 0,
         ];
-        let data = Bytes::from(serde_cbor::to_vec(&header).unwrap());
+        let ser = serde_cbor::to_vec(&header).unwrap();
+        for (idx, i) in expected.iter().enumerate() {
+            if ser[idx] != *i {
+                println!(
+                    "------ idx: {}, ser[idx] = {}, expected i = {}",
+                    idx, ser[idx], i
+                );
+            }
+        }
+        assert_eq!(ser, &expected[..]);
     }
 
     #[test]

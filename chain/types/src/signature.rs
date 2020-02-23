@@ -2,7 +2,7 @@
 
 use std::convert::TryFrom;
 
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::key_info::KeyType;
 
@@ -55,7 +55,6 @@ fn signature_serde_should_work() {
         84, 2, 98, 111, 111, 33, 32, 105, 109, 32, 97, 32, 115, 105, 103, 110, 97, 116, 117, 114,
         101,
     ];
-
     let ser = serde_cbor::to_vec(&signature).unwrap();
     assert_eq!(ser, &expected[..]);
     let de = serde_cbor::from_slice(&ser).unwrap();

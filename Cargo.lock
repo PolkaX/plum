@@ -602,6 +602,9 @@ name = "either"
 version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb1f6b1ce1c140482ea30ddd3335fc0024ac7ee112895426e0a629a6c20adfe3"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "env_logger"
@@ -2464,7 +2467,7 @@ dependencies = [
 [[package]]
 name = "rust-block-format"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#33fff23fe7244871d4d6ec183d06dfd1d27b669e"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#d327695862ccb66c6750c5e24c2f22886b086900"
 dependencies = [
  "bytes 0.5.4",
  "rust-cid",
@@ -2475,7 +2478,7 @@ dependencies = [
 [[package]]
 name = "rust-cid"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#33fff23fe7244871d4d6ec183d06dfd1d27b669e"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#d327695862ccb66c6750c5e24c2f22886b086900"
 dependencies = [
  "integer-encoding",
  "parity-multihash 0.2.3",
@@ -2489,15 +2492,47 @@ dependencies = [
 [[package]]
 name = "rust-ipfs-util"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#33fff23fe7244871d4d6ec183d06dfd1d27b669e"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#d327695862ccb66c6750c5e24c2f22886b086900"
 dependencies = [
  "parity-multihash 0.2.3",
 ]
 
 [[package]]
+name = "rust-ipld-cbor"
+version = "0.1.0"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#d327695862ccb66c6750c5e24c2f22886b086900"
+dependencies = [
+ "bytes 0.5.4",
+ "either",
+ "num-bigint",
+ "num-traits",
+ "parity-multihash 0.2.3",
+ "rust-block-format",
+ "rust-cid",
+ "rust-ipld-format",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "rust-ipld-format"
+version = "0.1.0"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#d327695862ccb66c6750c5e24c2f22886b086900"
+dependencies = [
+ "lazy_static",
+ "parity-multihash 0.2.3",
+ "rust-block-format",
+ "rust-cid",
+ "thiserror",
+]
+
+[[package]]
 name = "rust-multibase"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#33fff23fe7244871d4d6ec183d06dfd1d27b669e"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=develop#d327695862ccb66c6750c5e24c2f22886b086900"
 dependencies = [
  "base-x",
  "data-encoding",
@@ -3244,6 +3279,7 @@ dependencies = [
  "plum_address",
  "rust-block-format",
  "rust-cid",
+ "rust-ipld-cbor",
  "serde",
  "serde_bytes",
  "serde_cbor",
