@@ -1,31 +1,33 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use std::convert::TryFrom;
+
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
+
 use crate::key_info::KeyType;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 
 /// The maximum length of signature.
 pub const SIGNATURE_MAX_LENGTH: u32 = 200;
 
 /// The general signature structure.
-#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 pub struct Signature {
     /// The key type.
     pub ty: KeyType,
     /// Tha actual signature data.
-    #[serde(with = "serde_bytes")]
     pub data: Vec<u8>,
 }
 
-/*
 impl Serialize for Signature {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let data = serde_bytes::Bytes::new(&self.data);
-        let to_ser = (self.ty.clone() as u8, data);
-        to_ser.serialize(serializer)
+        let mut buf = Vec::with_capacity(self.data.len() + 1);
+        buf.push(self.ty as u8);
+        buf.extend_from_slice(&self.data);
+        let data = serde_bytes::Bytes::new(&buf);
+        data.serialize(serializer)
     }
 }
 
@@ -34,14 +36,14 @@ impl<'de> Deserialize<'de> for Signature {
     where
         D: Deserializer<'de>,
     {
-        let out: (KeyType, serde_bytes::ByteBuf) = Deserialize::deserialize(deserializer)?;
+        let buf = serde_bytes::ByteBuf::deserialize(deserializer)?;
+        let ty = KeyType::try_from(buf[0]).map_err(D::Error::custom)?;
         Ok(Self {
-            ty: out.0,
-            data: out.1.into_vec(),
+            ty,
+            data: (&buf[1..]).to_vec(),
         })
     }
 }
-*/
 
 #[test]
 fn signature_serde_should_work() {
