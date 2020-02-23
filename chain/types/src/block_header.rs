@@ -82,20 +82,10 @@ impl Ord for BlockHeader {
             Ordering::Greater => Ordering::Greater,
             Ordering::Less => Ordering::Less,
             Ordering::Equal => {
+                // TODO: is clone avoidable?
                 let my_cid = self.clone().cid();
                 let your_cid = other.clone().cid();
-                // FIXME: add test
                 warn!("blocks have same ticket: ({} {})", self.miner, other.miner);
-                println!(
-                    "my_cid: bytes: {:?}, string: {:?}",
-                    my_cid.to_bytes(),
-                    my_cid.to_string()
-                );
-                println!(
-                    "your_cid: bytes: {:?}, string: {:?}",
-                    your_cid.to_bytes(),
-                    your_cid.to_string()
-                );
                 my_cid.to_string().cmp(&your_cid.to_string())
             }
         }
@@ -123,7 +113,9 @@ impl TryInto<BasicBlock> for BlockHeader {
 
 impl BlockHeader {
     pub fn cid(self) -> Cid {
-        let blk: BasicBlock = self.try_into().expect("TODO: Check this later");
+        let blk: BasicBlock = self
+            .try_into()
+            .expect("failed to BasicBlock, this should not happen");
         blk.cid().clone()
     }
 
@@ -287,5 +279,15 @@ mod tests {
         blks.sort();
 
         assert_eq!(blks, vec![header1, header2, header4, header3]);
+    }
+
+    #[test]
+    fn to_storge_block_should_work() {
+        let header = new_block_header();
+        let storage_block: BasicBlock = header.try_into().unwrap();
+        assert_eq!(
+            "bafy2bzacect5mm5ptrpcqmrajuhmzs6tg43ytjutlsd5kjd4pvxui57er6ose",
+            storage_block.cid().to_string()
+        );
     }
 }

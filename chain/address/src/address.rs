@@ -286,10 +286,12 @@ mod tests {
     }
 
     #[test]
-    fn test_cbor_serde() {
+    fn test_address_serde() {
         let id_addr = Address::new_id_addr(Network::Test, 12512063u64).unwrap();
-        let cbor_encoded = serde_cbor::to_vec(&id_addr).unwrap();
-        assert_eq!(cbor_encoded, [69, 0, 191, 214, 251, 5]);
+        let ser = serde_cbor::to_vec(&id_addr).unwrap();
+        assert_eq!(ser, [69, 0, 191, 214, 251, 5]);
+        let de = serde_cbor::from_slice(&ser).unwrap();
+        assert_eq!(id_addr, de);
     }
 
     #[test]
