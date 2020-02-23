@@ -4,7 +4,7 @@ use std::convert::TryFrom;
 use std::fmt::{self, Display};
 use std::str::FromStr;
 
-use serde::{ser::SerializeSeq, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use plum_hashing::blake2b_variable;
 
@@ -234,12 +234,7 @@ impl Serialize for Address {
         S: Serializer,
     {
         let bytes = self.as_bytes();
-        println!("raw Vec<u8>: {:?}", bytes);
         serializer.serialize_bytes(&bytes)
-
-        // let value = serde_bytes::Bytes::new(&bytes);
-        // println!("raw Bytes::new(Vec<u8>): {:?}", bytes);
-        // serializer.serialize_bytes(&value)
     }
 }
 

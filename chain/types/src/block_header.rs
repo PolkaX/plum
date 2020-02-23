@@ -245,15 +245,9 @@ mod tests {
             115, 105, 103, 110, 97, 116, 117, 114, 101, 0,
         ];
         let ser = serde_cbor::to_vec(&header).unwrap();
-        for (idx, i) in expected.iter().enumerate() {
-            if ser[idx] != *i {
-                println!(
-                    "------ idx: {}, ser[idx] = {}, expected i = {}",
-                    idx, ser[idx], i
-                );
-            }
-        }
         assert_eq!(ser, &expected[..]);
+        let de = serde_cbor::from_slice(&ser).unwrap();
+        assert_eq!(header, de);
     }
 
     #[test]
