@@ -1,15 +1,14 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use crate::signature::Signature;
+use crate::{into_cid, to_storage_block, StorageBlockError};
 use address::Address;
-use block_format::{BasicBlock, BlockFormatError};
-use bytes::Bytes;
-use cid::{AsCidRef, Cid, CidError, Codec, Hash, Prefix};
+use block_format::BasicBlock;
+use cid::Cid;
 use core::convert::TryInto;
 use log::warn;
 use rust_ipld_cbor::bigint::CborBigInt;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_cbor::error::Error as CborError;
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use std::cmp::Ordering;
 
@@ -99,35 +98,16 @@ impl PartialOrd for BlockHeader {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum BlockHeaderError {
-    #[error("BlockFormatError: {0}")]
-    BlockFormatError(#[from] BlockFormatError),
-    #[error("cid error: {0}")]
-    CidError(#[from] CidError),
-    #[error("cbor err: {0}")]
-    CborError(#[from] CborError),
-}
-
 impl TryInto<BasicBlock> for BlockHeader {
-    type Error = BlockHeaderError;
+    type Error = StorageBlockError;
     fn try_into(self) -> std::result::Result<BasicBlock, Self::Error> {
-        let data = Bytes::from(serde_cbor::to_vec(&self)?);
-
-        let prefix = Prefix::new_prefix_v1(Codec::DagCBOR, Hash::Blake2b256);
-        let cid = prefix.sum(&data)?;
-        let block = BasicBlock::new_with_cid(data, cid)?;
-
-        Ok(block)
+        to_storage_block(&self)
     }
 }
 
 impl BlockHeader {
     pub fn cid(self) -> Cid {
-        let blk: BasicBlock = self
-            .try_into()
-            .expect("failed to BasicBlock, this should not happen");
-        blk.cid().clone()
+        into_cid(self)
     }
 
     pub fn last_ticket(&self) -> &Ticket {
@@ -140,6 +120,7 @@ mod tests {
     use super::*;
     use crate::key_info::SignKeyType;
     use address::Network;
+    use cid::AsCidRef;
 
     fn new_block_header() -> BlockHeader {
         let id = 12512063;

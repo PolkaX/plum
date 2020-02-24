@@ -35,3 +35,37 @@ pub use self::tipset::TipSet;
 
 pub use address::{self, Address};
 pub use cid::Cid;
+
+use block_format::{BasicBlock, BlockFormatError};
+use bytes::Bytes;
+use cid::{AsCidRef, CidError, Codec, Hash, Prefix};
+use core::convert::TryInto;
+use serde::Serialize;
+use serde_cbor::error::Error as CborError;
+
+#[derive(Debug, thiserror::Error)]
+pub enum StorageBlockError {
+    #[error("BlockFormatError: {0}")]
+    BlockFormatError(#[from] BlockFormatError),
+    #[error("cid error: {0}")]
+    CidError(#[from] CidError),
+    #[error("cbor err: {0}")]
+    CborError(#[from] CborError),
+}
+
+pub fn to_storage_block<S: Serialize>(s: &S) -> std::result::Result<BasicBlock, StorageBlockError> {
+    let data = Bytes::from(serde_cbor::to_vec(s)?);
+
+    let prefix = Prefix::new_prefix_v1(Codec::DagCBOR, Hash::Blake2b256);
+    let cid = prefix.sum(&data)?;
+    let block = BasicBlock::new_with_cid(data, cid)?;
+
+    Ok(block)
+}
+
+pub fn into_cid<T: TryInto<BasicBlock, Error = StorageBlockError>>(s: T) -> Cid {
+    let blk: BasicBlock = s
+        .try_into()
+        .expect("failed to BasicBlock, this should not happen");
+    blk.cid().clone()
+}
