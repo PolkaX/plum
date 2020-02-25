@@ -5,7 +5,6 @@ use crate::{
     Cid,
 };
 use rust_ipld_cbor::bigint::CborBigInt;
-use serde::{Deserialize, Serialize, Serializer};
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use std::result::Result;
 use thiserror::Error;
@@ -35,7 +34,6 @@ impl TipSet {
 
         let mut blks = blks;
 
-        // TODO: add tests
         blks.sort();
 
         let height = blks[0].height;
@@ -57,8 +55,9 @@ impl TipSet {
                         found: cid.clone(),
                     });
                 }
-                cids.push(blk.clone().cid());
             }
+
+            cids.push(blk.clone().cid());
         }
 
         Ok(Self { cids, blks, height })

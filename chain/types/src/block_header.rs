@@ -159,43 +159,6 @@ mod tests {
         }
     }
 
-    fn new_block_header2() -> BlockHeader {
-        let id = 12512064;
-        let addr = address::Address::new_id_addr(Network::Test, id).unwrap();
-
-        let cid: Cid = "bafy2bzacect5mm5ptrpcqmrajuhmzs6tg43ytjutlsd5kjd4pvxui57er6ose"
-            .parse()
-            .unwrap();
-
-        BlockHeader {
-            miner: addr,
-            ticket: Ticket {
-                vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
-            },
-            epost_proof: EPostProof {
-                proof: b"pruuf".to_vec(),
-                post_rand: b"random".to_vec(),
-                candidates: Vec::new(),
-            },
-            parents: vec![cid.clone(), cid.clone()],
-            parent_message_receipts: cid.clone(),
-            bls_aggregate: Signature {
-                ty: SignKeyType::BLS,
-                data: b"boo! im a signature".to_vec(),
-            },
-            parent_weight: CborBigInt(123125126212u64.into()),
-            messages: cid.clone(),
-            height: 85919298723,
-            parent_state_root: cid,
-            timestamp: 0u64,
-            block_sig: Signature {
-                ty: SignKeyType::BLS,
-                data: b"boo! im a signature".to_vec(),
-            },
-            fork_signaling: 0u64,
-        }
-    }
-
     #[test]
     fn ticket_serde_should_work() {
         let ticket = Ticket {
@@ -323,8 +286,6 @@ mod tests {
     #[test]
     fn tipset_serde_should_work() {
         let header = new_block_header();
-        let header2 = new_block_header2();
-        // let tipset = crate::tipset::TipSet::new(vec![header, header2]).unwrap();
         let tipset = crate::tipset::TipSet::new(vec![header]).unwrap();
 
         let expected = [
@@ -349,25 +310,6 @@ mod tests {
             33, 32, 105, 109, 32, 97, 32, 115, 105, 103, 110, 97, 116, 117, 114, 101, 0, 27, 0, 0,
             0, 20, 1, 48, 116, 163,
         ];
-
-        println!(
-            "&tipset.cids[0]:{:?}",
-            serde_cbor::to_vec(&tipset.cids[0]).unwrap()
-        );
-        println!(
-            "&(tipset.cids[0].clone(),):{:?}",
-            serde_cbor::to_vec(&(tipset.cids[0].clone(),)).unwrap()
-        );
-        println!(
-            "&tipset.cids:{:?}",
-            serde_cbor::to_vec(&tipset.cids).unwrap()
-        );
-        println!(
-            "&tipset.blks:{:?}",
-            serde_cbor::to_vec(&tipset.blks).unwrap()
-        );
-
-        println!("height:{:?}", serde_cbor::to_vec(&85919298723u64).unwrap());
 
         let ser = serde_cbor::to_vec(&tipset).unwrap();
         assert_eq!(ser, &expected[..]);
