@@ -35,6 +35,7 @@ pub use self::tipset::TipSet;
 
 pub use address::{self, Address};
 pub use cid::Cid;
+pub use rust_ipld_cbor::*;
 
 use block_format::{BasicBlock, BlockFormatError};
 use bytes::Bytes;

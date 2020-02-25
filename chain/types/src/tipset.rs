@@ -5,7 +5,8 @@ use crate::{
     Cid,
 };
 use rust_ipld_cbor::bigint::CborBigInt;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
+use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use std::result::Result;
 use thiserror::Error;
 
@@ -19,11 +20,11 @@ pub enum TipSetError {
     MismatchingParents { expected: Cid, found: Cid },
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
 pub struct TipSet {
-    cids: Vec<Cid>,
-    blks: Vec<BlockHeader>,
-    height: u64,
+    pub cids: Vec<Cid>,
+    pub blks: Vec<BlockHeader>,
+    pub height: u64,
 }
 
 impl TipSet {

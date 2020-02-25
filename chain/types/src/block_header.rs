@@ -159,6 +159,43 @@ mod tests {
         }
     }
 
+    fn new_block_header2() -> BlockHeader {
+        let id = 12512064;
+        let addr = address::Address::new_id_addr(Network::Test, id).unwrap();
+
+        let cid: Cid = "bafy2bzacect5mm5ptrpcqmrajuhmzs6tg43ytjutlsd5kjd4pvxui57er6ose"
+            .parse()
+            .unwrap();
+
+        BlockHeader {
+            miner: addr,
+            ticket: Ticket {
+                vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
+            },
+            epost_proof: EPostProof {
+                proof: b"pruuf".to_vec(),
+                post_rand: b"random".to_vec(),
+                candidates: Vec::new(),
+            },
+            parents: vec![cid.clone(), cid.clone()],
+            parent_message_receipts: cid.clone(),
+            bls_aggregate: Signature {
+                ty: SignKeyType::BLS,
+                data: b"boo! im a signature".to_vec(),
+            },
+            parent_weight: CborBigInt(123125126212u64.into()),
+            messages: cid.clone(),
+            height: 85919298723,
+            parent_state_root: cid,
+            timestamp: 0u64,
+            block_sig: Signature {
+                ty: SignKeyType::BLS,
+                data: b"boo! im a signature".to_vec(),
+            },
+            fork_signaling: 0u64,
+        }
+    }
+
     #[test]
     fn ticket_serde_should_work() {
         let ticket = Ticket {
@@ -281,5 +318,60 @@ mod tests {
             "bafy2bzacect5mm5ptrpcqmrajuhmzs6tg43ytjutlsd5kjd4pvxui57er6ose",
             storage_block.cid().to_string()
         );
+    }
+
+    #[test]
+    fn tipset_serde_should_work() {
+        let header = new_block_header();
+        let header2 = new_block_header2();
+        // let tipset = crate::tipset::TipSet::new(vec![header, header2]).unwrap();
+        let tipset = crate::tipset::TipSet::new(vec![header]).unwrap();
+
+        let expected = [
+            131, 129, 216, 42, 88, 39, 0, 1, 113, 160, 228, 2, 32, 167, 214, 51, 175, 156, 94, 40,
+            50, 32, 77, 14, 204, 203, 211, 55, 55, 137, 166, 147, 92, 135, 213, 36, 124, 125, 111,
+            68, 119, 228, 143, 157, 34, 129, 141, 69, 0, 191, 214, 251, 5, 129, 88, 32, 118, 114,
+            102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48, 118, 114, 102, 32, 112,
+            114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48, 131, 69, 112, 114, 117, 117, 102, 70,
+            114, 97, 110, 100, 111, 109, 128, 130, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122,
+            115, 187, 29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201,
+            142, 225, 217, 73, 55, 160, 199, 184, 78, 250, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76,
+            2, 122, 115, 187, 29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232,
+            201, 142, 225, 217, 73, 55, 160, 199, 184, 78, 250, 70, 0, 28, 170, 212, 84, 68, 27, 0,
+            0, 0, 20, 1, 48, 116, 163, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187,
+            29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225,
+            217, 73, 55, 160, 199, 184, 78, 250, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122,
+            115, 187, 29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201,
+            142, 225, 217, 73, 55, 160, 199, 184, 78, 250, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76,
+            2, 122, 115, 187, 29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232,
+            201, 142, 225, 217, 73, 55, 160, 199, 184, 78, 250, 84, 2, 98, 111, 111, 33, 32, 105,
+            109, 32, 97, 32, 115, 105, 103, 110, 97, 116, 117, 114, 101, 0, 84, 2, 98, 111, 111,
+            33, 32, 105, 109, 32, 97, 32, 115, 105, 103, 110, 97, 116, 117, 114, 101, 0, 27, 0, 0,
+            0, 20, 1, 48, 116, 163,
+        ];
+
+        println!(
+            "&tipset.cids[0]:{:?}",
+            serde_cbor::to_vec(&tipset.cids[0]).unwrap()
+        );
+        println!(
+            "&(tipset.cids[0].clone(),):{:?}",
+            serde_cbor::to_vec(&(tipset.cids[0].clone(),)).unwrap()
+        );
+        println!(
+            "&tipset.cids:{:?}",
+            serde_cbor::to_vec(&tipset.cids).unwrap()
+        );
+        println!(
+            "&tipset.blks:{:?}",
+            serde_cbor::to_vec(&tipset.blks).unwrap()
+        );
+
+        println!("height:{:?}", serde_cbor::to_vec(&85919298723u64).unwrap());
+
+        let ser = serde_cbor::to_vec(&tipset).unwrap();
+        assert_eq!(ser, &expected[..]);
+        let de = serde_cbor::from_slice(&ser).unwrap();
+        assert_eq!(tipset, de);
     }
 }
