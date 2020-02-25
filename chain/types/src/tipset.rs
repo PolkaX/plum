@@ -21,9 +21,9 @@ pub enum TipSetError {
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
 pub struct TipSet {
-    pub cids: Vec<Cid>,
-    pub blks: Vec<BlockHeader>,
-    pub height: u64,
+    cids: Vec<Cid>,
+    blks: Vec<BlockHeader>,
+    height: u64,
 }
 
 impl TipSet {
