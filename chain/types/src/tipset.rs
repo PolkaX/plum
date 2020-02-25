@@ -5,7 +5,7 @@ use crate::{
     Cid,
 };
 use rust_ipld_cbor::bigint::CborBigInt;
-use serde::{Deserialize, Serialize};
+use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use std::result::Result;
 use thiserror::Error;
 
@@ -19,7 +19,7 @@ pub enum TipSetError {
     MismatchingParents { expected: Cid, found: Cid },
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
 pub struct TipSet {
     cids: Vec<Cid>,
     blks: Vec<BlockHeader>,
@@ -34,7 +34,6 @@ impl TipSet {
 
         let mut blks = blks;
 
-        // TODO: add tests
         blks.sort();
 
         let height = blks[0].height;
@@ -56,8 +55,9 @@ impl TipSet {
                         found: cid.clone(),
                     });
                 }
-                cids.push(blk.clone().cid());
             }
+
+            cids.push(blk.clone().cid());
         }
 
         Ok(Self { cids, blks, height })

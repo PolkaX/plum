@@ -33,8 +33,9 @@ pub use self::signature::{Signature, SIGNATURE_MAX_LENGTH};
 pub use self::signed_message::SignedMessage;
 pub use self::tipset::TipSet;
 
-pub use address::{self, Address};
-pub use cid::Cid;
+pub use address::*;
+pub use cid::*;
+pub use rust_ipld_cbor::*;
 
 use block_format::{BasicBlock, BlockFormatError};
 use bytes::Bytes;
