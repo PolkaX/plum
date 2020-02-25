@@ -274,7 +274,7 @@ mod tests {
     }
 
     #[test]
-    fn to_storge_block_should_work() {
+    fn block_header_to_storge_block_should_work() {
         let header = new_block_header();
         let storage_block: BasicBlock = header.try_into().unwrap();
         assert_eq!(
