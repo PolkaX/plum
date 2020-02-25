@@ -7,6 +7,8 @@ use cid::Cid;
 use core::convert::TryInto;
 use rust_ipld_cbor::bigint::CborBigInt;
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
+use std::ops::Add;
+use std::ops::Mul;
 
 #[derive(Debug, Clone, Serialize_tuple, Deserialize_tuple)]
 pub struct Message {
@@ -39,6 +41,14 @@ impl TryInto<BasicBlock> for Message {
 impl Message {
     pub fn cid(self) -> Cid {
         into_cid(self)
+    }
+
+    pub fn required_funds(&self) -> CborBigInt {
+        CborBigInt(
+            self.value
+                .as_ref()
+                .add(self.gas_price.as_ref().mul(self.gas_limit.as_ref())),
+        )
     }
 }
 
