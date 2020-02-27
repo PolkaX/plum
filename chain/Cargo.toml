@@ -10,4 +10,4 @@ cid = "0.3"
 lazy_static = "1.4"
 data-encoding = "2.1"
 
-plum_address = { path = "address" }
+plum_address = { path = "address", features = ["serde"] }

@@ -4,14 +4,14 @@ use std::convert::TryFrom;
 use std::fmt::{self, Display};
 use std::str::FromStr;
 
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
 use plum_hashing::blake2b_variable;
 
 use crate::constant;
 use crate::error::AddressError;
-use crate::network::{Network, NETWORK_DEFAULT, NETWORK_MAINNET_PREFIX, NETWORK_TESTNET_PREFIX};
+use crate::network::{Network, NETWORK_MAINNET_PREFIX, NETWORK_TESTNET_PREFIX};
 use crate::protocol::Protocol;
+#[cfg(feature = "serde")]
+use crate::serde::JsonAddress;
 
 /// The general address structure.
 #[derive(PartialEq, Eq, Clone, Debug, Hash)]
@@ -27,7 +27,7 @@ pub struct Address {
 
 impl Address {
     /// Create an address with the given network, protocol and payload
-    fn new<T: Into<Vec<u8>>>(
+    pub(crate) fn new<T: Into<Vec<u8>>>(
         network: Network,
         protocol: Protocol,
         payload: T,
@@ -106,6 +106,12 @@ impl Address {
         bytes.push(self.protocol as u8);
         bytes.extend_from_slice(self.payload());
         bytes
+    }
+
+    /// Convert raw address into JSONify address.
+    #[cfg(feature = "serde")]
+    pub fn into_jsonify_address(self) -> JsonAddress {
+        JsonAddress::new(self)
     }
 
     /// Return the checksum of (protocol + payload).
@@ -228,28 +234,6 @@ impl FromStr for Address {
     }
 }
 
-impl Serialize for Address {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let bytes = self.as_bytes();
-        serializer.serialize_bytes(&bytes)
-    }
-}
-
-impl<'de> Deserialize<'de> for Address {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let bytes: serde_bytes::ByteBuf = Deserialize::deserialize(deserializer)?;
-        let mut bytes = bytes.into_vec();
-        let protocol = Protocol::try_from(bytes.remove(0)).map_err(serde::de::Error::custom)?;
-        Ok(Self::new(NETWORK_DEFAULT, protocol, bytes).map_err(serde::de::Error::custom)?)
-    }
-}
-
 /// Validate whether the checksum of `ingest` is equal to `expect`.
 pub fn validate_checksum(ingest: &[u8], expect: &[u8]) -> bool {
     let digest = checksum(ingest);
@@ -281,17 +265,8 @@ mod tests {
 
     #[test]
     fn test_id_payload() {
-        let id_addr = Address::new_id_addr(Network::Test, 12512063u64).unwrap();
+        let id_addr = Address::new_id_addr(Network::Test, 12_512_063u64).unwrap();
         assert_eq!(id_addr.payload(), [191, 214, 251, 5]);
-    }
-
-    #[test]
-    fn test_address_serde() {
-        let id_addr = Address::new_id_addr(Network::Test, 12512063u64).unwrap();
-        let ser = serde_cbor::to_vec(&id_addr).unwrap();
-        assert_eq!(ser, [69, 0, 191, 214, 251, 5]);
-        let de = serde_cbor::from_slice(&ser).unwrap();
-        assert_eq!(id_addr, de);
     }
 
     #[test]

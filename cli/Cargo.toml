@@ -19,6 +19,6 @@ lazy_static = "1.4.0"
 
 chain = { path = "../chain" }
 #wallet = { path = "../chain/wallet" }
-plum_address = { path = "../chain/address" }
+plum_address = { path = "../chain/address", features = ["serde"] }
 network = { path = "../network" }
 plum_libp2p = { path = "../plum_libp2p" }
