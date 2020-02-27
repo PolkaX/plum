@@ -12,7 +12,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use std::cmp::Ordering;
 
-#[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd)]
+#[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd, Hash)]
 pub struct Ticket {
     pub vrf_proof: Vec<u8>,
 }
@@ -40,7 +40,7 @@ impl<'de> Deserialize<'de> for Ticket {
     }
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize_tuple, Deserialize_tuple)]
 pub struct EPostTicket {
     #[serde(with = "serde_bytes")]
     pub partial: Vec<u8>,
@@ -48,7 +48,7 @@ pub struct EPostTicket {
     pub challenge_index: u64,
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize_tuple, Deserialize_tuple)]
 pub struct EPostProof {
     #[serde(with = "serde_bytes")]
     pub proof: Vec<u8>,
@@ -57,7 +57,7 @@ pub struct EPostProof {
     pub candidates: Vec<EPostTicket>,
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize_tuple, Deserialize_tuple)]
 pub struct BlockHeader {
     pub miner: Address,
     pub ticket: Ticket,

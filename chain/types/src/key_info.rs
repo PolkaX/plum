@@ -15,7 +15,7 @@ pub enum KeyTypeError {
 }
 
 /// The type of key that store in keystore.
-#[derive(Eq, PartialEq, Debug, Clone, Copy)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 #[repr(u8)]
 pub enum SignKeyType {
     /// SECP256K1 key.

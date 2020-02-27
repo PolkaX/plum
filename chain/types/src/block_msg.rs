@@ -3,7 +3,7 @@
 use crate::{block_header::BlockHeader, Cid};
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize_tuple, Deserialize_tuple)]
 pub struct BlockMsg {
     pub header: BlockHeader,
     pub bls_messages: Vec<Cid>,
