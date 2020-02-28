@@ -2,6 +2,7 @@
 
 use crate::{
     block_header::{BlockHeader, Ticket},
+    tipset_key::TipSetKey,
     Cid,
 };
 use rust_ipld_cbor::bigint::CborBigInt;
@@ -73,6 +74,10 @@ impl TipSet {
 
     pub fn height(&self) -> u64 {
         self.height
+    }
+
+    pub fn key(&self) -> TipSetKey {
+        TipSetKey::new(self.cids())
     }
 
     pub fn min_ticket(&self) -> &Ticket {

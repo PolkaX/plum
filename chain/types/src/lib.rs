@@ -15,6 +15,7 @@ mod message_receipt;
 mod signature;
 mod signed_message;
 mod tipset;
+mod tipset_key;
 mod vmcontext;
 
 pub use self::actor::Actor;
@@ -31,7 +32,8 @@ pub use self::message::Message;
 pub use self::message_receipt::MessageReceipt;
 pub use self::signature::{Signature, SIGNATURE_MAX_LENGTH};
 pub use self::signed_message::SignedMessage;
-pub use self::tipset::TipSet;
+pub use self::tipset::{TipSet, TipSetError};
+pub use self::tipset_key::TipSetKey;
 
 pub use address::*;
 pub use cid::*;

@@ -12,7 +12,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use std::cmp::Ordering;
 
-#[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd)]
+#[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd, Hash)]
 pub struct Ticket {
     pub vrf_proof: Vec<u8>,
 }
@@ -40,7 +40,7 @@ impl<'de> Deserialize<'de> for Ticket {
     }
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize_tuple, Deserialize_tuple)]
 pub struct EPostTicket {
     #[serde(with = "serde_bytes")]
     pub partial: Vec<u8>,
@@ -48,7 +48,7 @@ pub struct EPostTicket {
     pub challenge_index: u64,
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize_tuple, Deserialize_tuple)]
 pub struct EPostProof {
     #[serde(with = "serde_bytes")]
     pub proof: Vec<u8>,
@@ -57,7 +57,7 @@ pub struct EPostProof {
     pub candidates: Vec<EPostTicket>,
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize_tuple, Deserialize_tuple)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize_tuple, Deserialize_tuple)]
 pub struct BlockHeader {
     pub miner: Address,
     pub ticket: Ticket,
@@ -118,6 +118,7 @@ impl BlockHeader {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::block_msg::BlockMsg;
     use crate::key_info::SignKeyType;
     use address::Network;
     use cid::AsCidRef;
@@ -315,5 +316,47 @@ mod tests {
         assert_eq!(ser, &expected[..]);
         let de = serde_cbor::from_slice(&ser).unwrap();
         assert_eq!(tipset, de);
+    }
+
+    #[test]
+    fn block_msg_serde_should_work() {
+        let cid: Cid = "bafy2bzacect5mm5ptrpcqmrajuhmzs6tg43ytjutlsd5kjd4pvxui57er6ose"
+            .parse()
+            .unwrap();
+
+        let blk_msg = BlockMsg {
+            header: new_block_header(),
+            bls_messages: vec![cid.clone()],
+            secpk_messages: vec![cid],
+        };
+        let expected = [
+            131, 141, 69, 0, 191, 214, 251, 5, 129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111,
+            102, 48, 48, 48, 48, 48, 48, 48, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48,
+            48, 48, 48, 48, 48, 131, 69, 112, 114, 117, 117, 102, 70, 114, 97, 110, 100, 111, 109,
+            128, 130, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161, 80,
+            48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55, 160,
+            199, 184, 78, 250, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97,
+            161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73,
+            55, 160, 199, 184, 78, 250, 70, 0, 28, 170, 212, 84, 68, 27, 0, 0, 0, 20, 1, 48, 116,
+            163, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161, 80, 48,
+            167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55, 160, 199,
+            184, 78, 250, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161,
+            80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55,
+            160, 199, 184, 78, 250, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29,
+            97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217,
+            73, 55, 160, 199, 184, 78, 250, 84, 2, 98, 111, 111, 33, 32, 105, 109, 32, 97, 32, 115,
+            105, 103, 110, 97, 116, 117, 114, 101, 0, 84, 2, 98, 111, 111, 33, 32, 105, 109, 32,
+            97, 32, 115, 105, 103, 110, 97, 116, 117, 114, 101, 0, 129, 216, 42, 88, 39, 0, 1, 113,
+            160, 228, 2, 32, 167, 214, 51, 175, 156, 94, 40, 50, 32, 77, 14, 204, 203, 211, 55, 55,
+            137, 166, 147, 92, 135, 213, 36, 124, 125, 111, 68, 119, 228, 143, 157, 34, 129, 216,
+            42, 88, 39, 0, 1, 113, 160, 228, 2, 32, 167, 214, 51, 175, 156, 94, 40, 50, 32, 77, 14,
+            204, 203, 211, 55, 55, 137, 166, 147, 92, 135, 213, 36, 124, 125, 111, 68, 119, 228,
+            143, 157, 34,
+        ];
+
+        let ser = serde_cbor::to_vec(&blk_msg).unwrap();
+        assert_eq!(ser, &expected[..]);
+        let de = serde_cbor::from_slice(&ser).unwrap();
+        assert_eq!(blk_msg, de);
     }
 }

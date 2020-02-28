@@ -10,7 +10,7 @@ use crate::key_info::SignKeyType;
 pub const SIGNATURE_MAX_LENGTH: u32 = 200;
 
 /// The general signature structure.
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
 pub struct Signature {
     /// The key type.
     pub ty: SignKeyType,

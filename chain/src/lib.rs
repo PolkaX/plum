@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-pub type Cid = u8;
+use cid::Cid;
 
 pub struct Info {
     pub heaviest_tip_set: Cid,

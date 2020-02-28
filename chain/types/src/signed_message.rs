@@ -2,6 +2,7 @@
 
 use crate::{message::Message, signature::Signature};
 
+#[derive(Clone, Debug)]
 pub struct SignedMessage {
     pub message: Message,
     pub signature: Signature,
