@@ -2025,6 +2025,7 @@ version = "0.1.0"
 dependencies = [
  "bls-signatures",
  "data-encoding",
+ "lazy_static",
  "libsecp256k1",
  "plum_hashing",
  "rand 0.7.3",

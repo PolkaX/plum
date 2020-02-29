@@ -1,7 +1,9 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-/// The default network type.
-pub const NETWORK_DEFAULT: Network = Network::Test;
+lazy_static::lazy_static! {
+    /// The default network type.
+    pub static ref NETWORK_DEFAULT: Box<Network> = Box::new(Network::Main);
+}
 
 pub(crate) const NETWORK_MAINNET_PREFIX: &str = "f";
 pub(crate) const NETWORK_TESTNET_PREFIX: &str = "t";
@@ -10,8 +12,9 @@ pub(crate) const NETWORK_TESTNET_PREFIX: &str = "t";
 /// this function should set at the beginning of programing, and only set once.
 /// could not change it in runtime.
 pub unsafe fn set_network(network: Network) {
-    if network != NETWORK_DEFAULT {
-        let n = &mut *(&NETWORK_DEFAULT as *const Network as *mut Network);
+    if network != **NETWORK_DEFAULT {
+        let n = &**NETWORK_DEFAULT as *const Network as *mut Network;
+        let n = &mut *n;
         *n = network;
     }
 }

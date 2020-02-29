@@ -12,6 +12,7 @@ serde = ["serde1", "serde_bytes", "serde_cbor", "serde_json"]
 data-encoding = "2.1"
 thiserror = "1.0"
 unsigned-varint = "0.3"
+lazy_static = "1.4"
 
 plum_hashing = { path = "../../hashing" }
 

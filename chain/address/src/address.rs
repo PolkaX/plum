@@ -81,7 +81,7 @@ impl Address {
 
     /// Return the network type of the address.
     pub fn network(&self) -> Network {
-        NETWORK_DEFAULT
+        **NETWORK_DEFAULT
     }
 
     /// Return the protocol of the address.
@@ -259,6 +259,7 @@ mod tests {
 
     #[test]
     fn test_checksum() {
+        unsafe { crate::set_network(Network::Test) };
         let addr = Address::from_str("t24dd4ox4c2vpf5vk5wkadgyyn6qtuvgcpxxon64a").unwrap();
         let checksum = addr.checksum();
         assert!(validate_checksum(&addr.as_bytes(), checksum.as_slice()));

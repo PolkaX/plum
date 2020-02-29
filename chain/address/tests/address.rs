@@ -16,6 +16,7 @@ fn test_random_id_address() {
 
 #[test]
 fn test_id_address() {
+    unsafe { set_network(Network::Test) };
     let test_cases = vec![
         (0, "t00"),
         (1, "t01"),
@@ -48,6 +49,9 @@ fn test_random_secp256k1_address() {
 
 #[test]
 fn test_secp256k1_address() {
+    unsafe {
+        set_network(Network::Test);
+    }
     let test_cases = vec![
         (
             [
@@ -124,6 +128,9 @@ fn test_random_actor_address() {
 
 #[test]
 fn test_actor_address() {
+    unsafe {
+        set_network(Network::Test);
+    }
     let test_cases = vec![
         (
             [
@@ -183,6 +190,9 @@ fn test_random_bls_address() {
 
 #[test]
 fn test_bls_address() {
+    unsafe {
+        set_network(Network::Test);
+    }
     let test_cases = vec![
         (
             [
@@ -240,6 +250,9 @@ fn test_bls_address() {
 
 #[test]
 fn test_invalid_string_address() {
+    unsafe {
+        set_network(Network::Test);
+    }
     let test_cases = vec![
         (
             "Q2gfvuyh7v2sx3patm5k23wdzmhyhtmqctasbr23y",
