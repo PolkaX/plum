@@ -1,5 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use crate::NETWORK_DEFAULT;
 use thiserror::Error;
 
 /// Errors generated from this library.
@@ -8,6 +9,9 @@ pub enum AddressError {
     /// Unknown network.
     #[error("Unknown network")]
     UnknownNetwork,
+    /// Mismatch network.
+    #[error("Network do not match default network. current:{}", NETWORK_DEFAULT.prefix())]
+    MismatchNetwork,
     /// Unknown address protocol.
     #[error("Unknown protocol")]
     UnknownProtocol,

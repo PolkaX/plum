@@ -38,7 +38,7 @@ impl Plum {
 }
 
 pub struct Client;
-
+/*
 impl chain::Client for Client {
     fn info(&self) -> chain::Info {
         chain::Info {
@@ -49,7 +49,7 @@ impl chain::Client for Client {
         }
     }
 }
-
+*/
 pub fn run_lp2p(peer_ip: Option<Multiaddr>) {
     let (exit_send, exit) = exit_future::signal();
     let mut runtime = Runtime::new().expect("failed to start runtime on current thread");
