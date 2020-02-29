@@ -2817,6 +2817,7 @@ dependencies = [
  "bls-signatures",
  "libsecp256k1",
  "plum_hashing",
+ "rand 0.7.3",
 ]
 
 [[package]]

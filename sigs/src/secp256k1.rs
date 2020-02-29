@@ -11,3 +11,8 @@ pub fn secp256k1_sign(privkey: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
     let (signature, _) = secp256k1::sign(&message, &seckey);
     Ok(signature.serialize().to_vec())
 }
+
+pub fn secp256k1_generate_secret() -> Vec<u8> {
+    let seckey = secp256k1::SecretKey::random(&mut rand::rngs::OsRng);
+    seckey.serialize().to_vec()
+}

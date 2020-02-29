@@ -91,7 +91,7 @@ impl<KS: KeyStore> Wallet<KS> {
                 })
             }
             KeyType::BLS => {
-                let signature = sigs::bls_sign(key.info.privkey.as_slice(), msg)?;
+                let signature = sigs::bls_sign(&key.info.privkey, msg)?;
                 Ok(Signature {
                     ty: KeyType::BLS,
                     data: signature,
@@ -184,18 +184,17 @@ impl<KS: KeyStore> Wallet<KS> {
 pub fn generate_key(key_type: KeyType) -> Result<Key> {
     match key_type {
         KeyType::SECP256K1 => {
-            let seckey = secp256k1::SecretKey::random(&mut rand::rngs::OsRng);
+            let privkey = sigs::secp256k1_generate_secret();
             Key::new(KeyInfo {
                 ty: KeyType::SECP256K1,
-                privkey: seckey.serialize().to_vec(),
+                privkey,
             })
         }
         KeyType::BLS => {
-            use bls::Serialize;
-            let privkey = bls::PrivateKey::generate(&mut rand::rngs::OsRng);
+            let privkey = sigs::bls_generate_secret();
             Key::new(KeyInfo {
                 ty: KeyType::BLS,
-                privkey: privkey.as_bytes(),
+                privkey,
             })
         }
     }
