@@ -1,8 +1,5 @@
-use crate::signer::Signer;
 use anyhow::Result;
 use plum_hashing::blake2b_variable;
-
-pub struct Secp256k1Signer;
 
 pub fn secp256k1_sign(privkey: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
     let seckey = secp256k1::SecretKey::parse_slice(privkey)?;
