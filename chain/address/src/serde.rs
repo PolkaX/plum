@@ -5,7 +5,6 @@ use serde1::{de, ser};
 use serde_bytes::ByteBuf;
 
 use crate::address::Address;
-use crate::network::NETWORK_DEFAULT;
 use crate::protocol::Protocol;
 
 impl ser::Serialize for Address {
@@ -26,7 +25,7 @@ impl<'de> de::Deserialize<'de> for Address {
         let bytes = ByteBuf::deserialize(deserializer)?;
         let mut bytes = bytes.into_vec();
         let protocol = Protocol::try_from(bytes.remove(0)).map_err(de::Error::custom)?;
-        Ok(Self::new(NETWORK_DEFAULT, protocol, bytes).map_err(de::Error::custom)?)
+        Ok(Self::new(protocol, bytes).map_err(de::Error::custom)?)
     }
 }
 
@@ -74,7 +73,7 @@ mod tests {
 
     #[test]
     fn cbor_serde() {
-        let id_addr = Address::new_id_addr(Network::Test, 12_512_063u64).unwrap();
+        let id_addr = Address::new_id_addr(12_512_063u64).unwrap();
         let cbor = serde_cbor::to_vec(&id_addr).unwrap();
         assert_eq!(cbor, [69, 0, 191, 214, 251, 5]);
         assert_eq!(id_addr, serde_cbor::from_slice(&cbor).unwrap());
@@ -82,7 +81,7 @@ mod tests {
 
     #[test]
     fn json_serde() {
-        let id_addr = Address::new_id_addr(Network::Test, 1024).unwrap();
+        let id_addr = Address::new_id_addr(1024).unwrap();
         assert_eq!(id_addr.to_string(), "t01024");
 
         let json_id_addr = id_addr.clone().into_jsonify_address();

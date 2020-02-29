@@ -6,8 +6,9 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-cid = "0.3"
 lazy_static = "1.4"
 data-encoding = "2.1"
+
+cid = { package = "rust-cid", git = "https://github.com/PolkaX/rust-ipfs", branch = "filecoin-master", features = ["serde_support"] }
 
 plum_address = { path = "address", features = ["serde"] }

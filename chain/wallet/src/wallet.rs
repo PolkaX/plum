@@ -28,7 +28,7 @@ impl Key {
                 let pubkey = secp256k1::PublicKey::from_secret_key(&seckey)
                     .serialize()
                     .to_vec();
-                let address = Address::new_secp256k1_addr(NETWORK_DEFAULT, &pubkey)?;
+                let address = Address::new_secp256k1_addr(&pubkey)?;
                 Ok(Key {
                     info,
                     pubkey,
@@ -42,7 +42,7 @@ impl Key {
                     Err(_) => return Err(WalletError::BLS),
                 };
                 let pubkey = privkey.public_key().as_bytes();
-                let address = Address::new_bls_addr(NETWORK_DEFAULT, &pubkey)?;
+                let address = Address::new_bls_addr(&pubkey)?;
                 Ok(Key {
                     info,
                     pubkey,
