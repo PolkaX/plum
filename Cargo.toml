@@ -14,6 +14,7 @@ path = "src/bin/main.rs"
 
 [dependencies]
 plum_address = { path = "chain/address", features = ["serde"] }
+abi = { path = "chain/abi", features = ["serde"] }
 cli = { path = "./cli" }
 wallet = { path = "chain/wallet" }
 
@@ -22,6 +23,7 @@ members = [
     "chain/address",
 	"chain/types",
 	"chain/wallet",
+	"chain/abi",
 	"chain",
 	"cli",
 	"hashing",
