@@ -23,6 +23,9 @@ pub enum WalletError {
     /// Address error.
     #[error("Address error")]
     Address(#[from] AddressError),
+    /// Anyhow error.
+    #[error("Anyhow error")]
+    Anyhow(#[from] anyhow::Error),
     /// Key not found.
     #[error("Key not found")]
     KeyNotFound,

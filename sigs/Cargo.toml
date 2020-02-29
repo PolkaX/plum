@@ -1,0 +1,14 @@
+[package]
+name = "sigs"
+version = "0.1.0"
+authors = ["Liu-Cheng Xu <xuliuchengxlc@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bls = { package = "bls-signatures", version = "0.5" }
+anyhow = "1.0"
+libsecp256k1 = "0.3"
+
+plum_hashing = { path = "../hashing" }

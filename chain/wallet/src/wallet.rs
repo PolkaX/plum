@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use plum_address::{Address, NETWORK_DEFAULT};
-use plum_hashing::blake2b_variable;
 
 use crate::error::{Result, WalletError};
 use crate::keystore::{KeyInfo, KeyStore, KeyType, Signature};
@@ -85,25 +84,17 @@ impl<KS: KeyStore> Wallet<KS> {
         let key = self.find_key(addr).ok_or(WalletError::KeyNotFound)?;
         match key.info.ty {
             KeyType::SECP256K1 => {
-                let seckey = secp256k1::SecretKey::parse_slice(&key.info.privkey)?;
-                let blake2b_hash = blake2b_variable(msg, secp256k1::util::MESSAGE_SIZE);
-                let message = secp256k1::Message::parse_slice(&blake2b_hash)?;
-                let (signature, _) = secp256k1::sign(&message, &seckey);
+                let signature = sigs::secp256k1_sign(&key.info.privkey, msg)?;
                 Ok(Signature {
                     ty: KeyType::SECP256K1,
-                    data: signature.serialize().to_vec(),
+                    data: signature,
                 })
             }
             KeyType::BLS => {
-                use bls::Serialize;
-                let privkey = match bls::PrivateKey::from_bytes(key.info.privkey.as_slice()) {
-                    Ok(privkey) => privkey,
-                    Err(_) => return Err(WalletError::BLS),
-                };
-                let signature = privkey.sign(&msg);
+                let signature = sigs::bls_sign(key.info.privkey.as_slice(), msg)?;
                 Ok(Signature {
                     ty: KeyType::BLS,
-                    data: signature.as_bytes(),
+                    data: signature,
                 })
             }
         }

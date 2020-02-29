@@ -24,6 +24,7 @@ members = [
 	"chain/wallet",
 	"chain",
 	"cli",
+    "sigs",
 	"hashing",
 	"peermgr",
     "plum_libp2p",
