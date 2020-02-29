@@ -8,7 +8,7 @@ use plum_hashing::blake2b_variable;
 
 use crate::constant;
 use crate::error::AddressError;
-use crate::network::{Network, NETWORK_MAINNET_PREFIX, NETWORK_TESTNET_PREFIX};
+use crate::network::{Network, NETWORK_DEFAULT, NETWORK_MAINNET_PREFIX, NETWORK_TESTNET_PREFIX};
 use crate::protocol::Protocol;
 #[cfg(feature = "serde")]
 use crate::serde::JsonAddress;
@@ -16,7 +16,6 @@ use crate::serde::JsonAddress;
 /// The general address structure.
 #[derive(PartialEq, Eq, Clone, Debug, Hash)]
 pub struct Address {
-    network: Network,
     // ID protocol: payload is VarInt encoding.
     // SECP256K1 protocol: payload is pubkey (length = 20)
     // Actor protocol: payload length = 20
@@ -26,9 +25,8 @@ pub struct Address {
 }
 
 impl Address {
-    /// Create an address with the given network, protocol and payload
+    /// Create an address with the given protocol and payload
     pub(crate) fn new<T: Into<Vec<u8>>>(
-        network: Network,
         protocol: Protocol,
         payload: T,
     ) -> Result<Self, AddressError> {
@@ -47,47 +45,43 @@ impl Address {
             }
         }
 
-        Ok(Self {
-            network,
-            protocol,
-            payload,
-        })
+        Ok(Self { protocol, payload })
     }
 
     /// Create an address using the ID protocol.
-    pub fn new_id_addr(network: Network, id: u64) -> Result<Self, AddressError> {
+    pub fn new_id_addr(id: u64) -> Result<Self, AddressError> {
         let mut payload_buf = unsigned_varint::encode::u64_buffer();
         let payload = unsigned_varint::encode::u64(id, &mut payload_buf);
-        Self::new(network, Protocol::ID, payload)
+        Self::new(Protocol::ID, payload)
     }
 
     /// Create an address using the SECP256k1 protocol.
-    pub fn new_secp256k1_addr(network: Network, pubkey: &[u8]) -> Result<Self, AddressError> {
-        Self::new(network, Protocol::SECP256K1, address_hash(pubkey))
+    pub fn new_secp256k1_addr(pubkey: &[u8]) -> Result<Self, AddressError> {
+        Self::new(Protocol::SECP256K1, address_hash(pubkey))
     }
 
     /// Create an address using the Actor protocol.
-    pub fn new_actor_addr(network: Network, data: &[u8]) -> Result<Self, AddressError> {
-        Self::new(network, Protocol::Actor, address_hash(data))
+    pub fn new_actor_addr(data: &[u8]) -> Result<Self, AddressError> {
+        Self::new(Protocol::Actor, address_hash(data))
     }
 
     /// Create an address using the BLS protocol.
-    pub fn new_bls_addr(network: Network, pubkey: &[u8]) -> Result<Self, AddressError> {
-        Self::new(network, Protocol::BLS, pubkey)
+    pub fn new_bls_addr(pubkey: &[u8]) -> Result<Self, AddressError> {
+        Self::new(Protocol::BLS, pubkey)
     }
 
     /// Create an address represented by the encoding bytes `addr` (protocol + payload).
-    pub fn new_from_bytes(network: Network, addr: &[u8]) -> Result<Self, AddressError> {
+    pub fn new_from_bytes(addr: &[u8]) -> Result<Self, AddressError> {
         if addr.len() <= 1 {
             return Err(AddressError::InvalidLength);
         }
         let protocol = Protocol::try_from(addr[0])?;
-        Self::new(network, protocol, &addr[1..])
+        Self::new(protocol, &addr[1..])
     }
 
     /// Return the network type of the address.
     pub fn network(&self) -> Network {
-        self.network
+        NETWORK_DEFAULT
     }
 
     /// Return the protocol of the address.
@@ -121,7 +115,6 @@ impl Address {
 
     // A helper function for `from_str`.
     fn new_with_check(
-        network: Network,
         protocol: Protocol,
         raw: &[u8],
         payload_size: usize,
@@ -140,7 +133,6 @@ impl Address {
         }
 
         Ok(Self {
-            network,
             protocol,
             payload: payload.to_vec(),
         })
@@ -157,7 +149,7 @@ impl Display for Address {
                 write!(
                     f,
                     "{}{}{}",
-                    self.network().prefix(),
+                    NETWORK_DEFAULT.prefix(),
                     self.protocol() as u8,
                     id
                 )
@@ -169,7 +161,7 @@ impl Display for Address {
                 write!(
                     f,
                     "{}{}{}",
-                    self.network().prefix(),
+                    NETWORK_DEFAULT.prefix(),
                     self.protocol() as u8,
                     base32
                 )
@@ -186,11 +178,14 @@ impl FromStr for Address {
             return Err(AddressError::InvalidLength);
         }
 
-        let network = match &s[0..1] {
-            NETWORK_MAINNET_PREFIX => Network::Main,
-            NETWORK_TESTNET_PREFIX => Network::Test,
+        match &s[0..1] {
+            NETWORK_MAINNET_PREFIX | NETWORK_TESTNET_PREFIX => {
+                if &s[0..1] != NETWORK_DEFAULT.prefix() {
+                    return Err(AddressError::MismatchNetwork);
+                }
+            }
             _ => return Err(AddressError::UnknownNetwork),
-        };
+        }
 
         let protocol = match &s[1..2] {
             "0" => Protocol::ID,
@@ -208,28 +203,21 @@ impl FromStr for Address {
                     return Err(AddressError::InvalidLength);
                 }
                 match raw.parse::<u64>() {
-                    Ok(id) => Self::new_id_addr(network, id),
+                    Ok(id) => Self::new_id_addr(id),
                     Err(_) => Err(AddressError::InvalidPayload),
                 }
             }
             Protocol::SECP256K1 => Self::new_with_check(
-                network,
                 Protocol::SECP256K1,
                 raw.as_bytes(),
                 constant::PAYLOAD_HASH_LEN,
             ),
-            Protocol::Actor => Self::new_with_check(
-                network,
-                Protocol::Actor,
-                raw.as_bytes(),
-                constant::PAYLOAD_HASH_LEN,
-            ),
-            Protocol::BLS => Self::new_with_check(
-                network,
-                Protocol::BLS,
-                raw.as_bytes(),
-                constant::BLS_PUBLIC_KEY_LEN,
-            ),
+            Protocol::Actor => {
+                Self::new_with_check(Protocol::Actor, raw.as_bytes(), constant::PAYLOAD_HASH_LEN)
+            }
+            Protocol::BLS => {
+                Self::new_with_check(Protocol::BLS, raw.as_bytes(), constant::BLS_PUBLIC_KEY_LEN)
+            }
         }
     }
 }
@@ -265,7 +253,7 @@ mod tests {
 
     #[test]
     fn test_id_payload() {
-        let id_addr = Address::new_id_addr(Network::Test, 12_512_063u64).unwrap();
+        let id_addr = Address::new_id_addr(12_512_063u64).unwrap();
         assert_eq!(id_addr.payload(), [191, 214, 251, 5]);
     }
 
