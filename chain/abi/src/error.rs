@@ -8,12 +8,12 @@ pub enum AbiError {
     /// Unknown network.
     #[error("Unsupported proof type")]
     Unsupported,
-    /// Unknown address protocol.
-    #[error("Unknown protocol")]
-    UnknownProtocol,
-    /// Invalid address payload.
-    #[error("Invalid address payload")]
-    InvalidPayload,
+    /// Size too small.
+    #[error("Size too small, minimum piece size is 127 bytes")]
+    SizeTooSmall,
+    /// Invalid unpadded piece size or padded piece size.
+    #[error("Invalid unpadded piece size or padded piece size")]
+    InvalidSize,
     /// Invalid address length.
     #[error("Invalid address length")]
     InvalidLength,

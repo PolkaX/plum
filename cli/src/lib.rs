@@ -39,16 +39,16 @@ impl Plum {
 
 pub struct Client;
 
-impl chain::Client for Client {
-    fn info(&self) -> chain::Info {
-        chain::Info {
-            heaviest_tip_set: 101u8,
-            heaviest_tip_set_weight: 1000u128,
-            genesis_hash: 0u8,
-            best_hash: 88u8,
-        }
-    }
-}
+//impl chain::Client for Client {
+//    fn info(&self) -> chain::Info {
+//        chain::Info {
+//            heaviest_tip_set: 101u8,
+//            heaviest_tip_set_weight: 1000u128,
+//            genesis_hash: 0u8,
+//            best_hash: 88u8,
+//        }
+//    }
+//}
 
 pub fn run_lp2p(peer_ip: Option<Multiaddr>) {
     let (exit_send, exit) = exit_future::signal();

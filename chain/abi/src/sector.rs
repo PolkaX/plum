@@ -21,19 +21,19 @@ type PartialTicket = [u8; 32];
 
 #[derive(Debug, Clone)]
 pub struct SectorID {
-    pub Miner: ActorID,
-    pub Number: SectorNumber,
+    pub miner: ActorID,
+    pub number: SectorNumber,
 }
 
 #[derive(Debug, Clone)]
 pub struct PoStProof {
     //<curve, system> {
-    pub ProofBytes: [u8; 32],
+    pub proof_bytes: [u8; 32],
 }
 
 #[derive(Debug, Clone)]
 pub struct PrivatePoStCandidateProof {
-    pub Externalized: [u8; 32],
+    pub externalized: [u8; 32],
 }
 
 #[derive(Debug, Clone)]
