@@ -51,3 +51,26 @@ pub struct PieceInfo {
     size: PaddedPieceSize, // Size in nodes. For BLS12-381 (capacity 254 bits), must be >= 16. (16 * 8 = 128)
     piece_cid: Cid
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_validate() {
+        let unpadded_piece_size = UnpaddedPieceSize(127);
+        assert_eq!(unpadded_piece_size.validate(), Ok(()));
+        let unpadded_piece_size = UnpaddedPieceSize(128);
+        assert_ne!(unpadded_piece_size.validate(), Ok(()));
+        let unpadded_piece_size = UnpaddedPieceSize(254);
+        assert_eq!(unpadded_piece_size.validate(), Ok(()));
+        let unpadded_piece_size = UnpaddedPieceSize(255);
+        assert_ne!(unpadded_piece_size.validate(), Ok(()));
+
+        let padded_piece_size = PaddedPieceSize(126);
+        assert_ne!(padded_piece_size.validate(), Ok(()));
+        let padded_piece_size = PaddedPieceSize(128);
+        assert_eq!(padded_piece_size.validate(), Ok(()));
+        let padded_piece_size = PaddedPieceSize(512);
+        assert_eq!(padded_piece_size.validate(), Ok(()));
+    }
+}
