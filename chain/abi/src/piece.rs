@@ -2,10 +2,10 @@ use crate::error::AbiError;
 use cid::Cid;
 
 // UnpaddedPieceSize is the size of a piece, in bytes
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct UnpaddedPieceSize(u64);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PaddedPieceSize(u64);
 
 const MIN_UNPADDED_PIECE_SIZE: u64 = 127;
@@ -29,7 +29,7 @@ impl UnpaddedPieceSize {
 }
 
 impl PaddedPieceSize {
-    pub fn unpadded(&self) -> UnpaddedPieceSize {
+        pub fn unpadded(&self) -> UnpaddedPieceSize {
         UnpaddedPieceSize(self.0 - (self.0 / MIN_PADDED_PIECE_SIZE))
     }
 
@@ -57,20 +57,56 @@ mod tests {
     use super::*;
     #[test]
     fn test_validate() {
-        let unpadded_piece_size = UnpaddedPieceSize(127);
-        assert_eq!(unpadded_piece_size.validate(), Ok(()));
-        let unpadded_piece_size = UnpaddedPieceSize(128);
-        assert_ne!(unpadded_piece_size.validate(), Ok(()));
-        let unpadded_piece_size = UnpaddedPieceSize(254);
-        assert_eq!(unpadded_piece_size.validate(), Ok(()));
-        let unpadded_piece_size = UnpaddedPieceSize(255);
-        assert_ne!(unpadded_piece_size.validate(), Ok(()));
+        assert_eq!(UnpaddedPieceSize(127).validate(), Ok(()));
+        assert_eq!(UnpaddedPieceSize(1016).validate(), Ok(()));
+        assert_eq!(UnpaddedPieceSize(34091302912).validate(), Ok(()));
+        assert_eq!(UnpaddedPieceSize(254).validate(), Ok(()));
+        assert_ne!(UnpaddedPieceSize(255).validate(), Ok(()));
+        assert_ne!(UnpaddedPieceSize(128).validate(), Ok(()));
 
-        let padded_piece_size = PaddedPieceSize(126);
-        assert_ne!(padded_piece_size.validate(), Ok(()));
-        let padded_piece_size = PaddedPieceSize(128);
-        assert_eq!(padded_piece_size.validate(), Ok(()));
-        let padded_piece_size = PaddedPieceSize(512);
-        assert_eq!(padded_piece_size.validate(), Ok(()));
+
+        assert_eq!(PaddedPieceSize(128).validate(), Ok(()));
+        assert_eq!(PaddedPieceSize(1024).validate(), Ok(()));
+        assert_eq!(PaddedPieceSize(34359738368).validate(), Ok(()));
+        assert_eq!(PaddedPieceSize(512).validate(), Ok(()));
+        assert_ne!(PaddedPieceSize(126).validate(), Ok(()));
+
+        assert_eq!(PaddedPieceSize(128), UnpaddedPieceSize(127).padded());
+        assert_eq!(PaddedPieceSize(1024), UnpaddedPieceSize(1016).padded());
+        assert_eq!(PaddedPieceSize(34359738368), UnpaddedPieceSize(34091302912).padded());
+
+        assert_eq!(UnpaddedPieceSize(127), PaddedPieceSize(128).unpadded());
+        assert_eq!(UnpaddedPieceSize(1016), PaddedPieceSize(1024).unpadded());
+        assert_eq!(UnpaddedPieceSize(34091302912), PaddedPieceSize(34359738368).unpadded());
+
+
+        assert_eq!(UnpaddedPieceSize(127).padded().validate(), Ok(()));
+        assert_eq!(UnpaddedPieceSize(1016).padded().validate(), Ok(()));
+        assert_eq!(UnpaddedPieceSize(34091302912).padded().validate(), Ok(()));
+
+        assert_eq!(PaddedPieceSize(128).unpadded().validate(), Ok(()));
+        assert_eq!(PaddedPieceSize(1024).unpadded().validate(), Ok(()));
+        assert_eq!(PaddedPieceSize(34359738368).unpadded().validate(), Ok(()));
+
+
+        assert_eq!(UnpaddedPieceSize(127).padded().unpadded().validate(), Ok(()));
+        assert_eq!(UnpaddedPieceSize(1016).padded().unpadded().validate(), Ok(()));
+        assert_eq!(UnpaddedPieceSize(34091302912).padded().unpadded().validate(), Ok(()));
+
+        assert_eq!(PaddedPieceSize(128).unpadded().padded().validate(), Ok(()));
+        assert_eq!(PaddedPieceSize(1024).unpadded().padded().validate(), Ok(()));
+        assert_eq!(PaddedPieceSize(34359738368).unpadded().padded().validate(), Ok(()));
+
+        assert_ne!(UnpaddedPieceSize(9).validate(), Ok(()));
+        assert_ne!(UnpaddedPieceSize(128).validate(), Ok(()));
+        assert_ne!(UnpaddedPieceSize(99453687).validate(), Ok(()));
+        assert_ne!(UnpaddedPieceSize(1016+0x1000000).validate(), Ok(()));
+
+        assert_ne!(PaddedPieceSize(8).validate(), Ok(()));
+        assert_ne!(PaddedPieceSize(127).validate(), Ok(()));
+        assert_ne!(PaddedPieceSize(99453687).validate(), Ok(()));
+        assert_ne!(PaddedPieceSize(0xc00).validate(), Ok(()));
+        assert_ne!(PaddedPieceSize(1025).validate(), Ok(()));
+
     }
 }
