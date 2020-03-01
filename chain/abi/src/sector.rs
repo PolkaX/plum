@@ -134,7 +134,7 @@ pub fn registered_seal_proof(
 ) -> std::result::Result<RegisteredProof, AbiError> {
     match registered_proof {
         1 | 2 => Ok(RegisteredProof::StackedDRG32GiBSeal),
-        3 | 2 => Ok(RegisteredProof::StackedDRG2KiBSeal),
+        3 | 4 => Ok(RegisteredProof::StackedDRG2KiBSeal),
         5 | 6 => Ok(RegisteredProof::StackedDRG8MiBSeal),
         7 | 8 => Ok(RegisteredProof::StackedDRG512MiBSeal),
         _ => Err(AbiError::Unsupported),
