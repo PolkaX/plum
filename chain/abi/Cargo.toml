@@ -5,21 +5,8 @@ authors = ["The PolkaX Authors"]
 edition = "2018"
 license = "GPL-3.0"
 
-[features]
-serde = ["serde_bytes", "serde_cbor", "serde_json"]
-
 [dependencies]
-data-encoding = "2.1"
 thiserror = "1.0"
 rust-ipld-cbor = { git = "https://github.com/PolkaX/rust-ipfs", package = "rust-ipld-cbor", branch = "filecoin-master", features = ["bigint"] }
 cid = { git = "https://github.com/PolkaX/rust-ipfs", package = "rust-cid", branch = "filecoin-master", features = ["serde_support"] }
-serde_bytes = { version = "0.11", optional = true }
-serde_cbor = { git = "https://github.com/PolkaX/cbor", branch = "f64ser-hack", features = ["tags"], optional = true }
-serde_json = { version = "1.0", optional = true }
-
 types = { path = "../types" }
-
-[dev-dependencies]
-bls = { package = "bls-signatures", version = "0.5" }
-libsecp256k1 = "0.3"
-rand = "0.7"

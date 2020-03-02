@@ -14,13 +14,4 @@ pub enum AbiError {
     /// Invalid unpadded piece size or padded piece size.
     #[error("Invalid unpadded piece size or padded piece size")]
     InvalidSize,
-    /// Invalid address length.
-    #[error("Invalid address length")]
-    InvalidLength,
-    /// Invalid address checksum.
-    #[error("Invalid address checksum")]
-    InvalidChecksum,
-    /// Base32 decode error.
-    #[error("Base32 decode error: {0}")]
-    Base32Decode(#[from] data_encoding::DecodeError),
 }

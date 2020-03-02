@@ -64,7 +64,6 @@ mod tests {
         assert_ne!(UnpaddedPieceSize(255).validate(), Ok(()));
         assert_ne!(UnpaddedPieceSize(128).validate(), Ok(()));
 
-
         assert_eq!(PaddedPieceSize(128).validate(), Ok(()));
         assert_eq!(PaddedPieceSize(1024).validate(), Ok(()));
         assert_eq!(PaddedPieceSize(34359738368).validate(), Ok(()));
@@ -74,25 +73,20 @@ mod tests {
         assert_eq!(PaddedPieceSize(128), UnpaddedPieceSize(127).padded());
         assert_eq!(PaddedPieceSize(1024), UnpaddedPieceSize(1016).padded());
         assert_eq!(PaddedPieceSize(34359738368), UnpaddedPieceSize(34091302912).padded());
-
         assert_eq!(UnpaddedPieceSize(127), PaddedPieceSize(128).unpadded());
         assert_eq!(UnpaddedPieceSize(1016), PaddedPieceSize(1024).unpadded());
         assert_eq!(UnpaddedPieceSize(34091302912), PaddedPieceSize(34359738368).unpadded());
 
-
         assert_eq!(UnpaddedPieceSize(127).padded().validate(), Ok(()));
         assert_eq!(UnpaddedPieceSize(1016).padded().validate(), Ok(()));
         assert_eq!(UnpaddedPieceSize(34091302912).padded().validate(), Ok(()));
-
         assert_eq!(PaddedPieceSize(128).unpadded().validate(), Ok(()));
         assert_eq!(PaddedPieceSize(1024).unpadded().validate(), Ok(()));
         assert_eq!(PaddedPieceSize(34359738368).unpadded().validate(), Ok(()));
 
-
         assert_eq!(UnpaddedPieceSize(127).padded().unpadded().validate(), Ok(()));
         assert_eq!(UnpaddedPieceSize(1016).padded().unpadded().validate(), Ok(()));
         assert_eq!(UnpaddedPieceSize(34091302912).padded().unpadded().validate(), Ok(()));
-
         assert_eq!(PaddedPieceSize(128).unpadded().padded().validate(), Ok(()));
         assert_eq!(PaddedPieceSize(1024).unpadded().padded().validate(), Ok(()));
         assert_eq!(PaddedPieceSize(34359738368).unpadded().padded().validate(), Ok(()));

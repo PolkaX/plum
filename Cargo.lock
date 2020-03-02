@@ -4,15 +4,8 @@
 name = "abi"
 version = "0.1.0"
 dependencies = [
- "bls-signatures",
- "data-encoding",
- "libsecp256k1",
- "rand 0.7.3",
  "rust-cid",
  "rust-ipld-cbor",
- "serde_bytes",
- "serde_cbor",
- "serde_json",
  "thiserror",
  "types",
 ]
