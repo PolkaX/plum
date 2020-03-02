@@ -37,7 +37,7 @@ mod constant {
 pub use self::address::{checksum, validate_checksum, Address};
 pub use self::constant::*;
 pub use self::error::AddressError;
-pub use self::network::{Network, NETWORK_DEFAULT};
+pub use self::network::{set_network, Network, NETWORK_DEFAULT};
 pub use self::protocol::Protocol;
 #[cfg(feature = "serde")]
 pub use self::serde::JsonAddress;

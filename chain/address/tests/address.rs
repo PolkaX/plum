@@ -7,7 +7,7 @@ use plum_address::*;
 #[test]
 fn test_random_id_address() {
     let id = rand::random::<u64>();
-    let addr = Address::new_id_addr(Network::Test, id).unwrap();
+    let addr = Address::new_id_addr(id).unwrap();
     assert_eq!(addr.protocol(), Protocol::ID);
 
     let decoded = Address::from_str(&addr.to_string()).unwrap();
@@ -16,6 +16,7 @@ fn test_random_id_address() {
 
 #[test]
 fn test_id_address() {
+    unsafe { set_network(Network::Test) };
     let test_cases = vec![
         (0, "t00"),
         (1, "t01"),
@@ -29,7 +30,7 @@ fn test_id_address() {
     ];
 
     for (id, expect) in test_cases {
-        let addr = Address::new_id_addr(Network::Test, id).unwrap();
+        let addr = Address::new_id_addr(id).unwrap();
         assert_eq!(addr.protocol(), Protocol::ID);
         assert_eq!(addr.to_string(), expect);
     }
@@ -39,7 +40,7 @@ fn test_id_address() {
 fn test_random_secp256k1_address() {
     let seckey = secp256k1::SecretKey::random(&mut rand::rngs::OsRng);
     let pubkey = secp256k1::PublicKey::from_secret_key(&seckey);
-    let addr = Address::new_secp256k1_addr(Network::Test, &pubkey.serialize()).unwrap();
+    let addr = Address::new_secp256k1_addr(&pubkey.serialize()).unwrap();
     assert_eq!(addr.protocol(), Protocol::SECP256K1);
 
     let decoded = Address::from_str(&addr.to_string()).unwrap();
@@ -48,6 +49,9 @@ fn test_random_secp256k1_address() {
 
 #[test]
 fn test_secp256k1_address() {
+    unsafe {
+        set_network(Network::Test);
+    }
     let test_cases = vec![
         (
             [
@@ -106,7 +110,7 @@ fn test_secp256k1_address() {
     ];
 
     for (pubkey, expect) in test_cases {
-        let addr = Address::new_secp256k1_addr(Network::Test, &pubkey).unwrap();
+        let addr = Address::new_secp256k1_addr(&pubkey).unwrap();
         assert_eq!(addr.protocol(), Protocol::SECP256K1);
         assert_eq!(addr.to_string(), expect);
     }
@@ -115,7 +119,7 @@ fn test_secp256k1_address() {
 #[test]
 fn test_random_actor_address() {
     let data = rand::random::<[u8; 20]>();
-    let addr = Address::new_actor_addr(Network::Test, &data).unwrap();
+    let addr = Address::new_actor_addr(&data).unwrap();
     assert_eq!(addr.protocol(), Protocol::Actor);
 
     let decoded = Address::from_str(&addr.to_string()).unwrap();
@@ -124,6 +128,9 @@ fn test_random_actor_address() {
 
 #[test]
 fn test_actor_address() {
+    unsafe {
+        set_network(Network::Test);
+    }
     let test_cases = vec![
         (
             [
@@ -163,7 +170,7 @@ fn test_actor_address() {
     ];
 
     for (data, expect) in test_cases {
-        let addr = Address::new_actor_addr(Network::Test, &data).unwrap();
+        let addr = Address::new_actor_addr(&data).unwrap();
         assert_eq!(addr.protocol(), Protocol::Actor);
         assert_eq!(addr.to_string(), expect);
     }
@@ -174,7 +181,7 @@ fn test_random_bls_address() {
     use bls::Serialize;
     let privkey = bls::PrivateKey::generate(&mut rand::rngs::OsRng);
     let pubkey = privkey.public_key();
-    let addr = Address::new_bls_addr(Network::Test, &pubkey.as_bytes()).unwrap();
+    let addr = Address::new_bls_addr(&pubkey.as_bytes()).unwrap();
     assert_eq!(addr.protocol(), Protocol::BLS);
 
     let decoded = Address::from_str(&addr.to_string()).unwrap();
@@ -183,6 +190,9 @@ fn test_random_bls_address() {
 
 #[test]
 fn test_bls_address() {
+    unsafe {
+        set_network(Network::Test);
+    }
     let test_cases = vec![
         (
             [
@@ -232,7 +242,7 @@ fn test_bls_address() {
     ];
 
     for (pubkey, expect) in test_cases {
-        let addr = Address::new_bls_addr(Network::Test, &pubkey).unwrap();
+        let addr = Address::new_bls_addr(&pubkey).unwrap();
         assert_eq!(addr.protocol(), Protocol::BLS);
         assert_eq!(addr.to_string(), expect);
     }
@@ -240,6 +250,9 @@ fn test_bls_address() {
 
 #[test]
 fn test_invalid_string_address() {
+    unsafe {
+        set_network(Network::Test);
+    }
     let test_cases = vec![
         (
             "Q2gfvuyh7v2sx3patm5k23wdzmhyhtmqctasbr23y",
@@ -320,7 +333,7 @@ fn test_invalid_bytes_address() {
     ];
 
     for (addr, expect) in test_cases {
-        let error = Address::new_from_bytes(Default::default(), &addr).unwrap_err();
+        let error = Address::new_from_bytes(&addr).unwrap_err();
         assert_eq!(error, expect);
     }
 }
