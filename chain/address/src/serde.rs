@@ -69,7 +69,7 @@ impl<'de> de::Deserialize<'de> for JsonAddress {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::network::Network;
+    use crate::network::{set_network, Network};
 
     #[test]
     fn cbor_serde() {
@@ -81,6 +81,7 @@ mod tests {
 
     #[test]
     fn json_serde() {
+        unsafe { set_network(Network::Test) };
         let id_addr = Address::new_id_addr(1024).unwrap();
         assert_eq!(id_addr.to_string(), "t01024");
 

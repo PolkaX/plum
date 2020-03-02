@@ -1,7 +1,8 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::NETWORK_DEFAULT;
 use thiserror::Error;
+
+use crate::network::NETWORK_DEFAULT;
 
 /// Errors generated from this library.
 #[derive(PartialEq, Eq, Debug, Error)]

@@ -2031,10 +2031,23 @@ dependencies = [
  "rand 0.7.3",
  "serde",
  "serde_bytes",
- "serde_cbor",
+ "serde_cbor 0.11.1 (git+https://github.com/PolkaX/cbor?branch=f64ser-hack)",
  "serde_json",
  "thiserror",
  "unsigned-varint 0.3.1",
+]
+
+[[package]]
+name = "plum_bigint"
+version = "0.1.0"
+dependencies = [
+ "num-bigint",
+ "num-traits",
+ "serde",
+ "serde_bytes",
+ "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive",
+ "serde_json",
 ]
 
 [[package]]
@@ -2056,7 +2069,7 @@ dependencies = [
  "rust-cid",
  "serde",
  "serde_bytes",
- "serde_cbor",
+ "serde_cbor 0.11.1 (git+https://github.com/PolkaX/cbor?branch=f64ser-hack)",
  "smallvec 1.2.0",
  "tokio",
  "tokio-io-timeout",
@@ -2474,7 +2487,7 @@ dependencies = [
  "parity-multihash 0.2.3",
  "serde",
  "serde_bytes",
- "serde_cbor",
+ "serde_cbor 0.11.1 (git+https://github.com/PolkaX/cbor?branch=f64ser-hack)",
  "thiserror",
 ]
 
@@ -2501,7 +2514,7 @@ dependencies = [
  "rust-ipld-format",
  "serde",
  "serde_bytes",
- "serde_cbor",
+ "serde_cbor 0.11.1 (git+https://github.com/PolkaX/cbor?branch=f64ser-hack)",
  "serde_json",
  "thiserror",
 ]
@@ -2655,6 +2668,16 @@ dependencies = [
 name = "serde_cbor"
 version = "0.11.1"
 source = "git+https://github.com/PolkaX/cbor?branch=f64ser-hack#5b2fffab3709d13f4753288d599628ff636b2886"
+dependencies = [
+ "half",
+ "serde",
+]
+
+[[package]]
+name = "serde_cbor"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e18acfa2f90e8b735b2836ab8d538de304cbb6729a7360729ea5a895d15a622"
 dependencies = [
  "half",
  "serde",
@@ -3247,7 +3270,7 @@ dependencies = [
  "rust-ipld-cbor",
  "serde",
  "serde_bytes",
- "serde_cbor",
+ "serde_cbor 0.11.1 (git+https://github.com/PolkaX/cbor?branch=f64ser-hack)",
  "serde_json",
  "serde_tuple",
  "thiserror",
