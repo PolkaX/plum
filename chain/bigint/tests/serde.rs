@@ -17,7 +17,7 @@ struct TestJsonBigInt(#[serde(with = "bigint_json")] BigInt);
 struct TestJsonBigUint(#[serde(with = "biguint_json")] BigUint);
 
 #[test]
-fn test_cbor_big_int() {
+fn big_int_cbor_serde() {
     use std::str::FromStr;
     let cases = vec![
         ("0", vec![64]),
@@ -43,7 +43,7 @@ fn test_cbor_big_int() {
 }
 
 #[test]
-fn test_cbor_big_uint() {
+fn big_uint_cbor_serde() {
     use std::str::FromStr;
     let cases = vec![
         ("0", vec![64]),
@@ -68,7 +68,7 @@ fn test_cbor_big_uint() {
 }
 
 #[test]
-fn test_json_big_int() {
+fn big_int_json_serde() {
     use std::str::FromStr;
     let cases = vec![
         ("0", "\"0\""),
@@ -91,7 +91,7 @@ fn test_json_big_int() {
 }
 
 #[test]
-fn test_json_big_uint() {
+fn big_uint_serde() {
     use std::str::FromStr;
     let cases = vec![
         ("0", "\"0\""),
