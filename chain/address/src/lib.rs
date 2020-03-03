@@ -5,10 +5,9 @@
 #![deny(missing_docs)]
 
 mod address;
-mod error;
+mod errors;
 mod network;
 mod protocol;
-#[cfg(feature = "serde")]
 mod serde;
 
 /// Some constants used in this library.
@@ -36,8 +35,8 @@ mod constant {
 
 pub use self::address::{checksum, validate_checksum, Address};
 pub use self::constant::*;
-pub use self::error::AddressError;
+pub use self::errors::AddressError;
 pub use self::network::{set_network, Network, NETWORK_DEFAULT};
 pub use self::protocol::Protocol;
-#[cfg(feature = "serde")]
-pub use self::serde::JsonAddress;
+pub use self::serde::cbor as address_cbor;
+pub use self::serde::json as address_json;

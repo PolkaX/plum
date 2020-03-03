@@ -3,7 +3,7 @@
 use std::convert;
 use std::fmt;
 
-use crate::error::AddressError;
+use crate::errors::AddressError;
 
 /// Protocol Identifier.
 #[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]

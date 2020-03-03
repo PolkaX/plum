@@ -7,11 +7,9 @@ use std::str::FromStr;
 use plum_hashing::blake2b_variable;
 
 use crate::constant;
-use crate::error::AddressError;
+use crate::errors::AddressError;
 use crate::network::{Network, NETWORK_DEFAULT, NETWORK_MAINNET_PREFIX, NETWORK_TESTNET_PREFIX};
 use crate::protocol::Protocol;
-#[cfg(feature = "serde")]
-use crate::serde::JsonAddress;
 
 /// The general address structure.
 #[derive(PartialEq, Eq, Clone, Debug, Hash)]
@@ -100,12 +98,6 @@ impl Address {
         bytes.push(self.protocol as u8);
         bytes.extend_from_slice(self.payload());
         bytes
-    }
-
-    /// Convert raw address into JSONify address.
-    #[cfg(feature = "serde")]
-    pub fn into_jsonify_address(self) -> JsonAddress {
-        JsonAddress::new(self)
     }
 
     /// Return the checksum of (protocol + payload).
