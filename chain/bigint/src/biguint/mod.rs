@@ -1,6 +1,8 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+/// CBOR serialization/deserialization
 pub mod cbor;
+/// JSON serialization/deserialization
 pub mod json;
 
 use num_bigint::BigUint;

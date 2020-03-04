@@ -1,5 +1,12 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+//! BigInt and BigUint with CBOR and JSON serialization/deserialization
+//!
+//! Notice, thought the `lotus` (the go version of filecoin) support `big.Int`
+//! with cbor serialize/deserialize, in fact it only supports unsigned int.
+
+#![deny(missing_docs)]
+
 mod bigint;
 mod biguint;
 

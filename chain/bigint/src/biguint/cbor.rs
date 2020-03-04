@@ -5,6 +5,7 @@ use serde_bytes::{ByteBuf, Bytes};
 
 use num_bigint::BigUint;
 
+/// CBOR serialization
 pub fn serialize<S>(uint: &BigUint, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: ser::Serializer,
@@ -21,6 +22,7 @@ where
     value.serialize(serializer)
 }
 
+/// CBOR deserialization
 pub fn deserialize<'de, D>(deserializer: D) -> Result<BigUint, D::Error>
 where
     D: de::Deserializer<'de>,
