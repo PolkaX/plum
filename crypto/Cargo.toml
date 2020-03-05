@@ -1,0 +1,20 @@
+[package]
+name = "plum_crypto"
+version = "0.1.0"
+authors = ["The PolkaX Authors"]
+edition = "2018"
+license = "GPL-3.0"
+
+[dependencies]
+bls = { package = "bls-signatures", version = "0.5" }
+libsecp256k1 = "0.3"
+rand = "0.7"
+serde = "1.0"
+serde_bytes = "0.11"
+thiserror = "1.0"
+
+plum_hashing = { path = "../hashing" }
+
+[dev-dependencies]
+serde_cbor = "0.11"
+serde_derive = "1.0"

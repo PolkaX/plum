@@ -25,6 +25,7 @@ members = [
   "chain/wallet",
   "chain",
   "cli",
+  "crypto",
   "sigs",
   "hashing",
   "peermgr",
