@@ -2052,6 +2052,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "plum_crypto"
+version = "0.1.0"
+dependencies = [
+ "bls-signatures",
+ "libsecp256k1",
+ "plum_hashing",
+ "rand 0.7.3",
+ "serde",
+ "serde_bytes",
+ "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive",
+ "thiserror",
+]
+
+[[package]]
 name = "plum_hashing"
 version = "0.1.0"
 dependencies = [
