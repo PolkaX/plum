@@ -5,9 +5,12 @@ name = "abi"
 version = "0.1.0"
 dependencies = [
  "bitfield-rle",
+ "codec-rle",
  "rust-cid",
  "rust-ipld-cbor",
  "serde",
+ "serde_bytes",
+ "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "types",
 ]

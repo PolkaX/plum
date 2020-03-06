@@ -9,6 +9,13 @@ license = "GPL-3.0"
 thiserror = "1.0"
 bitfield-rle = "0.1"
 serde = { version = "1.0", features = ["derive"] }
+serde_bytes = "0.11"
+
 rust-ipld-cbor = { git = "https://github.com/PolkaX/rust-ipfs", package = "rust-ipld-cbor", branch = "filecoin-master", features = ["bigint"] }
 cid = { git = "https://github.com/PolkaX/rust-ipfs", package = "rust-cid", branch = "filecoin-master", features = ["serde_support"] }
+
 types = { path = "../types" }
+codec-rle = { path = "../../codec/rle" }
+
+[dev-dependencies]
+serde_cbor = "0.11"
