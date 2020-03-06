@@ -26,6 +26,7 @@ members = [
     "chain/wallet",
 	"chain/abi",
     "chain",
+    "codec/rle",
     "cli",
     "sigs",
     "hashing",
