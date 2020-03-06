@@ -76,7 +76,9 @@ impl Signature {
         Self::new(SignatureType::Bls, bytes)
     }
 
-    /// Sign the message with the given private key and return a signature.
+    /// Sign the message with the given signature type and private key.
+    ///
+    /// Return the signature related to the given signature type.
     pub fn sign<K, M>(ty: SignatureType, privkey: K, msg: M) -> Result<Self, CryptoError>
     where
         K: AsRef<[u8]>,
@@ -88,7 +90,9 @@ impl Signature {
         }
     }
 
-    /// Sign the message with the given secp256k1 private key and return a secp256k1 signature.
+    /// Sign the message with the given secp256k1 private key.
+    ///
+    /// Return the secp256k1 signature.
     pub fn sign_secp2526k1<K, M>(privkey: K, msg: M) -> Result<Self, CryptoError>
     where
         K: AsRef<[u8]>,
@@ -104,7 +108,9 @@ impl Signature {
         })
     }
 
-    /// Sign the message with the given bls private key and return a bls signature.
+    /// Sign the message with the given bls private key.
+    ///
+    /// Return the bls signature.
     pub fn sign_bls<K, M>(privkey: K, msg: M) -> Result<Self, CryptoError>
     where
         K: AsRef<[u8]>,
