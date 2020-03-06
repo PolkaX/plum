@@ -1,0 +1,21 @@
+[package]
+name = "abi"
+version = "0.1.0"
+authors = ["The PolkaX Authors"]
+edition = "2018"
+license = "GPL-3.0"
+
+[dependencies]
+thiserror = "1.0"
+bitfield-rle = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_bytes = "0.11"
+
+cid = { git = "https://github.com/PolkaX/rust-ipfs", package = "rust-cid", branch = "filecoin-master", features = ["serde_support"] }
+
+types = { path = "../types" }
+plum_bigint = { path = "../bigint" }
+codec-rle = { path = "../../codec/rle" }
+
+[dev-dependencies]
+serde_cbor = "0.11"

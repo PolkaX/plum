@@ -1,8 +1,9 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use address::Address;
+use plum_bigint::BigInt;
 
-use crate::{bigint::BigInt, signature::Signature};
+use crate::signature::Signature;
 
 pub struct StorageAsk {
     pub price: BigInt,

@@ -2,9 +2,9 @@
 
 mod actor;
 mod ask;
-mod bigint;
 mod block_header;
 mod block_msg;
+pub mod chain_epoch;
 mod fil;
 mod full_block;
 pub mod key_info;
@@ -20,7 +20,6 @@ mod vmcontext;
 
 pub use self::actor::Actor;
 pub use self::ask::{SignedStorageAsk, StorageAsk};
-pub use self::bigint::BigInt;
 pub use self::block_header::{BlockHeader, EPostProof, EPostTicket, Ticket};
 pub use self::block_msg::BlockMsg;
 pub use self::fil::{parse_fil, FIL};
@@ -37,7 +36,6 @@ pub use self::tipset_key::TipSetKey;
 
 pub use address::*;
 pub use cid::*;
-pub use rust_ipld_cbor::*;
 
 use block_format::{BasicBlock, BlockFormatError};
 use bytes::Bytes;
