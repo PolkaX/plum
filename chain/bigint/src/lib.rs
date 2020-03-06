@@ -3,7 +3,7 @@
 mod bigint;
 mod biguint;
 
-pub use num_bigint::{self, BigInt, BigUint};
+pub use num_bigint::{self, BigInt, BigUint, Sign};
 pub use num_traits;
 
 pub use self::bigint::bigint_size_str;
