@@ -6,8 +6,8 @@ version = "0.1.0"
 dependencies = [
  "bitfield-rle",
  "codec-rle",
+ "plum_bigint",
  "rust-cid",
- "rust-ipld-cbor",
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -622,9 +622,6 @@ name = "either"
 version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb1f6b1ce1c140482ea30ddd3335fc0024ac7ee112895426e0a629a6c20adfe3"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "env_logger"
@@ -2582,38 +2579,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-ipld-cbor"
-version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#b60bcfd39b65e4b8c38bbcd234538074126722e6"
-dependencies = [
- "bytes 0.5.4",
- "either",
- "num-bigint",
- "num-traits",
- "parity-multihash 0.2.3",
- "rust-block-format",
- "rust-cid",
- "rust-ipld-format",
- "serde",
- "serde_bytes",
- "serde_cbor 0.11.1 (git+https://github.com/PolkaX/cbor?branch=f64ser-hack)",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "rust-ipld-format"
-version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#b60bcfd39b65e4b8c38bbcd234538074126722e6"
-dependencies = [
- "lazy_static",
- "parity-multihash 0.2.3",
- "rust-block-format",
- "rust-cid",
- "thiserror",
-]
-
-[[package]]
 name = "rustc-demangle"
 version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3347,9 +3312,9 @@ dependencies = [
  "bytes 0.5.4",
  "log",
  "plum_address",
+ "plum_bigint",
  "rust-block-format",
  "rust-cid",
- "rust-ipld-cbor",
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1 (git+https://github.com/PolkaX/cbor?branch=f64ser-hack)",

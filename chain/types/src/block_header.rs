@@ -7,7 +7,7 @@ use block_format::BasicBlock;
 use cid::Cid;
 use core::convert::TryInto;
 use log::warn;
-use rust_ipld_cbor::bigint::CborBigInt;
+use plum_bigint::BigInt;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use std::cmp::Ordering;
@@ -63,7 +63,8 @@ pub struct BlockHeader {
     pub ticket: Ticket,
     pub epost_proof: EPostProof,
     pub parents: Vec<Cid>,
-    pub parent_weight: CborBigInt,
+    #[serde(with = "plum_bigint::bigint_cbor")]
+    pub parent_weight: BigInt,
     pub height: u64,
     pub parent_state_root: Cid,
     pub parent_message_receipts: Cid,
@@ -120,12 +121,11 @@ mod tests {
     use super::*;
     use crate::block_msg::BlockMsg;
     use crate::key_info::SignKeyType;
-    use address::Network;
     use cid::AsCidRef;
 
     fn new_block_header() -> BlockHeader {
         let id = 12512063;
-        let addr = address::Address::new_id_addr(Network::Test, id).unwrap();
+        let addr = address::Address::new_id_addr(id).unwrap();
 
         let cid: Cid = "bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"
             .parse()
@@ -147,7 +147,7 @@ mod tests {
                 ty: SignKeyType::BLS,
                 data: b"boo! im a signature".to_vec(),
             },
-            parent_weight: CborBigInt(123125126212u64.into()),
+            parent_weight: 123125126212u64.into(),
             messages: cid.clone(),
             height: 85919298723,
             parent_state_root: cid,
@@ -238,25 +238,25 @@ mod tests {
     #[test]
     fn block_header_sort_should_work() {
         let mut header1 = new_block_header();
-        let addr1 = address::Address::new_id_addr(Network::Main, 1).unwrap();
+        let addr1 = address::Address::new_id_addr(1).unwrap();
         header1.miner = addr1;
 
         let mut header2 = new_block_header();
-        let addr2 = address::Address::new_id_addr(Network::Main, 2).unwrap();
+        let addr2 = address::Address::new_id_addr(2).unwrap();
         header2.miner = addr2;
         header2.ticket = Ticket {
             vrf_proof: b"vrf proof0000000vrf proof0000001".to_vec(),
         };
 
         let mut header3 = new_block_header();
-        let addr3 = address::Address::new_id_addr(Network::Main, 3).unwrap();
+        let addr3 = address::Address::new_id_addr(3).unwrap();
         header3.miner = addr3;
         header3.ticket = Ticket {
             vrf_proof: b"vrf proof0000000vrf proof0000010".to_vec(),
         };
 
         let mut header4 = new_block_header();
-        let addr4 = address::Address::new_id_addr(Network::Main, 4).unwrap();
+        let addr4 = address::Address::new_id_addr(4).unwrap();
         header4.miner = addr4;
         header4.ticket = Ticket {
             vrf_proof: b"vrf proof0000000vrf proof0000001".to_vec(),

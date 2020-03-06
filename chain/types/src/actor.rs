@@ -1,6 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::{bigint::BigInt, Cid};
+use cid::Cid;
+use plum_bigint::BigInt;
 
 pub struct Actor {
     pub code: Cid,

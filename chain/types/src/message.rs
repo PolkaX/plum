@@ -1,23 +1,27 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::{into_cid, to_storage_block, StorageBlockError};
 use address::Address;
 use block_format::BasicBlock;
 use cid::Cid;
 use core::convert::TryInto;
-use rust_ipld_cbor::bigint::CborBigInt;
+use plum_bigint::BigInt;
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use std::ops::Add;
 use std::ops::Mul;
+
+use crate::{into_cid, to_storage_block, StorageBlockError};
 
 #[derive(Debug, Clone, Serialize_tuple, Deserialize_tuple)]
 pub struct Message {
     pub to: Address,
     pub from: Address,
     pub nonce: u64,
-    pub value: CborBigInt,
-    pub gas_price: CborBigInt,
-    pub gas_limit: CborBigInt,
+    #[serde(with = "plum_bigint::bigint_cbor")]
+    pub value: BigInt,
+    #[serde(with = "plum_bigint::bigint_cbor")]
+    pub gas_price: BigInt,
+    #[serde(with = "plum_bigint::bigint_cbor")]
+    pub gas_limit: BigInt,
     pub method: u64,
     #[serde(with = "serde_bytes")]
     pub params: Vec<u8>,
@@ -43,19 +47,15 @@ impl Message {
         into_cid(self)
     }
 
-    pub fn required_funds(&self) -> CborBigInt {
-        CborBigInt(
-            self.value
-                .as_ref()
-                .add(self.gas_price.as_ref().mul(self.gas_limit.as_ref())),
-        )
+    pub fn required_funds(&self) -> BigInt {
+        self.value.clone().add(&self.gas_price).mul(&self.gas_limit)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use address::{Address, Network};
+    use address::Address;
     use cid::AsCidRef;
 
     fn new_message() -> Message {
@@ -71,13 +71,13 @@ mod tests {
         ];
 
         Message {
-            to: Address::new_bls_addr(Network::Test, &to_pubkey).unwrap(),
-            from: Address::new_bls_addr(Network::Test, &from_pubkey).unwrap(),
+            to: Address::new_bls_addr(&to_pubkey).unwrap(),
+            from: Address::new_bls_addr(&from_pubkey).unwrap(),
             nonce: 197u64,
             method: 1231254u64,
             params: b"some bytes, idk. probably at least ten of them".to_vec(),
-            gas_limit: CborBigInt(126723u64.into()),
-            gas_price: CborBigInt(1776234u64.into()),
+            gas_limit: 126723u64.into(),
+            gas_price: 1776234u64.into(),
             value: Default::default(),
         }
     }

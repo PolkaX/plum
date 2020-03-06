@@ -11,10 +11,10 @@ bitfield-rle = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_bytes = "0.11"
 
-rust-ipld-cbor = { git = "https://github.com/PolkaX/rust-ipfs", package = "rust-ipld-cbor", branch = "filecoin-master", features = ["bigint"] }
 cid = { git = "https://github.com/PolkaX/rust-ipfs", package = "rust-cid", branch = "filecoin-master", features = ["serde_support"] }
 
 types = { path = "../types" }
+plum_bigint = { path = "../bigint" }
 codec-rle = { path = "../../codec/rle" }
 
 [dev-dependencies]

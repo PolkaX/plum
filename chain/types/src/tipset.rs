@@ -5,7 +5,7 @@ use crate::{
     tipset_key::TipSetKey,
     Cid,
 };
-use rust_ipld_cbor::bigint::CborBigInt;
+use plum_bigint::BigInt;
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use std::result::Result;
 use thiserror::Error;
@@ -100,7 +100,7 @@ impl TipSet {
         &self.blks[0].parent_state_root
     }
 
-    pub fn parent_weight(&self) -> CborBigInt {
+    pub fn parent_weight(&self) -> BigInt {
         self.blks[0].parent_weight.clone()
     }
 

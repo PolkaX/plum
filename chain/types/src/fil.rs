@@ -1,9 +1,9 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::bigint::BigInt;
+use bytes::Bytes;
+use plum_bigint::BigUint;
 
-pub type FIL = BigInt;
-pub type Bytes = [u8; 16];
+pub type FIL = BigUint;
 
 pub trait Coin {
     fn bytes(&mut self) -> Bytes;
@@ -11,10 +11,10 @@ pub trait Coin {
 
 impl Coin for FIL {
     fn bytes(&mut self) -> Bytes {
-        self.to_be_bytes()
+        self.to_bytes_be().into()
     }
 }
 
-pub fn parse_fil(bytes: Bytes) -> FIL {
-    u128::from_be_bytes(bytes)
+pub fn parse_fil(bytes: &Bytes) -> FIL {
+    FIL::from_bytes_be(bytes.as_ref())
 }

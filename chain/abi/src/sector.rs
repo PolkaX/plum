@@ -1,6 +1,6 @@
 use crate::error::AbiError;
 use cid::*;
-use rust_ipld_cbor::bigint::BigInt;
+use plum_bigint::BigInt;
 use types::chain_epoch::ChainEpoch;
 
 pub type ActorID = u64;
@@ -8,10 +8,10 @@ pub type SectorNumber = u64;
 pub type SectorSize = u64;
 
 // The unit of sector weight (power-epochs)
-type SectorWeight = BigInt;
+pub type SectorWeight = BigInt;
 
 // The unit of storage power (measured in bytes)
-type StoragePower = BigInt;
+pub type StoragePower = BigInt;
 
 type SealRandomness = [u8; 32];
 type InteractiveSealRandomness = [u8; 32];
@@ -123,7 +123,6 @@ pub fn sector_size(registered_proof: RegisteredProof) -> std::result::Result<Sec
         RegisteredProof::StackedDRG512MiBSeal | RegisteredProof::StackedDRG512MiBPoSt => {
             Ok(512 << 20)
         }
-        _ => Err(AbiError::Unsupported),
     }
 }
 
