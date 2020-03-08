@@ -2108,6 +2108,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "plum_crypto"
+version = "0.1.0"
+dependencies = [
+ "bls-signatures",
+ "libsecp256k1",
+ "plum_hashing",
+ "rand 0.7.3",
+ "serde",
+ "serde_bytes",
+ "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive",
+ "thiserror",
+]
+
+[[package]]
 name = "plum_hashing"
 version = "0.1.0"
 dependencies = [
@@ -2131,12 +2146,28 @@ dependencies = [
  "rust-cid",
  "serde",
  "serde_bytes",
- "serde_cbor 0.11.1 (git+https://github.com/PolkaX/cbor?branch=f64ser-hack)",
+ "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "smallvec 1.2.0",
  "tokio",
  "tokio-io-timeout",
  "unsigned-varint 0.2.3",
 ]
+
+[[package]]
+name = "plum_message"
+version = "0.1.0"
+dependencies = [
+ "plum_address",
+ "plum_bigint",
+ "plum_crypto",
+ "serde",
+ "serde_bytes",
+ "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "plum_vm"
+version = "0.1.0"
 
 [[package]]
 name = "ppv-lite86"
@@ -2697,10 +2728,7 @@ name = "serde_cbor"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e18acfa2f90e8b735b2836ab8d538de304cbb6729a7360729ea5a895d15a622"
-dependencies = [
- "half",
- "serde",
-]
+replace = "serde_cbor 0.11.1 (git+https://github.com/PolkaX/cbor?branch=f64ser-hack)"
 
 [[package]]
 name = "serde_derive"
@@ -3283,7 +3311,7 @@ dependencies = [
  "rust-cid",
  "serde",
  "serde_bytes",
- "serde_cbor 0.11.1 (git+https://github.com/PolkaX/cbor?branch=f64ser-hack)",
+ "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json",
  "serde_tuple",
  "thiserror",
