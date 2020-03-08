@@ -15,7 +15,7 @@ libp2p =  { git = "https://github.com/SigP/rust-libp2p", rev = "776d13ef04635896
 futures = "0.1.29"
 smallvec = "1.0.0"
 multihash = { package = "parity-multihash", version = "0.2" }
-serde_cbor = { git = "https://github.com/PolkaX/cbor", branch = "f64ser-hack", features = ["tags"] }
+serde_cbor = "0.11"
 serde_bytes = { version = "0.11" }
 unsigned-varint = "0.2.3"
 tokio-io-timeout = "0.3.1"

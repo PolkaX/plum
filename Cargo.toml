@@ -18,19 +18,25 @@ abi = { path = "./chain/abi"}
 cli = { path = "./cli" }
 wallet = { path = "./chain/wallet" }
 
+[replace]
+"serde_cbor:0.11.1" = {  git = "https://github.com/PolkaX/cbor", branch = "f64ser-hack" }
+
 [workspace]
 members = [
-    "chain/address",
-    "chain/bigint",
-    "chain/types",
-    "chain/wallet",
-	"chain/abi",
-    "chain",
-    "codec/rle",
-    "cli",
-    "sigs",
-    "hashing",
-    "peermgr",
-    "network",
-    "plum_libp2p",
+  "chain/abi",
+  "chain/address",
+  "chain/bigint",
+  "chain/types",
+  "chain/wallet",
+  "chain",
+  "cli",
+  "codec/rle",
+  "crypto",
+  "sigs",
+  "hashing",
+  "peermgr",
+  "plum_libp2p",
+  "network",
+  "vm",
+  "vm/message",
 ]
