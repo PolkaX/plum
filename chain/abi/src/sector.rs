@@ -13,11 +13,11 @@ pub type SectorWeight = BigInt;
 // The unit of storage power (measured in bytes)
 pub type StoragePower = BigInt;
 
-type SealRandomness = [u8; 32];
-type InteractiveSealRandomness = [u8; 32];
-type ChallengeTicketsCommitment = [u8; 32];
-type PoStRandomness = [u8; 32];
-type PartialTicket = [u8; 32];
+pub type SealRandomness = [u8; 32];
+pub type InteractiveSealRandomness = [u8; 32];
+pub type ChallengeTicketsCommitment = [u8; 32];
+pub type PoStRandomness = [u8; 32];
+pub type PartialTicket = [u8; 32];
 
 #[derive(Debug, Clone)]
 pub struct SectorID {
