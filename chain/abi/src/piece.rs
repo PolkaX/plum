@@ -1,12 +1,32 @@
-use crate::error::AbiError;
+use serde::{Deserialize, Serialize};
+use serde_tuple::{Deserialize_tuple, Serialize_tuple};
+
 use cid::Cid;
+
+use crate::error::{PieceError, PieceResult};
 
 // UnpaddedPieceSize is the size of a piece, in bytes
 #[derive(Debug, Clone, PartialEq)]
 pub struct UnpaddedPieceSize(u64);
 
-#[derive(Debug, Clone, PartialEq)]
+impl UnpaddedPieceSize {
+    pub fn new(u: u64) -> PieceResult<Self> {
+        let p = UnpaddedPieceSize(u);
+        p.validate()?;
+        Ok(p)
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PaddedPieceSize(u64);
+
+impl PaddedPieceSize {
+    pub fn new(u: u64) -> PieceResult<Self> {
+        let p = PaddedPieceSize(u);
+        p.validate()?;
+        Ok(p)
+    }
+}
 
 const MIN_UNPADDED_PIECE_SIZE: u64 = 127;
 const MIN_PADDED_PIECE_SIZE: u64 = 128;
@@ -16,13 +36,14 @@ impl UnpaddedPieceSize {
         PaddedPieceSize(self.0 + (self.0 / MIN_UNPADDED_PIECE_SIZE))
     }
 
-    pub fn validate(&self) -> std::result::Result<(), AbiError> {
+    pub fn validate(&self) -> PieceResult<()> {
         if self.0 < MIN_UNPADDED_PIECE_SIZE {
-            return Err(AbiError::SizeTooSmall); // minimum piece size is 127 bytes
+            return Err(PieceError::SizeTooSmall(self.0)); // minimum piece size is 127 bytes
         }
         // is 127 * 2^n
         if self.0 >> self.0.trailing_zeros() != MIN_UNPADDED_PIECE_SIZE {
-            return Err(AbiError::InvalidSize); //unpadded piece size must be a power of 2 multiple of 127
+            // unpadded piece size must be a power of 2 multiple of 127
+            return Err(PieceError::UnpadedSizeError(self.0));
         }
         Ok(())
     }
@@ -33,23 +54,24 @@ impl PaddedPieceSize {
         UnpaddedPieceSize(self.0 - (self.0 / MIN_PADDED_PIECE_SIZE))
     }
 
-    pub fn validate(&self) -> std::result::Result<(), AbiError> {
+    pub fn validate(&self) -> PieceResult<()> {
         if self.0 < MIN_PADDED_PIECE_SIZE {
-            return Err(AbiError::SizeTooSmall);
+            return Err(PieceError::SizeTooSmall(self.0));
         }
 
         if self.0.count_ones() != 1 {
-            return Err(AbiError::InvalidSize); //padded piece size must be a power of 2
+            //padded piece size must be a power of 2
+            return Err(PieceError::PadedSizeError(self.0));
         }
 
         Ok(())
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
 pub struct PieceInfo {
-    size: PaddedPieceSize, // Size in nodes. For BLS12-381 (capacity 254 bits), must be >= 16. (16 * 8 = 128)
-    piece_cid: Cid,
+    pub size: PaddedPieceSize, // Size in nodes. For BLS12-381 (capacity 254 bits), must be >= 16. (16 * 8 = 128)
+    pub piece_cid: Cid,
 }
 
 #[cfg(test)]
@@ -122,5 +144,30 @@ mod tests {
         assert_ne!(PaddedPieceSize(99453687).validate(), Ok(()));
         assert_ne!(PaddedPieceSize(0xc00).validate(), Ok(()));
         assert_ne!(PaddedPieceSize(1025).validate(), Ok(()));
+    }
+
+    #[test]
+    fn test_cbor() {
+        let cid: Cid = "bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"
+            .parse()
+            .unwrap();
+
+        let info = PieceInfo {
+            size: PaddedPieceSize::new(128).unwrap(),
+            piece_cid: cid,
+        };
+
+        let v = serde_cbor::to_vec(&info).unwrap();
+        assert_eq!(
+            v,
+            vec![
+                130, 24, 128, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97,
+                161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217,
+                73, 55, 160, 199, 184, 78, 250
+            ]
+        );
+
+        let expect: PieceInfo = serde_cbor::from_slice(&v).unwrap();
+        assert_eq!(info, expect);
     }
 }
