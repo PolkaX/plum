@@ -29,11 +29,11 @@ pub struct SectorID {
     pub number: SectorNumber,
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
 pub struct PoStProof {
     pub proof: RegisteredProof,
-    #[serde(with = "serde_support::h256::raw")]
-    pub proof_bytes: H256,
+    #[serde(with = "serde_bytes")]
+    pub proof_bytes: Vec<u8>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
@@ -149,32 +149,54 @@ pub struct PoStCandidate {
     pub challenge_index: u64,
 }
 
-#[derive(Debug, Clone)]
-pub struct OnChainPoStVerifyInfo {
-    pub candidates: Vec<PoStCandidate>, // each PoStCandidate has its own RegisteredProof
-    pub proofs: Vec<PoStProof>,         // each PoStProof has its own RegisteredProof
+impl PoStCandidate {
+    pub fn new(proof: RegisteredProof, sector_id: SectorID, challenge_index: u64) -> Self {
+        PoStCandidate {
+            proof,
+            partial_ticket: None,
+            private_proof: None,
+            sector_id,
+            challenge_index,
+        }
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
+pub struct OnChainPoStVerifyInfo {
+    /// each PoStCandidate has its own RegisteredProof
+    pub candidates: Vec<PoStCandidate>,
+    /// each PoStProof has its own RegisteredProof
+    pub proofs: Vec<PoStProof>,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct PoStVerifyInfo {
     pub post_randomness: Randomness,
-    pub candidates: Vec<PoStCandidate>, // From OnChain*PoStVerifyInfo
+    /// From OnChain*PoStVerifyInfo
+    pub candidates: Vec<PoStCandidate>,
     pub proofs: Vec<PoStProof>,
     pub eligible_sectors: Vec<SectorInfo>,
-    pub prover: ActorID, // used to derive 32-byte prover ID
+    /// used to derive 32-byte prover ID
+    pub prover: ActorID,
     pub challenge_count: u64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
 pub struct SectorInfo {
+    /// RegisteredProof used when sealing - needs to be mapped to PoSt registered proof when used to verify a PoSt
+    pub proof: RegisteredProof,
     pub sector_number: SectorNumber,
-    pub sealed_cid: Cid, // CommR
+    /// CommR
+    pub sealed_cid: Cid,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
 pub struct OnChainElectionPoStVerifyInfo {
-    pub candidates: Vec<PoStCandidate>, // each PoStCandidate has its own RegisteredProof
-    pub proofs: Vec<PoStProof>,         // each PoStProof has its own RegisteredProof
+    /// each PoStCandidate has its own RegisteredProof
+    pub candidates: Vec<PoStCandidate>,
+    /// each PoStProof has its own RegisteredProof
+    pub proofs: Vec<PoStProof>,
+    #[serde(with = "serde_support::h256::raw")]
     pub randomness: Randomness,
 }
 
@@ -254,7 +276,7 @@ fn test_cbor() {
         on_chain: verify_info,
         seal_randomness: [1; 32].into(),
         interactive_randomness: [2; 32].into(),
-        unsealed_cid: cid,
+        unsealed_cid: cid.clone(),
     };
     asset_cbor(
         info.clone(),
@@ -285,7 +307,7 @@ fn test_cbor() {
         challenge_index: 1000,
     };
     asset_cbor(
-        post_can,
+        post_can.clone(),
         vec![
             133, 1, 88, 32, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 1, 1, 1, 1, 1, 1, 1, 130, 1, 67, 1, 2, 3, 130, 24, 100, 24, 100, 25, 3, 232,
@@ -300,7 +322,27 @@ fn test_cbor() {
         challenge_index: 1000,
     };
     asset_cbor(
-        post_can2,
+        post_can2.clone(),
         vec![133, 1, 64, 130, 0, 64, 130, 24, 100, 24, 100, 25, 3, 232],
+    );
+
+    let post_proof = PoStProof {
+        proof: RegisteredProof::StackedDRG32GiBSeal,
+        proof_bytes: vec![1, 2, 3],
+    };
+    asset_cbor(post_proof.clone(), vec![130, 1, 67, 1, 2, 3]);
+
+    let verify_info = OnChainPoStVerifyInfo {
+        candidates: vec![post_can.clone(), post_can2.clone()],
+        proofs: vec![post_proof.clone()],
+    };
+    asset_cbor(
+        verify_info.clone(),
+        vec![
+            130, 130, 133, 1, 88, 32, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 130, 1, 67, 1, 2, 3, 130, 24, 100, 24, 100, 25, 3,
+            232, 133, 1, 64, 130, 0, 64, 130, 24, 100, 24, 100, 25, 3, 232, 129, 130, 1, 67, 1, 2,
+            3,
+        ],
     );
 }
