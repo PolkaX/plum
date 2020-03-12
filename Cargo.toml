@@ -13,7 +13,6 @@ name = "plum-node"
 path = "src/bin/main.rs"
 
 [dependencies]
-plum_address = { path = "./chain/address" }
 abi = { path = "./chain/abi"}
 cli = { path = "./cli" }
 wallet = { path = "./chain/wallet" }
@@ -24,8 +23,6 @@ wallet = { path = "./chain/wallet" }
 [workspace]
 members = [
   "chain/abi",
-  "chain/address",
-  "chain/bigint",
   "chain/types",
   "chain/wallet",
   "chain",
@@ -33,11 +30,13 @@ members = [
   "codec/rle",
   "codec/serde-support",
   "crypto",
-  "sigs",
   "hashing",
-  "peermgr",
-  "plum_libp2p",
   "network",
+  "peermgr",
+  "primitives/address",
+  "primitives/bigint",
+  "plum_libp2p",
+  "sigs",
   "vm",
   "vm/message",
 ]

@@ -2122,7 +2122,6 @@ version = "0.1.0"
 dependencies = [
  "abi",
  "cli",
- "plum_address",
  "wallet",
 ]
 

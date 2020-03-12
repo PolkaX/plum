@@ -1,16 +1,19 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::signature::Signature;
-use crate::{into_cid, to_storage_block, StorageBlockError};
-use address::Address;
+use std::cmp::Ordering;
+
 use block_format::BasicBlock;
 use cid::Cid;
 use core::convert::TryInto;
 use log::warn;
-use plum_bigint::BigInt;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
-use std::cmp::Ordering;
+
+use plum_address::Address;
+use plum_bigint::BigInt;
+
+use crate::signature::Signature;
+use crate::{into_cid, to_storage_block, StorageBlockError};
 
 #[derive(Eq, PartialEq, Debug, Clone, Ord, PartialOrd, Hash)]
 pub struct Ticket {
@@ -118,6 +121,8 @@ impl BlockHeader {
 
 #[cfg(test)]
 mod tests {
+    use plum_address::Address;
+
     use super::*;
     use crate::block_msg::BlockMsg;
     use crate::key_info::SignKeyType;
@@ -125,7 +130,7 @@ mod tests {
 
     fn new_block_header() -> BlockHeader {
         let id = 12512063;
-        let addr = address::Address::new_id_addr(id).unwrap();
+        let addr = Address::new_id_addr(id).unwrap();
 
         let cid: Cid = "bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"
             .parse()
@@ -238,25 +243,25 @@ mod tests {
     #[test]
     fn block_header_sort_should_work() {
         let mut header1 = new_block_header();
-        let addr1 = address::Address::new_id_addr(1).unwrap();
+        let addr1 = Address::new_id_addr(1).unwrap();
         header1.miner = addr1;
 
         let mut header2 = new_block_header();
-        let addr2 = address::Address::new_id_addr(2).unwrap();
+        let addr2 = Address::new_id_addr(2).unwrap();
         header2.miner = addr2;
         header2.ticket = Ticket {
             vrf_proof: b"vrf proof0000000vrf proof0000001".to_vec(),
         };
 
         let mut header3 = new_block_header();
-        let addr3 = address::Address::new_id_addr(3).unwrap();
+        let addr3 = Address::new_id_addr(3).unwrap();
         header3.miner = addr3;
         header3.ticket = Ticket {
             vrf_proof: b"vrf proof0000000vrf proof0000010".to_vec(),
         };
 
         let mut header4 = new_block_header();
-        let addr4 = address::Address::new_id_addr(4).unwrap();
+        let addr4 = Address::new_id_addr(4).unwrap();
         header4.miner = addr4;
         header4.ticket = Ticket {
             vrf_proof: b"vrf proof0000000vrf proof0000001".to_vec(),

@@ -1,13 +1,15 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use address::Address;
+use std::ops::Add;
+use std::ops::Mul;
+
 use block_format::BasicBlock;
 use cid::Cid;
 use core::convert::TryInto;
-use plum_bigint::BigInt;
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
-use std::ops::Add;
-use std::ops::Mul;
+
+use plum_address::Address;
+use plum_bigint::BigInt;
 
 use crate::{into_cid, to_storage_block, StorageBlockError};
 
@@ -54,9 +56,10 @@ impl Message {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use address::Address;
     use cid::AsCidRef;
+    use plum_address::Address;
+
+    use super::*;
 
     fn new_message() -> Message {
         let to_pubkey = [
