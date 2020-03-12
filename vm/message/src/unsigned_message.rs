@@ -63,7 +63,7 @@ pub mod cbor {
     use super::UnsignedMessage;
 
     #[derive(Serialize)]
-    struct TupleUnsignedMessage<'a>(
+    struct TupleUnsignedMessageRef<'a>(
         #[serde(with = "address_cbor")] &'a Address,
         #[serde(with = "address_cbor")] &'a Address,
         &'a u64,
@@ -79,7 +79,7 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        let tuple_unsigned_msg = TupleUnsignedMessage(
+        let tuple_unsigned_msg = TupleUnsignedMessageRef(
             &unsigned_msg.to,
             &unsigned_msg.from,
             &unsigned_msg.nonce,
@@ -93,7 +93,7 @@ pub mod cbor {
     }
 
     #[derive(Deserialize)]
-    struct OwnedTupleUnsignedMessage(
+    struct TupleUnsignedMessage(
         #[serde(with = "address_cbor")] Address,
         #[serde(with = "address_cbor")] Address,
         u64,
@@ -109,8 +109,8 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let OwnedTupleUnsignedMessage(to, from, nonce, value, gas_price, gas_limit, method, params) =
-            OwnedTupleUnsignedMessage::deserialize(deserializer)?;
+        let TupleUnsignedMessage(to, from, nonce, value, gas_price, gas_limit, method, params) =
+            TupleUnsignedMessage::deserialize(deserializer)?;
         Ok(UnsignedMessage {
             to,
             from,
@@ -172,9 +172,9 @@ mod tests {
             97, 115, 116, 32, 116, 101, 110, 32, 111, 102, 32, 116, 104, 101, 109,
         ];
 
-        let cbor = serde_cbor::to_vec(&unsigned_message).unwrap();
-        assert_eq!(cbor, &expected[..]);
-        let out: UnsignedMessage = serde_cbor::from_slice(&cbor).unwrap();
-        assert_eq!(out, unsigned_message);
+        let ser = serde_cbor::to_vec(&unsigned_message).unwrap();
+        assert_eq!(ser, &expected[..]);
+        let de = serde_cbor::from_slice::<UnsignedMessage>(&ser).unwrap();
+        assert_eq!(de, unsigned_message);
     }
 }

@@ -35,10 +35,10 @@ fn big_int_cbor_serde() {
     ];
     for (s, expect) in cases {
         let big_int = TestCborBigInt(BigInt::from_str(s).unwrap());
-        let cbor = serde_cbor::to_vec(&big_int).unwrap();
-        assert_eq!(cbor, expect);
-        let out: TestCborBigInt = serde_cbor::from_slice(&cbor).unwrap();
-        assert_eq!(big_int, out);
+        let ser = serde_cbor::to_vec(&big_int).unwrap();
+        assert_eq!(ser, expect);
+        let de = serde_cbor::from_slice::<TestCborBigInt>(&ser).unwrap();
+        assert_eq!(de, big_int);
     }
 }
 
@@ -60,10 +60,10 @@ fn big_uint_cbor_serde() {
     ];
     for (s, expect) in cases {
         let big_uint = TestCborBigUint(BigUint::from_str(s).unwrap());
-        let cbor = serde_cbor::to_vec(&big_uint).unwrap();
-        assert_eq!(cbor, expect);
-        let out: TestCborBigUint = serde_cbor::from_slice(&cbor).unwrap();
-        assert_eq!(big_uint, out);
+        let ser = serde_cbor::to_vec(&big_uint).unwrap();
+        assert_eq!(ser, expect);
+        let de = serde_cbor::from_slice::<TestCborBigUint>(&ser).unwrap();
+        assert_eq!(de, big_uint);
     }
 }
 
@@ -83,10 +83,10 @@ fn big_int_json_serde() {
     ];
     for (s, expect) in cases {
         let big_int = TestJsonBigInt(BigInt::from_str(s).unwrap());
-        let json = serde_json::to_string(&big_int).unwrap();
-        assert_eq!(json, expect);
-        let out: TestJsonBigInt = serde_json::from_str(&json).unwrap();
-        assert_eq!(big_int, out);
+        let ser = serde_json::to_string(&big_int).unwrap();
+        assert_eq!(ser, expect);
+        let de = serde_json::from_str::<TestJsonBigInt>(&ser).unwrap();
+        assert_eq!(de, big_int);
     }
 }
 
@@ -105,9 +105,9 @@ fn big_uint_serde() {
     ];
     for (s, expect) in cases {
         let big_uint = TestJsonBigUint(BigUint::from_str(s).unwrap());
-        let json = serde_json::to_string(&big_uint).unwrap();
-        assert_eq!(json, expect);
-        let out: TestJsonBigUint = serde_json::from_str(&json).unwrap();
-        assert_eq!(big_uint, out);
+        let ser = serde_json::to_string(&big_uint).unwrap();
+        assert_eq!(ser, expect);
+        let de = serde_json::from_str::<TestJsonBigUint>(&ser).unwrap();
+        assert_eq!(de, big_uint);
     }
 }

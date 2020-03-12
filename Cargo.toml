@@ -35,6 +35,7 @@ members = [
   "peermgr",
   "primitives/address",
   "primitives/bigint",
+  "primitives/ticket",
   "plum_libp2p",
   "sigs",
   "vm",

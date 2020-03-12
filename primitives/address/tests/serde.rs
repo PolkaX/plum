@@ -13,36 +13,36 @@ struct JsonAddress(#[serde(with = "address_json")] Address);
 #[test]
 fn address_default_serde() {
     let id_addr = Address::new_id_addr(12_512_063u64).unwrap();
-    let cbor = serde_cbor::to_vec(&id_addr).unwrap();
-    assert_eq!(cbor, [69, 0, 191, 214, 251, 5]);
-    let out = serde_cbor::from_slice(&cbor).unwrap();
-    assert_eq!(id_addr, out);
+    let ser = serde_cbor::to_vec(&id_addr).unwrap();
+    assert_eq!(ser, [69, 0, 191, 214, 251, 5]);
+    let de = serde_cbor::from_slice::<Address>(&ser).unwrap();
+    assert_eq!(de, id_addr);
 }
 
 #[test]
 fn address_cbor_serde() {
     let id_addr = CborAddress(Address::new_id_addr(12_512_063u64).unwrap());
-    let cbor = serde_cbor::to_vec(&id_addr).unwrap();
-    assert_eq!(cbor, [69, 0, 191, 214, 251, 5]);
-    let out = serde_cbor::from_slice(&cbor).unwrap();
-    assert_eq!(id_addr, out);
+    let ser = serde_cbor::to_vec(&id_addr).unwrap();
+    assert_eq!(ser, [69, 0, 191, 214, 251, 5]);
+    let de = serde_cbor::from_slice::<CborAddress>(&ser).unwrap();
+    assert_eq!(de, id_addr);
 }
 
 #[test]
 fn address_json_serde() {
     let id_addr = JsonAddress(Address::new_id_addr(1024).unwrap());
     assert_eq!(id_addr.0.to_string(), "f01024");
-    let json = serde_json::to_string(&id_addr).unwrap();
-    assert_eq!(json, "\"f01024\"");
-    let out = serde_json::from_str(&json).unwrap();
-    assert_eq!(id_addr, out);
+    let ser = serde_json::to_string(&id_addr).unwrap();
+    assert_eq!(ser, "\"f01024\"");
+    let de = serde_json::from_str::<JsonAddress>(&ser).unwrap();
+    assert_eq!(de, id_addr);
 
     unsafe { set_network(Network::Test) };
 
     let id_addr = JsonAddress(Address::new_id_addr(1024).unwrap());
     assert_eq!(id_addr.0.to_string(), "t01024");
-    let json = serde_json::to_string(&id_addr).unwrap();
-    assert_eq!(json, "\"t01024\"");
-    let out = serde_json::from_str(&json).unwrap();
-    assert_eq!(id_addr, out);
+    let ser = serde_json::to_string(&id_addr).unwrap();
+    assert_eq!(ser, "\"t01024\"");
+    let de = serde_json::from_str::<JsonAddress>(&ser).unwrap();
+    assert_eq!(de, id_addr);
 }
