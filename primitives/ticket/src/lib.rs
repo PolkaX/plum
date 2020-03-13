@@ -8,6 +8,6 @@ mod epost_proof;
 mod epost_ticket;
 mod ticket;
 
-pub use self::epost_proof::EPostProof;
+pub use self::epost_proof::{cbor as epost_proof_cbor, EPostProof};
 pub use self::epost_ticket::{cbor as epost_ticket_cbor, EPostTicket};
 pub use self::ticket::{cbor as ticket_cbor, Ticket};

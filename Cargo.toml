@@ -35,9 +35,10 @@ members = [
   "hashing",
   "network",
   "peermgr",
+  "primitives/block",
+  "primitives/message",
   "primitives/ticket",
   "plum_libp2p",
   "sigs",
   "vm",
-  "vm/message",
 ]

@@ -7,7 +7,7 @@ use plum_crypto::Signature;
 use crate::unsigned_message::UnsignedMessage;
 
 /// The signed message (a message with signature).
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash)]
 pub struct SignedMessage {
     /// The unsigned message.
     pub message: UnsignedMessage,

@@ -6,7 +6,7 @@ use plum_address::Address;
 use plum_bigint::BigInt;
 
 /// The unsigned message.
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash)]
 pub struct UnsignedMessage {
     /// The receiver of the unsigned message.
     pub to: Address,

@@ -3,7 +3,7 @@
 use serde::{de, ser};
 
 /// PoSt election candidates
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
 pub struct EPostTicket {
     ///
     pub partial: Vec<u8>,
@@ -19,7 +19,7 @@ impl EPostTicket {
         Self {
             partial: partial.into(),
             sector_id,
-            challenge_index
+            challenge_index,
         }
     }
 }
