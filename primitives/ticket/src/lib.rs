@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-//!
+//! Ticket, EPostTicket and EPostProof with CBOR serialization/deserialization
 
 #![deny(missing_docs)]
 

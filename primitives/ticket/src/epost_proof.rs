@@ -4,7 +4,7 @@ use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 
 use crate::epost_ticket::EPostTicket;
 
-/// Proof of space-time election proof
+/// The PoSt election proof of space/time
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Serialize_tuple, Deserialize_tuple)]
 pub struct EPostProof {
     ///

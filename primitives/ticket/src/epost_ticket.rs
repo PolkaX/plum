@@ -13,6 +13,17 @@ pub struct EPostTicket {
     pub challenge_index: u64,
 }
 
+impl EPostTicket {
+    /// Create a new EPostTicket with the given `partial`, `sector_id` and `challenge_index`.
+    pub fn new<T: Into<Vec<u8>>>(partial: T, sector_id: u64, challenge_index: u64) -> Self {
+        Self {
+            partial: partial.into(),
+            sector_id,
+            challenge_index
+        }
+    }
+}
+
 impl ser::Serialize for EPostTicket {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
