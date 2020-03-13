@@ -11,4 +11,4 @@ data-encoding = "2.1"
 
 cid = { package = "rust-cid", git = "https://github.com/PolkaX/rust-ipfs", branch = "filecoin-master", features = ["serde_support"] }
 
-plum_address = { path = "../primitives/address" }
+plum_address = { path = "address" }

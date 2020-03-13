@@ -23,6 +23,8 @@ wallet = { path = "./chain/wallet" }
 [workspace]
 members = [
   "chain/abi",
+  "chain/address",
+  "chain/bigint",
   "chain/types",
   "chain/wallet",
   "chain",
@@ -33,8 +35,6 @@ members = [
   "hashing",
   "network",
   "peermgr",
-  "primitives/address",
-  "primitives/bigint",
   "primitives/ticket",
   "plum_libp2p",
   "sigs",
