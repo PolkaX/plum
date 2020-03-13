@@ -2122,7 +2122,6 @@ version = "0.1.0"
 dependencies = [
  "abi",
  "cli",
- "plum_address",
  "wallet",
 ]
 
@@ -2215,6 +2214,16 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "plum_ticket"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_bytes",
+ "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_tuple",
 ]
 
 [[package]]

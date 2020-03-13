@@ -43,7 +43,7 @@ pub mod cbor {
     use crate::unsigned_message::{cbor as unsigned_message_cbor, UnsignedMessage};
 
     #[derive(Serialize)]
-    struct TupleSignedMessage<'a>(
+    struct TupleSignedMessageRef<'a>(
         #[serde(with = "unsigned_message_cbor")] &'a UnsignedMessage,
         #[serde(with = "signature_cbor")] &'a Signature,
     );
@@ -53,12 +53,12 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        let tuple_signed_msg = TupleSignedMessage(&signed_msg.message, &signed_msg.signature);
+        let tuple_signed_msg = TupleSignedMessageRef(&signed_msg.message, &signed_msg.signature);
         tuple_signed_msg.serialize(serializer)
     }
 
     #[derive(Deserialize)]
-    struct OwnedTupleSignedMessage(
+    struct TupleSignedMessage(
         #[serde(with = "unsigned_message_cbor")] UnsignedMessage,
         #[serde(with = "signature_cbor")] Signature,
     );
@@ -68,8 +68,8 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let OwnedTupleSignedMessage(unsigned_message, signature) =
-            OwnedTupleSignedMessage::deserialize(deserializer)?;
+        let TupleSignedMessage(unsigned_message, signature) =
+            TupleSignedMessage::deserialize(deserializer)?;
         Ok(SignedMessage {
             message: unsigned_message,
             signature,

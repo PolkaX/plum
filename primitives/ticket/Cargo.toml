@@ -1,0 +1,14 @@
+[package]
+name = "plum_ticket"
+version = "0.1.0"
+authors = ["The PolkaX Authors"]
+edition = "2018"
+license = "GPL-3.0"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_bytes = "0.11"
+serde_tuple = "0.4"
+
+[dev-dependencies]
+serde_cbor = "0.11.1"

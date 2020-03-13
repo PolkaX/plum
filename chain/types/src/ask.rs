@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use address::Address;
+use plum_address::Address;
 use plum_bigint::BigInt;
 
 use crate::signature::Signature;

@@ -34,8 +34,9 @@ pub use self::signed_message::SignedMessage;
 pub use self::tipset::{TipSet, TipSetError};
 pub use self::tipset_key::TipSetKey;
 
-pub use address::*;
 pub use cid::*;
+
+pub use plum_address::*;
 
 use block_format::{BasicBlock, BlockFormatError};
 use bytes::Bytes;

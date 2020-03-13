@@ -19,7 +19,7 @@ serde_tuple = "0.4"
 block_format = { package = "rust-block-format", git = "https://github.com/PolkaX/rust-ipfs", branch = "filecoin-master" }
 unsigned-varint = "0.3"
 
-address = { package = "plum_address", path = "../address" }
+plum_address = { path = "../address" }
 plum_bigint = { path = "../bigint" }
 
 [dev-dependencies]
