@@ -379,6 +379,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "cid"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b08bd59ac7b32410f32cb71c027c454e61c7826d166e281866560106f4a55956"
+replace = "cid 0.4.0 (git+https://github.com/PolkaX/rust-cid?branch=impl-serde)"
+
+[[package]]
 name = "clap"
 version = "2.33.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2196,7 +2203,7 @@ dependencies = [
 name = "plum_block"
 version = "0.1.0"
 dependencies = [
- "cid",
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "plum_address",
  "plum_bigint",
  "plum_crypto",
@@ -2279,7 +2286,7 @@ dependencies = [
 name = "plum_tipset"
 version = "0.1.0"
 dependencies = [
- "cid",
+ "cid 0.4.0 (git+https://github.com/PolkaX/rust-cid?branch=impl-serde)",
  "hex",
  "multihash",
  "plum_block",

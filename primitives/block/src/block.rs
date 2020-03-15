@@ -39,19 +39,17 @@ impl<'de> de::Deserialize<'de> for Block {
 pub mod cbor {
     use serde::{de, ser, Deserialize, Serialize};
 
-    use plum_message::{SignedMessage, UnsignedMessage};
+    use plum_message::{
+        signed_message_cbor, unsigned_message_cbor, SignedMessage, UnsignedMessage,
+    };
 
     use super::Block;
     use crate::header::BlockHeader;
 
     #[derive(Serialize)]
-    struct CborUnsignedMessageRef<'a>(
-        #[serde(with = "plum_message::unsigned_message_cbor")] &'a UnsignedMessage,
-    );
+    struct CborUnsignedMessageRef<'a>(#[serde(with = "unsigned_message_cbor")] &'a UnsignedMessage);
     #[derive(Serialize)]
-    struct CborSignedMessageRef<'a>(
-        #[serde(with = "plum_message::signed_message_cbor")] &'a SignedMessage,
-    );
+    struct CborSignedMessageRef<'a>(#[serde(with = "signed_message_cbor")] &'a SignedMessage);
     #[derive(Serialize)]
     struct TupleBlockRef<'a>(
         #[serde(with = "crate::header::cbor")] &'a BlockHeader,
@@ -78,11 +76,9 @@ pub mod cbor {
     }
 
     #[derive(Deserialize)]
-    struct CborUnsignedMessage(
-        #[serde(with = "plum_message::unsigned_message_cbor")] UnsignedMessage,
-    );
+    struct CborUnsignedMessage(#[serde(with = "unsigned_message_cbor")] UnsignedMessage);
     #[derive(Deserialize)]
-    struct CborSignedMessage(#[serde(with = "plum_message::signed_message_cbor")] SignedMessage);
+    struct CborSignedMessage(#[serde(with = "signed_message_cbor")] SignedMessage);
     #[derive(Deserialize)]
     struct TupleBlock(
         #[serde(with = "crate::header::cbor")] BlockHeader,

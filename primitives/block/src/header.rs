@@ -71,10 +71,10 @@ pub mod cbor {
 
     use cid::Cid;
 
-    use plum_address::Address;
-    use plum_bigint::BigInt;
-    use plum_crypto::Signature;
-    use plum_ticket::{EPostProof, Ticket};
+    use plum_address::{address_cbor, Address};
+    use plum_bigint::{bigint_cbor, BigInt};
+    use plum_crypto::{signature_cbor, Signature};
+    use plum_ticket::{epost_proof_cbor, ticket_cbor, EPostProof, Ticket};
 
     use super::BlockHeader;
 
@@ -82,18 +82,18 @@ pub mod cbor {
     struct CborCidRef<'a>(#[serde(with = "cid::ipld_dag_cbor")] &'a Cid);
     #[derive(Serialize)]
     struct TupleBlockHeaderRef<'a>(
-        #[serde(with = "plum_address::address_cbor")] &'a Address,
-        #[serde(with = "plum_ticket::ticket_cbor")] &'a Ticket,
-        #[serde(with = "plum_ticket::epost_proof_cbor")] &'a EPostProof,
+        #[serde(with = "address_cbor")] &'a Address,
+        #[serde(with = "ticket_cbor")] &'a Ticket,
+        #[serde(with = "epost_proof_cbor")] &'a EPostProof,
         &'a [CborCidRef<'a>],
-        #[serde(with = "plum_bigint::bigint_cbor")] &'a BigInt,
+        #[serde(with = "bigint_cbor")] &'a BigInt,
         &'a u64,
         #[serde(with = "cid::ipld_dag_cbor")] &'a Cid,
         #[serde(with = "cid::ipld_dag_cbor")] &'a Cid,
         #[serde(with = "cid::ipld_dag_cbor")] &'a Cid,
-        #[serde(with = "plum_crypto::signature_cbor")] &'a Signature,
+        #[serde(with = "signature_cbor")] &'a Signature,
         &'a u64,
-        #[serde(with = "plum_crypto::signature_cbor")] &'a Signature,
+        #[serde(with = "signature_cbor")] &'a Signature,
         &'a u64,
     );
 
@@ -129,18 +129,18 @@ pub mod cbor {
     struct CborCid(#[serde(with = "cid::ipld_dag_cbor")] Cid);
     #[derive(Deserialize)]
     struct TupleBlockHeader(
-        #[serde(with = "plum_address::address_cbor")] Address,
-        #[serde(with = "plum_ticket::ticket_cbor")] Ticket,
-        #[serde(with = "plum_ticket::epost_proof_cbor")] EPostProof,
+        #[serde(with = "address_cbor")] Address,
+        #[serde(with = "ticket_cbor")] Ticket,
+        #[serde(with = "epost_proof_cbor")] EPostProof,
         Vec<CborCid>,
-        #[serde(with = "plum_bigint::bigint_cbor")] BigInt,
+        #[serde(with = "bigint_cbor")] BigInt,
         u64,
         #[serde(with = "cid::ipld_dag_cbor")] Cid,
         #[serde(with = "cid::ipld_dag_cbor")] Cid,
         #[serde(with = "cid::ipld_dag_cbor")] Cid,
-        #[serde(with = "plum_crypto::signature_cbor")] Signature,
+        #[serde(with = "signature_cbor")] Signature,
         u64,
-        #[serde(with = "plum_crypto::signature_cbor")] Signature,
+        #[serde(with = "signature_cbor")] Signature,
         u64,
     );
 
@@ -186,6 +186,7 @@ pub mod cbor {
 #[cfg(test)]
 mod tests {
     use cid::Cid;
+    use serde::{Deserialize, Serialize};
 
     use plum_address::Address;
     use plum_crypto::Signature;
@@ -194,7 +195,7 @@ mod tests {
     use super::BlockHeader;
 
     fn new_block_header() -> BlockHeader {
-        let id = 12512063;
+        let id = 12_512_063;
         let addr = Address::new_id_addr(id).unwrap();
 
         let cid: Cid = "bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"
@@ -214,9 +215,9 @@ mod tests {
             parents: vec![cid.clone(), cid.clone()],
             parent_message_receipts: cid.clone(),
             bls_aggregate: Signature::new_bls("boo! im a signature"),
-            parent_weight: 123125126212u64.into(),
+            parent_weight: 123_125_126_212u64.into(),
             messages: cid.clone(),
-            height: 85919298723,
+            height: 85_919_298_723,
             parent_state_root: cid,
             timestamp: 0u64,
             block_sig: Signature::new_bls("boo! im a signature"),
@@ -224,9 +225,12 @@ mod tests {
         }
     }
 
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    struct CborBlockHeader(#[serde(with = "super::cbor")] BlockHeader);
+
     #[test]
     fn block_header_cbor_serde() {
-        let header = new_block_header();
+        let header = CborBlockHeader(new_block_header());
         let expected = [
             141, 69, 0, 191, 214, 251, 5, 129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111, 102,
             48, 48, 48, 48, 48, 48, 48, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48,
@@ -248,7 +252,7 @@ mod tests {
         ];
         let ser = serde_cbor::to_vec(&header).unwrap();
         assert_eq!(ser, &expected[..]);
-        let de = serde_cbor::from_slice(&ser).unwrap();
-        assert_eq!(header, de);
+        let de = serde_cbor::from_slice::<CborBlockHeader>(&ser).unwrap();
+        assert_eq!(de, header);
     }
 }

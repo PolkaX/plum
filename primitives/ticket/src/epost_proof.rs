@@ -94,22 +94,27 @@ pub mod cbor {
 
 #[cfg(test)]
 mod tests {
+    use serde::{Deserialize, Serialize};
+
     use super::EPostProof;
+
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    struct CborEPostProof(#[serde(with = "super::cbor")] EPostProof);
 
     #[test]
     fn epost_proof_cbor_serde() {
-        let epost_proof = EPostProof {
+        let epost_proof = CborEPostProof(EPostProof {
             proof: b"pruuf".to_vec(),
             post_rand: b"random".to_vec(),
             candidates: Vec::new(),
-        };
+        });
         let expected = [
             131, 69, 112, 114, 117, 117, 102, 70, 114, 97, 110, 100, 111, 109, 128,
         ];
 
         let ser = serde_cbor::to_vec(&epost_proof).unwrap();
         assert_eq!(ser, &expected[..]);
-        let de = serde_cbor::from_slice::<EPostProof>(&ser).unwrap();
+        let de = serde_cbor::from_slice::<CborEPostProof>(&ser).unwrap();
         assert_eq!(de, epost_proof);
     }
 }
