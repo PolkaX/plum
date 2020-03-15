@@ -1,0 +1,20 @@
+[package]
+name = "plum_tipset"
+version = "0.1.0"
+authors = ["The PolkaX Authors"]
+edition = "2018"
+license = "GPL-3.0"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+
+cid = { git = "https://github.com/PolkaX/rust-cid", branch = "ext", features = ["impl-serde"] }
+
+plum_block = { path = "../block" }
+
+[dev-dependencies]
+hex = "0.4"
+multihash = "0.10"
+serde_cbor = { version = "0.11", features = ["tags"] }
+serde_json = "1.0"

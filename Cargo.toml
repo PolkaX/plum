@@ -38,6 +38,7 @@ members = [
   "primitives/block",
   "primitives/message",
   "primitives/ticket",
+  "primitives/tipset",
   "plum_libp2p",
   "sigs",
   "vm",
