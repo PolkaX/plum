@@ -68,13 +68,18 @@ pub mod cbor {
 
 #[cfg(test)]
 mod tests {
+    use serde::{Deserialize, Serialize};
+
     use super::Ticket;
+
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    struct CborTicket(#[serde(with = "super::cbor")] Ticket);
 
     #[test]
     fn ticket_cbor_serde() {
-        let ticket = Ticket {
+        let ticket = CborTicket(Ticket {
             vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
-        };
+        });
         let expected = [
             129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48,
             118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48,
@@ -82,7 +87,7 @@ mod tests {
 
         let ser = serde_cbor::to_vec(&ticket).unwrap();
         assert_eq!(ser, &expected[..]);
-        let de = serde_cbor::from_slice::<Ticket>(&ser).unwrap();
+        let de = serde_cbor::from_slice::<CborTicket>(&ser).unwrap();
         assert_eq!(de, ticket);
     }
 }

@@ -126,6 +126,8 @@ pub mod cbor {
 
 #[cfg(test)]
 mod tests {
+    use serde::{Deserialize, Serialize};
+
     use plum_address::{set_network, Address, Network};
 
     use super::UnsignedMessage;
@@ -147,19 +149,22 @@ mod tests {
             from: Address::new_bls_addr(&from_pubkey).unwrap(),
             nonce: 197u64,
             value: Default::default(),
-            gas_limit: 126723u64.into(),
-            gas_price: 1776234u64.into(),
-            method: 1231254u64,
+            gas_limit: 126_723u64.into(),
+            gas_price: 1_776_234u64.into(),
+            method: 1_231_254u64,
             params: b"some bytes, idk. probably at least ten of them".to_vec(),
         }
     }
+
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    struct CborUnsignedMessage(#[serde(with = "super::cbor")] UnsignedMessage);
 
     #[test]
     fn unsigned_message_cbor_serde() {
         unsafe {
             set_network(Network::Test);
         }
-        let unsigned_message = new_unsigned_message();
+        let unsigned_message = CborUnsignedMessage(new_unsigned_message());
         let expected = [
             136, 88, 49, 3, 82, 253, 252, 7, 33, 130, 101, 79, 22, 63, 95, 15, 154, 98, 29, 114,
             149, 102, 199, 77, 16, 3, 124, 77, 123, 187, 4, 7, 209, 226, 198, 73, 129, 133, 90,
@@ -174,7 +179,7 @@ mod tests {
 
         let ser = serde_cbor::to_vec(&unsigned_message).unwrap();
         assert_eq!(ser, &expected[..]);
-        let de = serde_cbor::from_slice::<UnsignedMessage>(&ser).unwrap();
+        let de = serde_cbor::from_slice::<CborUnsignedMessage>(&ser).unwrap();
         assert_eq!(de, unsigned_message);
     }
 }

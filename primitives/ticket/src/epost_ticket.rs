@@ -84,22 +84,27 @@ pub mod cbor {
 
 #[cfg(test)]
 mod tests {
+    use serde::{Deserialize, Serialize};
+
     use super::EPostTicket;
+
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    struct CborEPostTicket(#[serde(with = "super::cbor")] EPostTicket);
 
     #[test]
     fn epost_ticket_cbor_serde() {
-        let epost_ticket = EPostTicket {
+        let epost_ticket = CborEPostTicket(EPostTicket {
             partial: b"epost_ticket".to_vec(),
             sector_id: 6,
             challenge_index: 8,
-        };
+        });
         let expected = [
             131, 76, 101, 112, 111, 115, 116, 95, 116, 105, 99, 107, 101, 116, 6, 8,
         ];
 
         let ser = serde_cbor::to_vec(&epost_ticket).unwrap();
         assert_eq!(ser, &expected[..]);
-        let de = serde_cbor::from_slice::<EPostTicket>(&ser).unwrap();
+        let de = serde_cbor::from_slice::<CborEPostTicket>(&ser).unwrap();
         assert_eq!(de, epost_ticket);
     }
 }
