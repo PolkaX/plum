@@ -367,7 +367,7 @@ dependencies = [
 [[package]]
 name = "cid"
 version = "0.4.0"
-source = "git+https://github.com/PolkaX/rust-cid?branch=ext#ab74abbca49e5abafa3422fd40558ce786d9b78d"
+source = "git+https://github.com/PolkaX/rust-cid?branch=impl-serde#70b4aa59c99776f1afc7cf38bd27b12af56e0402"
 dependencies = [
  "multibase",
  "multihash",
@@ -377,6 +377,13 @@ dependencies = [
  "serde_json",
  "unsigned-varint 0.3.2",
 ]
+
+[[package]]
+name = "cid"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b08bd59ac7b32410f32cb71c027c454e61c7826d166e281866560106f4a55956"
+replace = "cid 0.4.0 (git+https://github.com/PolkaX/rust-cid?branch=impl-serde)"
 
 [[package]]
 name = "clap"
@@ -2190,7 +2197,7 @@ dependencies = [
 name = "plum_block"
 version = "0.1.0"
 dependencies = [
- "cid",
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "plum_address",
  "plum_bigint",
  "plum_crypto",

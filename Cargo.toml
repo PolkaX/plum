@@ -18,13 +18,12 @@ cli = { path = "./cli" }
 wallet = { path = "./chain/wallet" }
 
 [replace]
+"cid:0.4.0" = { git = "https://github.com/PolkaX/rust-cid", branch = "impl-serde" }
 "serde_cbor:0.11.1" = {  git = "https://github.com/PolkaX/cbor", branch = "f64ser-hack" }
 
 [workspace]
 members = [
   "chain/abi",
-  "chain/address",
-  "chain/bigint",
   "chain/types",
   "chain/wallet",
   "chain",
@@ -35,6 +34,8 @@ members = [
   "hashing",
   "network",
   "peermgr",
+  "primitives/address",
+  "primitives/bigint",
   "primitives/block",
   "primitives/message",
   "primitives/ticket",
