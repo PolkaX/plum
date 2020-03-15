@@ -367,7 +367,7 @@ dependencies = [
 [[package]]
 name = "cid"
 version = "0.4.0"
-source = "git+https://github.com/PolkaX/rust-cid?branch=ext#ab74abbca49e5abafa3422fd40558ce786d9b78d"
+source = "git+https://github.com/PolkaX/rust-cid?branch=impl-serde#70b4aa59c99776f1afc7cf38bd27b12af56e0402"
 dependencies = [
  "multibase",
  "multihash",

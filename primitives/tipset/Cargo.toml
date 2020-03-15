@@ -9,7 +9,7 @@ license = "GPL-3.0"
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0"
 
-cid = { git = "https://github.com/PolkaX/rust-cid", branch = "ext", features = ["impl-serde"] }
+cid = { git = "https://github.com/PolkaX/rust-cid", branch = "impl-serde", features = ["impl-serde"] }
 
 plum_block = { path = "../block" }
 
