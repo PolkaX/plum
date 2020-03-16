@@ -417,9 +417,9 @@ dependencies = [
  "exit-future",
  "lazy_static",
  "log",
- "network",
  "plum_address",
  "plum_libp2p",
+ "plum_network",
  "regex",
  "structopt",
  "time",
@@ -1797,18 +1797,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "network"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures 0.1.29",
- "libp2p",
- "log",
- "plum_libp2p",
- "tokio",
-]
-
-[[package]]
 name = "nohash-hasher"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2256,6 +2244,18 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "plum_network"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "futures 0.1.29",
+ "libp2p",
+ "log",
+ "plum_libp2p",
+ "tokio",
 ]
 
 [[package]]
