@@ -7,11 +7,13 @@ use std::io::Write;
 use ansi_term::Colour;
 use lazy_static::lazy_static;
 use log::info;
-use plum_libp2p::Multiaddr;
 use regex::Regex;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
+
+use plum_libp2p::Multiaddr;
+use plum_network::service::Service;
 
 use crate::cmd::Command;
 
@@ -52,7 +54,7 @@ pub fn run_lp2p(peer_ip: Option<Multiaddr>) {
         network_config.bootnodes.push(peer);
     }
 
-    let _network_service = network::service::Service::spawn(&network_config, &task_executor);
+    let _network_service = Service::spawn(&network_config, &task_executor);
 
     let _ = runtime.block_on(exit);
     exit_send.fire();

@@ -1,14 +1,21 @@
 [package]
-name = "plum_network"
+name = "plum_libp2p"
 version = "0.1.0"
 authors = ["The PolkaX Authors"]
 edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-anyhow = "1.0"
+cid = { version = "0.4", features = ["impl-serde"] }
+fnv = "1.0.6"
 futures = "0.1.29"
 libp2p =  { git = "https://github.com/SigP/rust-libp2p", rev = "776d13ef046358964c7d64cda3295a3a3cb24743" }
 log = "0.4.8"
-plum_libp2p = { path = "../libp2p", package = "plum_libp2p" }
+multihash = "0.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_bytes = "0.11"
+serde_cbor = "0.11"
+smallvec = "1.0.0"
 tokio = "0.1.22"
+tokio-io-timeout = "0.3.1"
+unsigned-varint = "0.2.3"

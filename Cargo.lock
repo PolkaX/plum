@@ -4,12 +4,12 @@
 name = "abi"
 version = "0.1.0"
 dependencies = [
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "codec-rle",
  "codec-serde-support",
  "enum-repr-derive",
  "plum_bigint",
  "primitive-types",
- "rust-cid",
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -332,9 +332,6 @@ name = "bytes"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "130aac562c0dd69c56b3b1cc8ffd2e17be31d0b6c25b61c96b76231aa23e39e1"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "c_linked_list"
@@ -358,10 +355,10 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 name = "chain"
 version = "0.1.0"
 dependencies = [
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "data-encoding",
  "lazy_static",
  "plum_address",
- "rust-cid",
 ]
 
 [[package]]
@@ -420,9 +417,9 @@ dependencies = [
  "exit-future",
  "lazy_static",
  "log",
- "network",
  "plum_address",
  "plum_libp2p",
+ "plum_network",
  "regex",
  "structopt",
  "time",
@@ -1092,12 +1089,6 @@ checksum = "076f042c5b7b98f31d205f1249267e12a6518c1481e9dae9764af19b707d2292"
 dependencies = [
  "autocfg 1.0.0",
 ]
-
-[[package]]
-name = "integer-encoding"
-version = "1.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "083cfe51895f8d283aaf210a736fdf5d08a1171faa44fe08e979cc0c961b891a"
 
 [[package]]
 name = "iovec"
@@ -1812,18 +1803,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "network"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures 0.1.29",
- "libp2p",
- "log",
- "plum_libp2p",
- "tokio",
-]
-
-[[package]]
 name = "nohash-hasher"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2246,12 +2225,12 @@ dependencies = [
 name = "plum_libp2p"
 version = "0.1.0"
 dependencies = [
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "fnv",
  "futures 0.1.29",
  "libp2p",
  "log",
- "parity-multihash 0.2.3",
- "rust-cid",
+ "multihash",
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2271,6 +2250,18 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "plum_network"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "futures 0.1.29",
+ "libp2p",
+ "log",
+ "plum_libp2p",
+ "tokio",
 ]
 
 [[package]]
@@ -2704,34 +2695,12 @@ dependencies = [
 [[package]]
 name = "rust-block-format"
 version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#b60bcfd39b65e4b8c38bbcd234538074126722e6"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#430294308a72255edfbfca155282a7ed43c459f7"
 dependencies = [
  "bytes 0.5.4",
- "rust-cid",
- "rust-ipfs-util",
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multihash",
  "thiserror",
-]
-
-[[package]]
-name = "rust-cid"
-version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#b60bcfd39b65e4b8c38bbcd234538074126722e6"
-dependencies = [
- "integer-encoding",
- "multibase",
- "parity-multihash 0.2.3",
- "serde",
- "serde_bytes",
- "serde_cbor 0.11.1 (git+https://github.com/PolkaX/cbor?branch=f64ser-hack)",
- "thiserror",
-]
-
-[[package]]
-name = "rust-ipfs-util"
-version = "0.1.0"
-source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#b60bcfd39b65e4b8c38bbcd234538074126722e6"
-dependencies = [
- "parity-multihash 0.2.3",
 ]
 
 [[package]]
@@ -3457,11 +3426,12 @@ dependencies = [
  "anyhow",
  "byteorder 1.3.4",
  "bytes 0.5.4",
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log",
+ "multihash",
  "plum_address",
  "plum_bigint",
  "rust-block-format",
- "rust-cid",
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",

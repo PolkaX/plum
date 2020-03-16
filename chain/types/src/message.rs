@@ -56,7 +56,8 @@ impl Message {
 
 #[cfg(test)]
 mod tests {
-    use cid::AsCidRef;
+    use block_format::Block;
+
     use plum_address::Address;
 
     use super::*;
