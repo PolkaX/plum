@@ -21,4 +21,4 @@ chain = { path = "../chain" }
 #wallet = { path = "../chain/wallet" }
 plum_address = { path = "../primitives/address" }
 network = { path = "../network" }
-plum_libp2p = { path = "../plum_libp2p" }
+plum_libp2p = { path = "../libp2p" }

@@ -115,14 +115,6 @@ mod tests {
 
     #[test]
     fn address_json_serde() {
-        unsafe { set_network(Network::Main) };
-        let id_addr = JsonAddress(Address::new_id_addr(1024).unwrap());
-        assert_eq!(id_addr.0.to_string(), "f01024");
-        let ser = serde_json::to_string(&id_addr).unwrap();
-        assert_eq!(ser, "\"f01024\"");
-        let de = serde_json::from_str::<JsonAddress>(&ser).unwrap();
-        assert_eq!(de, id_addr);
-
         unsafe { set_network(Network::Test) };
         let id_addr = JsonAddress(Address::new_id_addr(1024).unwrap());
         assert_eq!(id_addr.0.to_string(), "t01024");
