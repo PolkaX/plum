@@ -6,9 +6,8 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-lazy_static = "1.4"
+cid = { version = "0.4", features = ["impl-serde"] }
 data-encoding = "2.1"
-
-cid = { package = "rust-cid", git = "https://github.com/PolkaX/rust-ipfs", branch = "filecoin-master", features = ["serde_support"] }
+lazy_static = "1.4"
 
 plum_address = { path = "../primitives/address" }

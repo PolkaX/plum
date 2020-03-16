@@ -38,9 +38,9 @@ pub use cid::*;
 
 pub use plum_address::*;
 
-use block_format::{BasicBlock, BlockFormatError};
+use block_format::{BasicBlock, Block, BlockFormatError};
 use bytes::Bytes;
-use cid::{AsCidRef, CidError, Codec, Hash, Prefix};
+use cid::Codec;
 use core::convert::TryInto;
 use serde::Serialize;
 use serde_cbor::error::Error as CborError;
@@ -50,7 +50,7 @@ pub enum StorageBlockError {
     #[error("BlockFormatError: {0}")]
     BlockFormatError(#[from] BlockFormatError),
     #[error("cid error: {0}")]
-    CidError(#[from] CidError),
+    CidError(#[from] cid::Error),
     #[error("cbor err: {0}")]
     CborError(#[from] CborError),
 }
@@ -58,8 +58,8 @@ pub enum StorageBlockError {
 pub fn to_storage_block<S: Serialize>(s: &S) -> std::result::Result<BasicBlock, StorageBlockError> {
     let data = Bytes::from(serde_cbor::to_vec(s)?);
 
-    let prefix = Prefix::new_prefix_v1(Codec::DagCBOR, Hash::Blake2b256);
-    let cid = prefix.sum(&data)?;
+    let hash = multihash::Blake2b256::digest(&data);
+    let cid = Cid::new_v1(Codec::DagCBOR, hash);
     let block = BasicBlock::new_with_cid(data, cid)?;
 
     Ok(block)

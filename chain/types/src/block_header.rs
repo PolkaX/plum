@@ -126,7 +126,6 @@ mod tests {
     use super::*;
     use crate::block_msg::BlockMsg;
     use crate::key_info::SignKeyType;
-    use cid::AsCidRef;
 
     fn new_block_header() -> BlockHeader {
         let id = 12512063;
@@ -281,6 +280,7 @@ mod tests {
 
     #[test]
     fn block_header_to_storge_block_should_work() {
+        use block_format::Block;
         let header = new_block_header();
         let storage_block: BasicBlock = header.try_into().unwrap();
         assert_eq!(

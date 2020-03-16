@@ -32,6 +32,7 @@ members = [
   "codec/serde-support",
   "crypto",
   "hashing",
+  "libp2p",
   "network",
   "peermgr",
   "primitives/address",
@@ -39,7 +40,6 @@ members = [
   "primitives/block",
   "primitives/message",
   "primitives/ticket",
-  "plum_libp2p",
   "sigs",
   "vm",
 ]

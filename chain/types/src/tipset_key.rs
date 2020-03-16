@@ -1,8 +1,10 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::Cid;
 use std::convert::TryFrom;
+
 use thiserror::Error;
+
+use crate::Cid;
 
 // go-cid is 32
 pub const BLOCK_HEADER_CID_LEN: u8 = 38;
@@ -23,7 +25,7 @@ fn encode_key(cids: &[Cid]) -> Vec<u8> {
 fn decode_key(slices: &[u8]) -> std::result::Result<Vec<Cid>, TipSetKeyError> {
     let mut cids = Vec::new();
     for chunk in slices.chunks(BLOCK_HEADER_CID_LEN as usize) {
-        cids.push(Cid::from(chunk)?);
+        cids.push(Cid::try_from(chunk)?);
     }
     Ok(cids)
 }
@@ -31,7 +33,7 @@ fn decode_key(slices: &[u8]) -> std::result::Result<Vec<Cid>, TipSetKeyError> {
 #[derive(Error, Debug)]
 pub enum TipSetKeyError {
     #[error("cid error: {0}")]
-    CidError(#[from] cid::CidError),
+    CidError(#[from] cid::Error),
 }
 
 impl TipSetKey {

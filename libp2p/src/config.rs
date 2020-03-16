@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use cid::{Cid, Codec, Version};
+use cid::{Cid, Codec};
 use libp2p::gossipsub::Topic;
 use libp2p::kad::{record::store::MemoryStore, KademliaConfig};
 use libp2p::{Multiaddr, PeerId};
@@ -33,8 +33,8 @@ impl Default for Libp2pConfig {
 }
 
 pub fn genesis_hash() -> Cid {
-    let h = multihash::encode(multihash::Hash::SHA2256, GENESIS).unwrap();
-    Cid::new(Version::V1, Codec::DagProtobuf, h)
+    let hash = multihash::Sha2_256::digest(GENESIS);
+    Cid::new_v1(Codec::DagProtobuf, hash)
 }
 
 pub fn generate_kad_config(peer_id: &PeerId) -> (KademliaConfig, MemoryStore) {
