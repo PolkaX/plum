@@ -90,31 +90,126 @@ pub mod cbor {
             candidates,
         })
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use serde::{Deserialize, Serialize};
-
-    use super::EPostProof;
-
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    struct CborEPostProof(#[serde(with = "super::cbor")] EPostProof);
 
     #[test]
     fn epost_proof_cbor_serde() {
-        let epost_proof = CborEPostProof(EPostProof {
-            proof: b"pruuf".to_vec(),
-            post_rand: b"random".to_vec(),
-            candidates: Vec::new(),
-        });
-        let expected = [
-            131, 69, 112, 114, 117, 117, 102, 70, 114, 97, 110, 100, 111, 109, 128,
-        ];
+        use serde::{Deserialize, Serialize};
 
-        let ser = serde_cbor::to_vec(&epost_proof).unwrap();
-        assert_eq!(ser, &expected[..]);
-        let de = serde_cbor::from_slice::<CborEPostProof>(&ser).unwrap();
-        assert_eq!(de, epost_proof);
+        #[derive(Debug, PartialEq, Serialize, Deserialize)]
+        struct CborEPostProof(#[serde(with = "self")] EPostProof);
+
+        let cases = vec![(
+            CborEPostProof(EPostProof {
+                proof: b"pruuf".to_vec(),
+                post_rand: b"random".to_vec(),
+                candidates: vec![],
+            }),
+            vec![
+                131, 69, 112, 114, 117, 117, 102, 70, 114, 97, 110, 100, 111, 109, 128,
+            ],
+        )];
+
+        for (epost_proof, expected) in cases {
+            let ser = serde_cbor::to_vec(&epost_proof).unwrap();
+            assert_eq!(ser, &expected[..]);
+            let de = serde_cbor::from_slice::<CborEPostProof>(&ser).unwrap();
+            assert_eq!(de, epost_proof);
+        }
+    }
+}
+
+/// EPostProof JSON serialization/deserialization
+pub mod json {
+    use serde::{de, ser, Deserialize, Serialize};
+
+    use super::{EPostProof, EPostTicket};
+
+    #[derive(Serialize)]
+    struct JsonEPostTicketRef<'a>(#[serde(with = "crate::epost_ticket::json")] &'a EPostTicket);
+
+    #[derive(Serialize)]
+    struct JsonEPostProofRef<'a> {
+        #[serde(rename = "Proof")]
+        proof: String,
+        #[serde(rename = "PostRand")]
+        post_rand: String,
+        #[serde(rename = "Candidates")]
+        candidates: &'a [JsonEPostTicketRef<'a>],
+    }
+
+    /// CBOR serialization
+    pub fn serialize<S>(epost_proof: &EPostProof, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        let candidates = epost_proof
+            .candidates
+            .iter()
+            .map(|candidate| JsonEPostTicketRef(candidate))
+            .collect::<Vec<_>>();
+        JsonEPostProofRef {
+            proof: base64::encode(&epost_proof.proof),
+            post_rand: base64::encode(&epost_proof.post_rand),
+            candidates: &candidates,
+        }
+        .serialize(serializer)
+    }
+
+    #[derive(Deserialize)]
+    struct JsonEPostProof {
+        #[serde(rename = "Proof")]
+        proof: String,
+        #[serde(rename = "PostRand")]
+        post_rand: String,
+        #[serde(rename = "Candidates")]
+        candidates: Vec<EPostTicket>,
+    }
+
+    /// CBOR deserialization
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<EPostProof, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let epost_proof = JsonEPostProof::deserialize(deserializer)?;
+        Ok(EPostProof {
+            proof: base64::decode(epost_proof.proof).expect(""),
+            post_rand: base64::decode(epost_proof.post_rand).expect(""),
+            candidates: epost_proof.candidates,
+        })
+    }
+
+    #[test]
+    fn epost_proof_json_serde() {
+        use serde::{Deserialize, Serialize};
+
+        #[derive(Debug, PartialEq, Serialize, Deserialize)]
+        struct JsonEPostProof(#[serde(with = "self")] EPostProof);
+
+        let cases = vec![(
+            JsonEPostProof(EPostProof {
+                proof: b"pruuf".to_vec(),
+                post_rand: b"random".to_vec(),
+                candidates: vec![],
+            }),
+            vec![
+                123, 34, 80, 114, 111, 111, 102, 34, 58, 34, 99, 72, 74, 49, 100, 87, 89, 61, 34,
+                44, 34, 80, 111, 115, 116, 82, 97, 110, 100, 34, 58, 34, 99, 109, 70, 117, 90, 71,
+                57, 116, 34, 44, 34, 67, 97, 110, 100, 105, 100, 97, 116, 101, 115, 34, 58, 91, 93,
+                125,
+            ],
+            r#"{"Proof":"cHJ1dWY=","PostRand":"cmFuZG9t","Candidates":[]}"#,
+        )];
+
+        for (epost_proof, expected_bytes, expected_str) in cases {
+            let ser = serde_json::to_vec(&epost_proof).unwrap();
+            assert_eq!(ser, expected_bytes);
+            let de = serde_json::from_slice::<JsonEPostProof>(&ser).unwrap();
+            assert_eq!(de, epost_proof);
+
+            let ser = serde_json::to_string(&epost_proof).unwrap();
+            assert_eq!(ser, expected_str);
+            let de = serde_json::from_str::<JsonEPostProof>(&ser).unwrap();
+            assert_eq!(de, epost_proof);
+        }
     }
 }

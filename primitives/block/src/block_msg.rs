@@ -1,8 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use serde::{de, ser};
-
 use cid::Cid;
+use serde::{de, ser};
 
 use crate::header::BlockHeader;
 
@@ -15,6 +14,13 @@ pub struct BlockMsg {
     pub bls_msgs: Vec<Cid>,
     /// The CIDs of secp256k1 messages.
     pub secp_msgs: Vec<Cid>,
+}
+
+impl BlockMsg {
+    /// Convert to the CID.
+    pub fn cid(&self) -> Cid {
+        self.header.cid()
+    }
 }
 
 impl ser::Serialize for BlockMsg {
@@ -37,9 +43,8 @@ impl<'de> de::Deserialize<'de> for BlockMsg {
 
 /// BlockMsg CBOR serialization/deserialization
 pub mod cbor {
-    use serde::{de, ser, Deserialize, Serialize};
-
     use cid::Cid;
+    use serde::{de, ser, Deserialize, Serialize};
 
     use super::BlockMsg;
     use crate::header::BlockHeader;

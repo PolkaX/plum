@@ -64,30 +64,97 @@ pub mod cbor {
             vrf_proof: vrf_proof.into_vec(),
         })
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use serde::{Deserialize, Serialize};
-
-    use super::Ticket;
-
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    struct CborTicket(#[serde(with = "super::cbor")] Ticket);
 
     #[test]
     fn ticket_cbor_serde() {
-        let ticket = CborTicket(Ticket {
-            vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
-        });
-        let expected = [
-            129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48,
-            118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48,
-        ];
+        use serde::{Deserialize, Serialize};
 
-        let ser = serde_cbor::to_vec(&ticket).unwrap();
-        assert_eq!(ser, &expected[..]);
-        let de = serde_cbor::from_slice::<CborTicket>(&ser).unwrap();
-        assert_eq!(de, ticket);
+        #[derive(Debug, PartialEq, Serialize, Deserialize)]
+        struct CborTicket(#[serde(with = "self")] Ticket);
+
+        let cases = vec![(
+            CborTicket(Ticket {
+                vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
+            }),
+            vec![
+                129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48,
+                48, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48,
+            ],
+        )];
+
+        for (ticket, expected) in cases {
+            let ser = serde_cbor::to_vec(&ticket).unwrap();
+            assert_eq!(ser, expected);
+            let de = serde_cbor::from_slice::<CborTicket>(&ser).unwrap();
+            assert_eq!(de, ticket);
+        }
+    }
+}
+
+/// Ticket JSON serialization/deserialization
+pub mod json {
+    use serde::{de, ser, Deserialize, Serialize};
+
+    use super::Ticket;
+
+    #[derive(Serialize, Deserialize)]
+    struct JsonTicket {
+        #[serde(rename = "VRFProof")]
+        vrf_proof: String,
+    }
+
+    /// JSON serialization
+    pub fn serialize<S>(ticket: &Ticket, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        let value = JsonTicket {
+            vrf_proof: base64::encode(&ticket.vrf_proof),
+        };
+        value.serialize(serializer)
+    }
+
+    /// JSON deserialization
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Ticket, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let ticket = JsonTicket::deserialize(deserializer)?;
+        Ok(Ticket {
+            vrf_proof: base64::decode(ticket.vrf_proof).expect("base64 decode shouldn't be fail"),
+        })
+    }
+
+    #[test]
+    fn ticket_json_serde() {
+        use serde::{Deserialize, Serialize};
+
+        #[derive(Debug, PartialEq, Serialize, Deserialize)]
+        struct JsonTicket(#[serde(with = "self")] Ticket);
+
+        let cases = vec![(
+            JsonTicket(Ticket {
+                vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
+            }),
+            vec![
+                123, 34, 86, 82, 70, 80, 114, 111, 111, 102, 34, 58, 34, 100, 110, 74, 109, 73, 72,
+                66, 121, 98, 50, 57, 109, 77, 68, 65, 119, 77, 68, 65, 119, 77, 72, 90, 121, 90,
+                105, 66, 119, 99, 109, 57, 118, 90, 106, 65, 119, 77, 68, 65, 119, 77, 68, 65, 61,
+                34, 125,
+            ],
+            r#"{"VRFProof":"dnJmIHByb29mMDAwMDAwMHZyZiBwcm9vZjAwMDAwMDA="}"#,
+        )];
+
+        for (ticket, expected_bytes, expected_str) in cases {
+            let ser = serde_json::to_vec(&ticket).unwrap();
+            assert_eq!(ser, expected_bytes);
+            let de = serde_json::from_slice::<JsonTicket>(&ser).unwrap();
+            assert_eq!(de, ticket);
+
+            let ser = serde_json::to_string(&ticket).unwrap();
+            assert_eq!(ser, expected_str);
+            let de = serde_json::from_str::<JsonTicket>(&ser).unwrap();
+            assert_eq!(de, ticket);
+        }
     }
 }

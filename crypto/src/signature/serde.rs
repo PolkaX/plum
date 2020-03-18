@@ -58,13 +58,13 @@ pub mod cbor {
 
     #[test]
     fn signature_cbor_serde() {
-        use serde_derive::{Deserialize, Serialize};
+        use serde::{Deserialize, Serialize};
 
         #[derive(Debug, PartialEq, Serialize, Deserialize)]
-        struct TestSignature(#[serde(with = "self")] Signature);
+        struct CborSignature(#[serde(with = "self")] Signature);
 
         let cases = vec![(
-            TestSignature(Signature {
+            CborSignature(Signature {
                 ty: SignatureType::Bls,
                 bytes: b"boo! im a signature".to_vec(),
             }),
@@ -77,7 +77,94 @@ pub mod cbor {
         for (signature, expected) in cases {
             let ser = serde_cbor::to_vec(&signature).unwrap();
             assert_eq!(ser, expected);
-            let de = serde_cbor::from_slice::<TestSignature>(&ser).unwrap();
+            let de = serde_cbor::from_slice::<CborSignature>(&ser).unwrap();
+            assert_eq!(signature, de);
+        }
+    }
+}
+
+/// Signature JSON serialization/deserialization.
+pub mod json {
+    use serde::{de, ser, Deserialize, Serialize};
+
+    use crate::signature::{Signature, SignatureType};
+
+    #[derive(Clone, Copy, Serialize, Deserialize)]
+    enum JsonSignatureType {
+        #[serde(rename = "secp256k1")]
+        Secp256k1,
+        #[serde(rename = "bls")]
+        Bls,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    struct JsonSignature {
+        #[serde(rename = "Type")]
+        ty: JsonSignatureType,
+        #[serde(rename = "Data")]
+        bytes: String,
+    }
+
+    /// JSON serialization.
+    pub fn serialize<S>(signature: &Signature, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        JsonSignature {
+            ty: match signature.ty {
+                SignatureType::Secp256k1 => JsonSignatureType::Secp256k1,
+                SignatureType::Bls => JsonSignatureType::Bls,
+            },
+            // Fuck golang
+            bytes: base64::encode(&signature.bytes),
+        }
+        .serialize(serializer)
+    }
+
+    /// JSON deserialization.
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Signature, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let signature = JsonSignature::deserialize(deserializer)?;
+        Ok(Signature {
+            ty: match signature.ty {
+                JsonSignatureType::Secp256k1 => SignatureType::Secp256k1,
+                JsonSignatureType::Bls => SignatureType::Bls,
+            },
+            bytes: base64::decode(signature.bytes).expect("base64 decode shouldn't be fail"),
+        })
+    }
+
+    #[test]
+    fn signature_json_serde() {
+        use serde::{Deserialize, Serialize};
+
+        #[derive(Debug, PartialEq, Serialize, Deserialize)]
+        struct JsonSignature(#[serde(with = "self")] Signature);
+
+        let cases = vec![(
+            JsonSignature(Signature {
+                ty: SignatureType::Bls,
+                bytes: b"boo! im a signature".to_vec(),
+            }),
+            vec![
+                123, 34, 84, 121, 112, 101, 34, 58, 34, 98, 108, 115, 34, 44, 34, 68, 97, 116, 97,
+                34, 58, 34, 89, 109, 57, 118, 73, 83, 66, 112, 98, 83, 66, 104, 73, 72, 78, 112,
+                90, 50, 53, 104, 100, 72, 86, 121, 90, 81, 61, 61, 34, 125,
+            ],
+            r#"{"Type":"bls","Data":"Ym9vISBpbSBhIHNpZ25hdHVyZQ=="}"#,
+        )];
+
+        for (signature, expected_bytes, expected_str) in cases {
+            let ser = serde_json::to_vec(&signature).unwrap();
+            assert_eq!(ser, expected_bytes);
+            let de = serde_json::from_slice::<JsonSignature>(&ser).unwrap();
+            assert_eq!(signature, de);
+
+            let ser = serde_json::to_string(&signature).unwrap();
+            assert_eq!(ser, expected_str);
+            let de = serde_json::from_str::<JsonSignature>(&ser).unwrap();
             assert_eq!(signature, de);
         }
     }

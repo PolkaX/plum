@@ -1,8 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use cid::{Cid, Codec};
 use serde::{de, ser};
-
-use cid::Cid;
 
 use plum_address::Address;
 use plum_bigint::BigInt;
@@ -41,6 +40,22 @@ pub struct BlockHeader {
 }
 
 impl BlockHeader {
+    /// Convert to the CID.
+    pub fn cid(&self) -> Cid {
+        let data = serde_cbor::to_vec(self)
+            .expect("CBOR serialization of BlockHeader shouldn't be failed");
+        self.cid_with_data(data)
+    }
+
+    /// Convert to the CID with the given CBOR serialized data of BlockHeader.
+    ///
+    /// For cases where serialized data of the BlockHeader is already known,
+    /// it's more cheaper than `cid`.
+    pub fn cid_with_data(&self, data: impl AsRef<[u8]>) -> Cid {
+        let hash = multihash::Blake2b256::digest(data.as_ref());
+        Cid::new_v1(Codec::DagCBOR, hash)
+    }
+
     ///
     pub fn last_ticket(&self) -> &Ticket {
         &self.ticket
@@ -67,9 +82,8 @@ impl<'de> de::Deserialize<'de> for BlockHeader {
 
 /// BlockHeader CBOR serialization/deserialization
 pub mod cbor {
-    use serde::{de, ser, Deserialize, Serialize};
-
     use cid::Cid;
+    use serde::{de, ser, Deserialize, Serialize};
 
     use plum_address::{address_cbor, Address};
     use plum_bigint::{bigint_cbor, BigInt};
@@ -183,6 +197,35 @@ pub mod cbor {
     }
 }
 
+/// BlockHeader JSON serialization/deserialization
+pub mod json {
+    use cid::Cid;
+    use serde::{de, ser, Deserialize, Serialize};
+
+    use plum_address::{address_json, Address};
+    use plum_bigint::{bigint_json, BigInt};
+    use plum_crypto::{signature_cbor, Signature};
+    use plum_ticket::{epost_proof_cbor, ticket_cbor, EPostProof, Ticket};
+
+    use super::BlockHeader;
+
+    /// JSON serialization
+    pub fn serialize<S>(header: &BlockHeader, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        unimplemented!()
+    }
+
+    /// CBOR deserialization
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<BlockHeader, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        unimplemented!()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use cid::Cid;
@@ -225,11 +268,11 @@ mod tests {
         }
     }
 
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    struct CborBlockHeader(#[serde(with = "super::cbor")] BlockHeader);
-
     #[test]
     fn block_header_cbor_serde() {
+        #[derive(Debug, PartialEq, Serialize, Deserialize)]
+        struct CborBlockHeader(#[serde(with = "super::cbor")] BlockHeader);
+
         let header = CborBlockHeader(new_block_header());
         let expected = [
             141, 69, 0, 191, 214, 251, 5, 129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111, 102,
@@ -253,6 +296,19 @@ mod tests {
         let ser = serde_cbor::to_vec(&header).unwrap();
         assert_eq!(ser, &expected[..]);
         let de = serde_cbor::from_slice::<CborBlockHeader>(&ser).unwrap();
+        assert_eq!(de, header);
+    }
+
+    #[test]
+    fn block_header_json_serde() {
+        #[derive(Debug, PartialEq, Serialize, Deserialize)]
+        struct JsonBlockHeader(#[serde(with = "super::json")] BlockHeader);
+
+        let header = JsonBlockHeader(new_block_header());
+        let expected = "";
+        let ser = serde_json::to_string(&header).unwrap();
+        assert_eq!(ser, &expected[..]);
+        let de = serde_json::from_str::<JsonBlockHeader>(&ser).unwrap();
         assert_eq!(de, header);
     }
 }

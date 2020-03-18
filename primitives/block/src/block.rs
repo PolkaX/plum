@@ -1,5 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use cid::Cid;
 use serde::{de, ser};
 
 use plum_message::{SignedMessage, UnsignedMessage};
@@ -15,6 +16,13 @@ pub struct Block {
     pub bls_msgs: Vec<UnsignedMessage>,
     /// The secp256k1 messages.
     pub secp_msgs: Vec<SignedMessage>,
+}
+
+impl Block {
+    /// Convert to the CID.
+    pub fn cid(&self) -> Cid {
+        self.header.cid()
+    }
 }
 
 impl ser::Serialize for Block {

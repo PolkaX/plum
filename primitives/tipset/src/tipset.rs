@@ -45,13 +45,13 @@ impl Tipset {
 pub mod cbor {
     use serde::{de, ser, Deserialize, Serialize};
 
-    use plum_block::BlockHeader;
+    use plum_block::{block_header_cbor, BlockHeader};
 
     use super::Tipset;
     use crate::key::TipsetKey;
 
     #[derive(Serialize)]
-    struct CborBlockHeaderRef<'a>(#[serde(with = "plum_block::block_header_cbor")] &'a BlockHeader);
+    struct CborBlockHeaderRef<'a>(#[serde(with = "block_header_cbor")] &'a BlockHeader);
     #[derive(Serialize)]
     struct TupleTipsetRef<'a>(
         #[serde(with = "crate::key::cbor")] &'a TipsetKey,
@@ -73,7 +73,7 @@ pub mod cbor {
     }
 
     #[derive(Deserialize)]
-    struct CborBlockHeader(#[serde(with = "plum_block::block_header_cbor")] BlockHeader);
+    struct CborBlockHeader(#[serde(with = "block_header_cbor")] BlockHeader);
     #[derive(Deserialize)]
     struct TupleTipset(
         #[serde(with = "crate::key::cbor")] TipsetKey,
@@ -96,18 +96,17 @@ pub mod cbor {
     }
 }
 
-/*
 /// TipsetKey JSON serialization/deserialization
 pub mod json {
     use serde::{de, ser, Deserialize, Serialize};
 
-    use plum_block::BlockHeader;
+    use plum_block::{block_header_json, BlockHeader};
 
     use super::Tipset;
     use crate::key::TipsetKey;
 
     #[derive(Serialize)]
-    struct JsonBlockHeaderRef<'a>(#[serde(with = "plum_block::block_header_json")] &'a BlockHeader);
+    struct JsonBlockHeaderRef<'a>(#[serde(with = "block_header_json")] &'a BlockHeader);
     #[derive(Serialize)]
     struct TupleTipsetRef<'a>(
         #[serde(with = "crate::key::json")] &'a TipsetKey,
@@ -129,7 +128,7 @@ pub mod json {
     }
 
     #[derive(Deserialize)]
-    struct JsonBlockHeader(#[serde(with = "plum_block::block_header_json")] BlockHeader);
+    struct JsonBlockHeader(#[serde(with = "block_header_json")] BlockHeader);
     #[derive(Deserialize)]
     struct TupleTipset(
         #[serde(with = "crate::key::json")] TipsetKey,
@@ -151,7 +150,6 @@ pub mod json {
         })
     }
 }
-*/
 
 #[cfg(test)]
 mod tests {}
