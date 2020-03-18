@@ -67,8 +67,6 @@ pub mod cbor {
 
     #[test]
     fn ticket_cbor_serde() {
-        use serde::{Deserialize, Serialize};
-
         #[derive(Debug, PartialEq, Serialize, Deserialize)]
         struct CborTicket(#[serde(with = "self")] Ticket);
 
@@ -108,10 +106,10 @@ pub mod json {
     where
         S: ser::Serializer,
     {
-        let value = JsonTicket {
+        JsonTicket {
             vrf_proof: base64::encode(&ticket.vrf_proof),
-        };
-        value.serialize(serializer)
+        }
+        .serialize(serializer)
     }
 
     /// JSON deserialization
@@ -127,8 +125,6 @@ pub mod json {
 
     #[test]
     fn ticket_json_serde() {
-        use serde::{Deserialize, Serialize};
-
         #[derive(Debug, PartialEq, Serialize, Deserialize)]
         struct JsonTicket(#[serde(with = "self")] Ticket);
 

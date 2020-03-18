@@ -64,12 +64,16 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        let blocks = tipset
-            .blocks
-            .iter()
-            .map(|block| CborBlockHeaderRef(block))
-            .collect::<Vec<_>>();
-        TupleTipsetRef(&tipset.key, &blocks, &tipset.height).serialize(serializer)
+        TupleTipsetRef(
+            &tipset.key,
+            &tipset
+                .blocks
+                .iter()
+                .map(|block| CborBlockHeaderRef(block))
+                .collect::<Vec<_>>(),
+            &tipset.height,
+        )
+        .serialize(serializer)
     }
 
     #[derive(Deserialize)]
@@ -108,44 +112,53 @@ pub mod json {
     #[derive(Serialize)]
     struct JsonBlockHeaderRef<'a>(#[serde(with = "block_header_json")] &'a BlockHeader);
     #[derive(Serialize)]
-    struct TupleTipsetRef<'a>(
-        #[serde(with = "crate::key::json")] &'a TipsetKey,
-        &'a [JsonBlockHeaderRef<'a>],
-        &'a u64,
-    );
+    struct JsonTipsetRef<'a> {
+        #[serde(with = "crate::key::json")]
+        key: &'a TipsetKey,
+        blocks: &'a [JsonBlockHeaderRef<'a>],
+        height: &'a u64,
+    }
 
-    /// CBOR serialization.
+    /// JSON serialization.
     pub fn serialize<S>(tipset: &Tipset, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
-        let blocks = tipset
-            .blocks
-            .iter()
-            .map(|block| JsonBlockHeaderRef(block))
-            .collect::<Vec<_>>();
-        TupleTipsetRef(&tipset.key, &blocks, &tipset.height).serialize(serializer)
+        JsonTipsetRef {
+            key: &tipset.key,
+            blocks: &tipset
+                .blocks
+                .iter()
+                .map(|block| JsonBlockHeaderRef(block))
+                .collect::<Vec<_>>(),
+            height: &tipset.height,
+        }
+        .serialize(serializer)
     }
 
     #[derive(Deserialize)]
     struct JsonBlockHeader(#[serde(with = "block_header_json")] BlockHeader);
     #[derive(Deserialize)]
-    struct TupleTipset(
-        #[serde(with = "crate::key::json")] TipsetKey,
-        Vec<JsonBlockHeader>,
-        u64,
-    );
+    struct JsonTipset {
+        #[serde(with = "crate::key::json")]
+        key: TipsetKey,
+        blocks: Vec<JsonBlockHeader>,
+        height: u64,
+    }
 
-    /// CBOR deserialization.
+    /// JSON deserialization.
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Tipset, D::Error>
     where
         D: de::Deserializer<'de>,
     {
-        let TupleTipset(key, blocks, height) = TupleTipset::deserialize(deserializer)?;
-        let blocks = blocks.into_iter().map(|block| block.0).collect();
-        Ok(Tipset {
+        let JsonTipset {
             key,
             blocks,
+            height,
+        } = JsonTipset::deserialize(deserializer)?;
+        Ok(Tipset {
+            key,
+            blocks: blocks.into_iter().map(|block| block.0).collect(),
             height,
         })
     }

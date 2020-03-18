@@ -116,16 +116,15 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        let parents = header
-            .parents
-            .iter()
-            .map(|parent| CborCidRef(parent))
-            .collect::<Vec<_>>();
         TupleBlockHeaderRef(
             &header.miner,
             &header.ticket,
             &header.epost_proof,
-            &parents,
+            &header
+                .parents
+                .iter()
+                .map(|parent| CborCidRef(parent))
+                .collect::<Vec<_>>(),
             &header.parent_weight,
             &header.height,
             &header.parent_state_root,
@@ -178,12 +177,11 @@ pub mod cbor {
             block_sig,
             fork_signaling,
         ) = TupleBlockHeader::deserialize(deserializer)?;
-        let parents = parents.into_iter().map(|parent| parent.0).collect();
         Ok(BlockHeader {
             miner,
             ticket,
             epost_proof,
-            parents,
+            parents: parents.into_iter().map(|parent| parent.0).collect(),
             parent_weight,
             height,
             parent_state_root,
@@ -252,16 +250,15 @@ pub mod json {
     where
         S: ser::Serializer,
     {
-        let parents = header
-            .parents
-            .iter()
-            .map(|parent| JsonCidRef(parent))
-            .collect::<Vec<_>>();
         JsonBlockHeaderRef {
             miner: &header.miner,
             ticket: &header.ticket,
             epost_proof: &header.epost_proof,
-            parents: &parents,
+            parents: &header
+                .parents
+                .iter()
+                .map(|parent| JsonCidRef(parent))
+                .collect::<Vec<_>>(),
             parent_weight: &header.parent_weight,
             height: &header.height,
             parent_state_root: &JsonCidRef(&header.parent_state_root),
@@ -319,12 +316,11 @@ pub mod json {
         D: de::Deserializer<'de>,
     {
         let header = JsonBlockHeader::deserialize(deserializer)?;
-        let parents = header.parents.into_iter().map(|parent| parent.0).collect();
         Ok(BlockHeader {
             miner: header.miner,
             ticket: header.ticket,
             epost_proof: header.epost_proof,
-            parents,
+            parents: header.parents.into_iter().map(|parent| parent.0).collect(),
             parent_weight: header.parent_weight,
             height: header.height,
             parent_state_root: header.parent_state_root.0,
@@ -405,6 +401,7 @@ mod tests {
             103, 110, 97, 116, 117, 114, 101, 0, 84, 2, 98, 111, 111, 33, 32, 105, 109, 32, 97, 32,
             115, 105, 103, 110, 97, 116, 117, 114, 101, 0,
         ];
+
         let ser = serde_cbor::to_vec(&header).unwrap();
         assert_eq!(ser, expected);
         let de = serde_cbor::from_slice::<CborBlockHeader>(&ser).unwrap();

@@ -83,8 +83,6 @@ pub mod cbor {
 
     #[test]
     fn epost_ticket_cbor_serde() {
-        use serde::{Deserialize, Serialize};
-
         #[derive(Debug, PartialEq, Serialize, Deserialize)]
         struct CborEPostTicket(#[serde(with = "self")] EPostTicket);
 
@@ -152,8 +150,6 @@ pub mod json {
 
     #[test]
     fn epost_ticket_json_serde() {
-        use serde::{Deserialize, Serialize};
-
         #[derive(Debug, PartialEq, Serialize, Deserialize)]
         struct JsonEPostTicket(#[serde(with = "self")] EPostTicket);
 

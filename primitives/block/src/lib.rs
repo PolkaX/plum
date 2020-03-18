@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-//! BlockHeader, Block, and MsgMeta with CBOR serialization/deserialization.
+//! BlockHeader, Block, and MsgMeta with CBOR and JSON serialization/deserialization.
 
 #![deny(missing_docs)]
 

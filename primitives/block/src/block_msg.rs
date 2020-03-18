@@ -63,17 +63,20 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        let bls_msgs = block
-            .bls_msgs
-            .iter()
-            .map(|cid| CborCidRef(cid))
-            .collect::<Vec<_>>();
-        let secp_msgs = block
-            .secp_msgs
-            .iter()
-            .map(|cid| CborCidRef(cid))
-            .collect::<Vec<_>>();
-        TupleBlockMsgRef(&block.header, &bls_msgs, &secp_msgs).serialize(serializer)
+        TupleBlockMsgRef(
+            &block.header,
+            &block
+                .bls_msgs
+                .iter()
+                .map(|cid| CborCidRef(cid))
+                .collect::<Vec<_>>(),
+            &block
+                .secp_msgs
+                .iter()
+                .map(|cid| CborCidRef(cid))
+                .collect::<Vec<_>>(),
+        )
+        .serialize(serializer)
     }
 
     #[derive(Deserialize)]
@@ -91,12 +94,10 @@ pub mod cbor {
         D: de::Deserializer<'de>,
     {
         let TupleBlockMsg(header, bls_msgs, secp_msgs) = TupleBlockMsg::deserialize(deserializer)?;
-        let bls_msgs = bls_msgs.into_iter().map(|cid| cid.0).collect();
-        let secp_msgs = secp_msgs.into_iter().map(|cid| cid.0).collect();
         Ok(BlockMsg {
             header,
-            bls_msgs,
-            secp_msgs,
+            bls_msgs: bls_msgs.into_iter().map(|cid| cid.0).collect(),
+            secp_msgs: secp_msgs.into_iter().map(|cid| cid.0).collect(),
         })
     }
 }

@@ -72,8 +72,9 @@ pub mod cbor {
         D: de::Deserializer<'de>,
     {
         let cids = Vec::<CborCid>::deserialize(deserializer)?;
-        let cids = cids.into_iter().map(|cid| cid.0).collect();
-        Ok(TipsetKey { cids })
+        Ok(TipsetKey {
+            cids: cids.into_iter().map(|cid| cid.0).collect(),
+        })
     }
 }
 
@@ -109,8 +110,9 @@ pub mod json {
         D: de::Deserializer<'de>,
     {
         let cids = Vec::<JsonCid>::deserialize(deserializer)?;
-        let cids = cids.into_iter().map(|cid| cid.0).collect();
-        Ok(TipsetKey { cids })
+        Ok(TipsetKey {
+            cids: cids.into_iter().map(|cid| cid.0).collect(),
+        })
     }
 }
 

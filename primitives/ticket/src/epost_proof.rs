@@ -54,13 +54,16 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        let candidates = epost_proof
-            .candidates
-            .iter()
-            .map(|candidates| CborEPostTicketRef(candidates))
-            .collect::<Vec<_>>();
-        TupleEPostProofRef(&epost_proof.proof, &epost_proof.post_rand, &candidates)
-            .serialize(serializer)
+        TupleEPostProofRef(
+            &epost_proof.proof,
+            &epost_proof.post_rand,
+            &epost_proof
+                .candidates
+                .iter()
+                .map(|candidates| CborEPostTicketRef(candidates))
+                .collect::<Vec<_>>(),
+        )
+        .serialize(serializer)
     }
 
     #[derive(Deserialize)]
@@ -93,8 +96,6 @@ pub mod cbor {
 
     #[test]
     fn epost_proof_cbor_serde() {
-        use serde::{Deserialize, Serialize};
-
         #[derive(Debug, PartialEq, Serialize, Deserialize)]
         struct CborEPostProof(#[serde(with = "self")] EPostProof);
 
@@ -142,15 +143,14 @@ pub mod json {
     where
         S: ser::Serializer,
     {
-        let candidates = epost_proof
-            .candidates
-            .iter()
-            .map(|candidate| JsonEPostTicketRef(candidate))
-            .collect::<Vec<_>>();
         JsonEPostProofRef {
             proof: base64::encode(&epost_proof.proof),
             post_rand: base64::encode(&epost_proof.post_rand),
-            candidates: &candidates,
+            candidates: &epost_proof
+                .candidates
+                .iter()
+                .map(|candidate| JsonEPostTicketRef(candidate))
+                .collect::<Vec<_>>(),
         }
         .serialize(serializer)
     }
@@ -172,16 +172,15 @@ pub mod json {
     {
         let epost_proof = JsonEPostProof::deserialize(deserializer)?;
         Ok(EPostProof {
-            proof: base64::decode(epost_proof.proof).expect(""),
-            post_rand: base64::decode(epost_proof.post_rand).expect(""),
+            proof: base64::decode(epost_proof.proof).expect("base64 decode shouldn't be fail"),
+            post_rand: base64::decode(epost_proof.post_rand)
+                .expect("base64 decode shouldn't be fail"),
             candidates: epost_proof.candidates,
         })
     }
 
     #[test]
     fn epost_proof_json_serde() {
-        use serde::{Deserialize, Serialize};
-
         #[derive(Debug, PartialEq, Serialize, Deserialize)]
         struct JsonEPostProof(#[serde(with = "self")] EPostProof);
 

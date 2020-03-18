@@ -3,12 +3,26 @@
 use cid::Cid;
 use thiserror::Error;
 
+///
 #[derive(Debug, Error)]
 pub enum TipsetError {
+    ///
     #[error("zero length array of blocks")]
     EmptyBlocks,
+    ///
     #[error("mismatching heights (expected {expected:?}, found {found:?})")]
-    MismatchingHeight { expected: u64, found: u64 },
+    MismatchingHeight {
+        ///
+        expected: u64,
+        ///
+        found: u64,
+    },
+    ///
     #[error("mismatching parents (expected {expected:?}, found {found:?})")]
-    MismatchingParent { expected: Cid, found: Cid },
+    MismatchingParent {
+        ///
+        expected: Cid,
+        ///
+        found: Cid,
+    },
 }
