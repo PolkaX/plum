@@ -1,5 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use cid::Cid;
 use serde::{de, ser};
 
 use plum_message::{SignedMessage, UnsignedMessage};
@@ -15,6 +16,13 @@ pub struct Block {
     pub bls_msgs: Vec<UnsignedMessage>,
     /// The secp256k1 messages.
     pub secp_msgs: Vec<SignedMessage>,
+}
+
+impl Block {
+    /// Convert to the CID.
+    pub fn cid(&self) -> Cid {
+        self.header.cid()
+    }
 }
 
 impl ser::Serialize for Block {
@@ -62,17 +70,20 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        let bls_msgs = block
-            .bls_msgs
-            .iter()
-            .map(|bls_msg| CborUnsignedMessageRef(bls_msg))
-            .collect::<Vec<_>>();
-        let secp_msgs = block
-            .secp_msgs
-            .iter()
-            .map(|secp_msg| CborSignedMessageRef(secp_msg))
-            .collect::<Vec<_>>();
-        TupleBlockRef(&block.header, &bls_msgs, &secp_msgs).serialize(serializer)
+        TupleBlockRef(
+            &block.header,
+            &block
+                .bls_msgs
+                .iter()
+                .map(|bls_msg| CborUnsignedMessageRef(bls_msg))
+                .collect::<Vec<_>>(),
+            &block
+                .secp_msgs
+                .iter()
+                .map(|secp_msg| CborSignedMessageRef(secp_msg))
+                .collect::<Vec<_>>(),
+        )
+        .serialize(serializer)
     }
 
     #[derive(Deserialize)]
@@ -92,12 +103,10 @@ pub mod cbor {
         D: de::Deserializer<'de>,
     {
         let TupleBlock(header, bls_msgs, secp_msgs) = TupleBlock::deserialize(deserializer)?;
-        let bls_msgs = bls_msgs.into_iter().map(|bls_msg| bls_msg.0).collect();
-        let secp_msgs = secp_msgs.into_iter().map(|secp_msg| secp_msg.0).collect();
         Ok(Block {
             header,
-            bls_msgs,
-            secp_msgs,
+            bls_msgs: bls_msgs.into_iter().map(|bls_msg| bls_msg.0).collect(),
+            secp_msgs: secp_msgs.into_iter().map(|secp_msg| secp_msg.0).collect(),
         })
     }
 }

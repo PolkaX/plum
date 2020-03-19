@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-//!
+//! MessageReceipt, SignedMessage, and UnsignedMessage with CBOR and JSON serialization/deserialization.
 
 #![deny(missing_docs)]
 

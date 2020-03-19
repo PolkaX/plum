@@ -1,5 +1,5 @@
 [package]
-name = "plum_block"
+name = "plum_tipset"
 version = "0.1.0"
 authors = ["The PolkaX Authors"]
 edition = "2018"
@@ -7,14 +7,18 @@ license = "GPL-3.0"
 
 [dependencies]
 cid = { version = "0.4", features = ["impl-serde"] }
-multihash = "0.10"
 serde = { version = "1.0", features = ["derive"] }
-serde_bytes = "0.11"
-serde_cbor = { version = "0.11.1", features = ["tags"] }
+thiserror = "1.0"
+
+plum_bigint = { path = "../bigint" }
+plum_block = { path = "../block" }
+plum_ticket = { path = "../ticket" }
+
+[dev-dependencies]
+hex = "0.4"
+multihash = "0.10"
+serde_cbor = { version = "0.11", features = ["tags"] }
 serde_json = "1.0"
 
 plum_address = { path = "../address" }
-plum_bigint = { path = "../bigint" }
 plum_crypto = { path = "../../crypto" }
-plum_message = { path = "../message" }
-plum_ticket = { path = "../ticket" }

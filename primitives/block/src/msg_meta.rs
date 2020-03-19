@@ -1,8 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use cid::{Cid, Codec};
 use serde::{de, ser};
-
-use cid::Cid;
 
 ///
 #[derive(Eq, PartialEq, Debug, Clone, Hash)]
@@ -11,6 +10,24 @@ pub struct MsgMeta {
     pub bls_msg: Cid,
     ///
     pub secp_msg: Cid,
+}
+
+impl MsgMeta {
+    /// Convert to the CID.
+    pub fn cid(&self) -> Cid {
+        let data =
+            serde_cbor::to_vec(self).expect("CBOR serialization of MsgMeta shouldn't be failed");
+        self.cid_with_data(data)
+    }
+
+    /// Convert to the CID with the given CBOR serialized data of MsgData.
+    ///
+    /// For cases where serialized data of the MsgData is already known,
+    /// it's more cheaper than `cid`.
+    pub fn cid_with_data(&self, data: impl AsRef<[u8]>) -> Cid {
+        let hash = multihash::Blake2b256::digest(data.as_ref());
+        Cid::new_v1(Codec::DagCBOR, hash)
+    }
 }
 
 impl ser::Serialize for MsgMeta {
@@ -33,9 +50,8 @@ impl<'de> de::Deserialize<'de> for MsgMeta {
 
 /// Block CBOR serialization/deserialization
 pub mod cbor {
-    use serde::{de, ser, Deserialize, Serialize};
-
     use cid::Cid;
+    use serde::{de, ser, Deserialize, Serialize};
 
     use super::MsgMeta;
 
