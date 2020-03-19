@@ -132,23 +132,12 @@ pub mod json {
             JsonTicket(Ticket {
                 vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
             }),
-            vec![
-                123, 34, 86, 82, 70, 80, 114, 111, 111, 102, 34, 58, 34, 100, 110, 74, 109, 73, 72,
-                66, 121, 98, 50, 57, 109, 77, 68, 65, 119, 77, 68, 65, 119, 77, 72, 90, 121, 90,
-                105, 66, 119, 99, 109, 57, 118, 90, 106, 65, 119, 77, 68, 65, 119, 77, 68, 65, 61,
-                34, 125,
-            ],
             r#"{"VRFProof":"dnJmIHByb29mMDAwMDAwMHZyZiBwcm9vZjAwMDAwMDA="}"#,
         )];
 
-        for (ticket, expected_bytes, expected_str) in cases {
-            let ser = serde_json::to_vec(&ticket).unwrap();
-            assert_eq!(ser, expected_bytes);
-            let de = serde_json::from_slice::<JsonTicket>(&ser).unwrap();
-            assert_eq!(de, ticket);
-
+        for (ticket, expected) in cases {
             let ser = serde_json::to_string(&ticket).unwrap();
-            assert_eq!(ser, expected_str);
+            assert_eq!(ser, expected);
             let de = serde_json::from_str::<JsonTicket>(&ser).unwrap();
             assert_eq!(de, ticket);
         }

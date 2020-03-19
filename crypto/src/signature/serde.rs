@@ -148,22 +148,12 @@ pub mod json {
                 ty: SignatureType::Bls,
                 bytes: b"boo! im a signature".to_vec(),
             }),
-            vec![
-                123, 34, 84, 121, 112, 101, 34, 58, 34, 98, 108, 115, 34, 44, 34, 68, 97, 116, 97,
-                34, 58, 34, 89, 109, 57, 118, 73, 83, 66, 112, 98, 83, 66, 104, 73, 72, 78, 112,
-                90, 50, 53, 104, 100, 72, 86, 121, 90, 81, 61, 61, 34, 125,
-            ],
             r#"{"Type":"bls","Data":"Ym9vISBpbSBhIHNpZ25hdHVyZQ=="}"#,
         )];
 
-        for (signature, expected_bytes, expected_str) in cases {
-            let ser = serde_json::to_vec(&signature).unwrap();
-            assert_eq!(ser, expected_bytes);
-            let de = serde_json::from_slice::<JsonSignature>(&ser).unwrap();
-            assert_eq!(signature, de);
-
+        for (signature, expected) in cases {
             let ser = serde_json::to_string(&signature).unwrap();
-            assert_eq!(ser, expected_str);
+            assert_eq!(ser, expected);
             let de = serde_json::from_str::<JsonSignature>(&ser).unwrap();
             assert_eq!(signature, de);
         }

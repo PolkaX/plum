@@ -190,23 +190,12 @@ pub mod json {
                 post_rand: b"random".to_vec(),
                 candidates: vec![],
             }),
-            vec![
-                123, 34, 80, 114, 111, 111, 102, 34, 58, 34, 99, 72, 74, 49, 100, 87, 89, 61, 34,
-                44, 34, 80, 111, 115, 116, 82, 97, 110, 100, 34, 58, 34, 99, 109, 70, 117, 90, 71,
-                57, 116, 34, 44, 34, 67, 97, 110, 100, 105, 100, 97, 116, 101, 115, 34, 58, 91, 93,
-                125,
-            ],
             r#"{"Proof":"cHJ1dWY=","PostRand":"cmFuZG9t","Candidates":[]}"#,
         )];
 
-        for (epost_proof, expected_bytes, expected_str) in cases {
-            let ser = serde_json::to_vec(&epost_proof).unwrap();
-            assert_eq!(ser, expected_bytes);
-            let de = serde_json::from_slice::<JsonEPostProof>(&ser).unwrap();
-            assert_eq!(de, epost_proof);
-
+        for (epost_proof, expected) in cases {
             let ser = serde_json::to_string(&epost_proof).unwrap();
-            assert_eq!(ser, expected_str);
+            assert_eq!(ser, expected);
             let de = serde_json::from_str::<JsonEPostProof>(&ser).unwrap();
             assert_eq!(de, epost_proof);
         }

@@ -2290,10 +2290,13 @@ dependencies = [
 name = "plum_tipset"
 version = "0.1.0"
 dependencies = [
- "cid 0.4.0 (git+https://github.com/PolkaX/rust-cid?branch=impl-serde)",
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex",
  "multihash",
+ "plum_address",
  "plum_block",
+ "plum_crypto",
+ "plum_ticket",
  "serde",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json",

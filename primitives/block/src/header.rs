@@ -346,15 +346,12 @@ mod tests {
     use super::BlockHeader;
 
     fn new_block_header() -> BlockHeader {
-        let id = 12_512_063;
-        let addr = Address::new_id_addr(id).unwrap();
-
         let cid: Cid = "bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"
             .parse()
             .unwrap();
 
         BlockHeader {
-            miner: addr,
+            miner: Address::new_id_addr(12_512_063).unwrap(),
             ticket: Ticket {
                 vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
             },
@@ -417,59 +414,10 @@ mod tests {
         struct JsonBlockHeader(#[serde(with = "super::json")] BlockHeader);
 
         let header = JsonBlockHeader(new_block_header());
-        let expected_bytes = vec![
-            123, 34, 77, 105, 110, 101, 114, 34, 58, 34, 116, 48, 49, 50, 53, 49, 50, 48, 54, 51,
-            34, 44, 34, 84, 105, 99, 107, 101, 116, 34, 58, 123, 34, 86, 82, 70, 80, 114, 111, 111,
-            102, 34, 58, 34, 100, 110, 74, 109, 73, 72, 66, 121, 98, 50, 57, 109, 77, 68, 65, 119,
-            77, 68, 65, 119, 77, 72, 90, 121, 90, 105, 66, 119, 99, 109, 57, 118, 90, 106, 65, 119,
-            77, 68, 65, 119, 77, 68, 65, 61, 34, 125, 44, 34, 69, 80, 111, 115, 116, 80, 114, 111,
-            111, 102, 34, 58, 123, 34, 80, 114, 111, 111, 102, 34, 58, 34, 99, 72, 74, 49, 100, 87,
-            89, 61, 34, 44, 34, 80, 111, 115, 116, 82, 97, 110, 100, 34, 58, 34, 99, 109, 70, 117,
-            90, 71, 57, 116, 34, 44, 34, 67, 97, 110, 100, 105, 100, 97, 116, 101, 115, 34, 58, 91,
-            93, 125, 44, 34, 80, 97, 114, 101, 110, 116, 115, 34, 58, 91, 123, 34, 47, 34, 58, 34,
-            98, 97, 102, 121, 114, 101, 105, 99, 109, 97, 106, 53, 104, 104, 111, 121, 53, 109,
-            103, 113, 118, 97, 109, 102, 104, 103, 101, 120, 120, 121, 101, 114, 103, 119, 55, 104,
-            100, 101, 115, 104, 105, 122, 103, 104, 111, 100, 119, 107, 106, 103, 54, 113, 109,
-            112, 111, 99, 111, 55, 105, 34, 125, 44, 123, 34, 47, 34, 58, 34, 98, 97, 102, 121,
-            114, 101, 105, 99, 109, 97, 106, 53, 104, 104, 111, 121, 53, 109, 103, 113, 118, 97,
-            109, 102, 104, 103, 101, 120, 120, 121, 101, 114, 103, 119, 55, 104, 100, 101, 115,
-            104, 105, 122, 103, 104, 111, 100, 119, 107, 106, 103, 54, 113, 109, 112, 111, 99, 111,
-            55, 105, 34, 125, 93, 44, 34, 80, 97, 114, 101, 110, 116, 87, 101, 105, 103, 104, 116,
-            34, 58, 34, 49, 50, 51, 49, 50, 53, 49, 50, 54, 50, 49, 50, 34, 44, 34, 72, 101, 105,
-            103, 104, 116, 34, 58, 56, 53, 57, 49, 57, 50, 57, 56, 55, 50, 51, 44, 34, 80, 97, 114,
-            101, 110, 116, 83, 116, 97, 116, 101, 82, 111, 111, 116, 34, 58, 123, 34, 47, 34, 58,
-            34, 98, 97, 102, 121, 114, 101, 105, 99, 109, 97, 106, 53, 104, 104, 111, 121, 53, 109,
-            103, 113, 118, 97, 109, 102, 104, 103, 101, 120, 120, 121, 101, 114, 103, 119, 55, 104,
-            100, 101, 115, 104, 105, 122, 103, 104, 111, 100, 119, 107, 106, 103, 54, 113, 109,
-            112, 111, 99, 111, 55, 105, 34, 125, 44, 34, 80, 97, 114, 101, 110, 116, 77, 101, 115,
-            115, 97, 103, 101, 82, 101, 99, 101, 105, 112, 116, 115, 34, 58, 123, 34, 47, 34, 58,
-            34, 98, 97, 102, 121, 114, 101, 105, 99, 109, 97, 106, 53, 104, 104, 111, 121, 53, 109,
-            103, 113, 118, 97, 109, 102, 104, 103, 101, 120, 120, 121, 101, 114, 103, 119, 55, 104,
-            100, 101, 115, 104, 105, 122, 103, 104, 111, 100, 119, 107, 106, 103, 54, 113, 109,
-            112, 111, 99, 111, 55, 105, 34, 125, 44, 34, 77, 101, 115, 115, 97, 103, 101, 115, 34,
-            58, 123, 34, 47, 34, 58, 34, 98, 97, 102, 121, 114, 101, 105, 99, 109, 97, 106, 53,
-            104, 104, 111, 121, 53, 109, 103, 113, 118, 97, 109, 102, 104, 103, 101, 120, 120, 121,
-            101, 114, 103, 119, 55, 104, 100, 101, 115, 104, 105, 122, 103, 104, 111, 100, 119,
-            107, 106, 103, 54, 113, 109, 112, 111, 99, 111, 55, 105, 34, 125, 44, 34, 66, 76, 83,
-            65, 103, 103, 114, 101, 103, 97, 116, 101, 34, 58, 123, 34, 84, 121, 112, 101, 34, 58,
-            34, 98, 108, 115, 34, 44, 34, 68, 97, 116, 97, 34, 58, 34, 89, 109, 57, 118, 73, 83,
-            66, 112, 98, 83, 66, 104, 73, 72, 78, 112, 90, 50, 53, 104, 100, 72, 86, 121, 90, 81,
-            61, 61, 34, 125, 44, 34, 84, 105, 109, 101, 115, 116, 97, 109, 112, 34, 58, 48, 44, 34,
-            66, 108, 111, 99, 107, 83, 105, 103, 34, 58, 123, 34, 84, 121, 112, 101, 34, 58, 34,
-            98, 108, 115, 34, 44, 34, 68, 97, 116, 97, 34, 58, 34, 89, 109, 57, 118, 73, 83, 66,
-            112, 98, 83, 66, 104, 73, 72, 78, 112, 90, 50, 53, 104, 100, 72, 86, 121, 90, 81, 61,
-            61, 34, 125, 44, 34, 70, 111, 114, 107, 83, 105, 103, 110, 97, 108, 105, 110, 103, 34,
-            58, 48, 125,
-        ];
-        let expected_str = r#"{"Miner":"t012512063","Ticket":{"VRFProof":"dnJmIHByb29mMDAwMDAwMHZyZiBwcm9vZjAwMDAwMDA="},"EPostProof":{"Proof":"cHJ1dWY=","PostRand":"cmFuZG9t","Candidates":[]},"Parents":[{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"}],"ParentWeight":"123125126212","Height":85919298723,"ParentStateRoot":{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},"ParentMessageReceipts":{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},"Messages":{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},"BLSAggregate":{"Type":"bls","Data":"Ym9vISBpbSBhIHNpZ25hdHVyZQ=="},"Timestamp":0,"BlockSig":{"Type":"bls","Data":"Ym9vISBpbSBhIHNpZ25hdHVyZQ=="},"ForkSignaling":0}"#;
-
-        let ser = serde_json::to_vec(&header).unwrap();
-        assert_eq!(ser, expected_bytes);
-        let de = serde_json::from_slice::<JsonBlockHeader>(&ser).unwrap();
-        assert_eq!(de, header);
+        let expected = r#"{"Miner":"t012512063","Ticket":{"VRFProof":"dnJmIHByb29mMDAwMDAwMHZyZiBwcm9vZjAwMDAwMDA="},"EPostProof":{"Proof":"cHJ1dWY=","PostRand":"cmFuZG9t","Candidates":[]},"Parents":[{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"}],"ParentWeight":"123125126212","Height":85919298723,"ParentStateRoot":{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},"ParentMessageReceipts":{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},"Messages":{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},"BLSAggregate":{"Type":"bls","Data":"Ym9vISBpbSBhIHNpZ25hdHVyZQ=="},"Timestamp":0,"BlockSig":{"Type":"bls","Data":"Ym9vISBpbSBhIHNpZ25hdHVyZQ=="},"ForkSignaling":0}"#;
 
         let ser = serde_json::to_string(&header).unwrap();
-        assert_eq!(ser, expected_str);
+        assert_eq!(ser, expected);
         let de = serde_json::from_str::<JsonBlockHeader>(&ser).unwrap();
         assert_eq!(de, header);
     }

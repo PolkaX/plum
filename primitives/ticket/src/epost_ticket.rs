@@ -159,23 +159,12 @@ pub mod json {
                 sector_id: 6,
                 challenge_index: 8,
             }),
-            vec![
-                123, 34, 80, 97, 114, 116, 105, 97, 108, 34, 58, 34, 90, 88, 66, 118, 99, 51, 82,
-                102, 100, 71, 108, 106, 97, 50, 86, 48, 34, 44, 34, 83, 101, 99, 116, 111, 114, 73,
-                68, 34, 58, 54, 44, 34, 67, 104, 97, 108, 108, 101, 110, 103, 101, 73, 110, 100,
-                101, 120, 34, 58, 56, 125,
-            ],
             r#"{"Partial":"ZXBvc3RfdGlja2V0","SectorID":6,"ChallengeIndex":8}"#,
         )];
 
-        for (epost_ticket, expected_bytes, expected_str) in cases {
-            let ser = serde_json::to_vec(&epost_ticket).unwrap();
-            assert_eq!(ser, expected_bytes);
-            let de = serde_json::from_slice::<JsonEPostTicket>(&ser).unwrap();
-            assert_eq!(de, epost_ticket);
-
+        for (epost_ticket, expected) in cases {
             let ser = serde_json::to_string(&epost_ticket).unwrap();
-            assert_eq!(ser, expected_str);
+            assert_eq!(ser, expected);
             let de = serde_json::from_str::<JsonEPostTicket>(&ser).unwrap();
             assert_eq!(de, epost_ticket);
         }
