@@ -10,7 +10,9 @@ cid = { version = "0.4", features = ["impl-serde"] }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0"
 
+plum_bigint = { path = "../bigint" }
 plum_block = { path = "../block" }
+plum_ticket = { path = "../ticket" }
 
 [dev-dependencies]
 hex = "0.4"
@@ -20,4 +22,3 @@ serde_json = "1.0"
 
 plum_address = { path = "../address" }
 plum_crypto = { path = "../../crypto" }
-plum_ticket = { path = "../ticket" }
