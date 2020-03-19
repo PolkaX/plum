@@ -1,5 +1,5 @@
 [package]
-name = "abi"
+name = "actors"
 version = "0.1.0"
 authors = ["The PolkaX Authors"]
 edition = "2018"
@@ -17,8 +17,12 @@ thiserror = "1.0"
 
 types = { path = "../types" }
 plum_bigint = { path = "../../primitives/bigint" }
+plum_address = { path = "../../primitives/address" }
+plum_types = { path = "../../primitives/types" }
 codec-rle = { path = "../../codec/rle" }
 serde-support = { package = "codec-serde-support", path = "../../codec/serde-support" }
 
 [dev-dependencies]
 serde_cbor = "0.11"
+hex-literal = "0.2"
+multihash = "0.10.1"

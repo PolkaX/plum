@@ -1,10 +1,10 @@
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::sector::PrivatePoStCandidateProof;
+use super::sector::PrivatePoStCandidateProof;
 
 pub mod option_prev_post_candidate_proof {
     use super::*;
-    use crate::sector::RegisteredProof;
+    use crate::abi::sector::RegisteredProof;
     use std::convert::TryFrom;
 
     #[derive(Serialize, Deserialize)]
