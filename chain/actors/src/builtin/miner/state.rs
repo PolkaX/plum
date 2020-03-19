@@ -1,14 +1,13 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 
 use cid::Cid;
-use types::chain_epoch::ChainEpoch;
 use plum_address::Address;
+use plum_types::{DealId, DealWeight, PeerId, TokenAmount};
+use types::chain_epoch::ChainEpoch;
 
 use crate::abi::bitfield::BitField;
 use crate::abi::sector::{SectorNumber, SectorSize};
-
-use super::{PeerId, DealId, DealWeight, TokenAmount};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize_tuple, Deserialize_tuple)]
 pub struct State {
@@ -30,11 +29,11 @@ pub struct MinerInfo {
     /// - This address is also allowed to change the worker address for the miner.
     ///
     /// Must be an ID-address.
-    #[serde(with="plum_address::address_cbor")]
+    #[serde(with = "plum_address::address_cbor")]
     pub owner: Address,
     /// Worker account for this miner. The associated pubkey-type address is used
     /// to sign blocks and messages on behalf of this miner. Must be an ID-address.
-    #[serde(with="plum_address::address_cbor")]
+    #[serde(with = "plum_address::address_cbor")]
     pub worker: Address,
     pub pending_worker_key: Option<WorkerKeyChange>,
     /// Libp2p identity that should be used when connecting to this miner.
@@ -58,7 +57,7 @@ pub struct PoStState {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize_tuple, Deserialize_tuple)]
 pub struct WorkerKeyChange {
     /// Must be an ID address
-    #[serde(with="plum_address::address_cbor")]
+    #[serde(with = "plum_address::address_cbor")]
     pub new_worker: Address,
     pub effective_at: ChainEpoch,
 }
@@ -77,7 +76,7 @@ pub struct SectorPreCommitInfo {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize_tuple, Deserialize_tuple)]
 pub struct SectorPreCommitOnChainInfo {
     pub info: SectorPreCommitInfo,
-    #[serde(with="plum_bigint::bigint_cbor")]
+    #[serde(with = "plum_bigint::bigint_cbor")]
     pub precommit_deposit: TokenAmount,
     pub precommit_epoch: ChainEpoch,
 }
@@ -88,13 +87,11 @@ pub struct SectorOnChainInfo {
     /// Epoch at which SectorProveCommit is accepted
     pub activation_epoch: ChainEpoch,
     /// Integral of active deals over sector lifetime, 0 if CommittedCapacity sector
-    #[serde(with="plum_bigint::bigint_cbor")]
+    #[serde(with = "plum_bigint::bigint_cbor")]
     pub deal_weight: DealWeight,
     /// Fixed pledge collateral requirement determined at activation
-    #[serde(with="plum_bigint::bigint_cbor")]
+    #[serde(with = "plum_bigint::bigint_cbor")]
     pub pledge_requirement: TokenAmount,
     pub declared_fault_epoch: ChainEpoch,
     pub declared_fault_duration: ChainEpoch,
 }
-
-

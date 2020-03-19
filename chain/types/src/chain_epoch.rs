@@ -1,13 +1,15 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 use serde::{Deserialize, Serialize};
 
+use std::borrow::{Borrow, BorrowMut};
 use std::convert::TryInto;
 use std::num::TryFromIntError;
 use std::ops::{Deref, DerefMut};
-use std::borrow::{Borrow, BorrowMut};
 
 /// An epoch represents a single valid state in the blockchain
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Ord, PartialOrd, Hash, Default, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Ord, PartialOrd, Hash, Default, Serialize, Deserialize,
+)]
 pub struct ChainEpoch(u64);
 
 impl From<u64> for ChainEpoch {

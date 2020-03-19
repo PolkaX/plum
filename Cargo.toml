@@ -40,6 +40,7 @@ members = [
   "primitives/message",
   "primitives/ticket",
   "primitives/tipset",
+  "primitives/types",
   "sigs",
   "vm",
 ]

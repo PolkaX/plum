@@ -18,6 +18,7 @@ thiserror = "1.0"
 types = { path = "../types" }
 plum_bigint = { path = "../../primitives/bigint" }
 plum_address = { path = "../../primitives/address" }
+plum_types = { path = "../../primitives/types" }
 codec-rle = { path = "../../codec/rle" }
 serde-support = { package = "codec-serde-support", path = "../../codec/serde-support" }
 
