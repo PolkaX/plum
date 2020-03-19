@@ -3,7 +3,7 @@ use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 
 use cid::Cid;
 
-use crate::error::{PieceError, PieceResult};
+use super::error::{PieceError, PieceResult};
 
 // UnpaddedPieceSize is the size of a piece, in bytes
 #[derive(Debug, Clone, PartialEq)]

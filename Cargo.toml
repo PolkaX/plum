@@ -13,7 +13,6 @@ name = "plum-node"
 path = "src/bin/main.rs"
 
 [dependencies]
-abi = { path = "./chain/abi"}
 cli = { path = "./cli" }
 wallet = { path = "./chain/wallet" }
 
@@ -23,7 +22,7 @@ wallet = { path = "./chain/wallet" }
 
 [workspace]
 members = [
-  "chain/abi",
+  "chain/actors",
   "chain/types",
   "chain/wallet",
   "chain",
