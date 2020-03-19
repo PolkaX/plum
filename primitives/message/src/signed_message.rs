@@ -1,8 +1,9 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use cid::{Cid, Codec};
 use serde::{de, ser};
 
-use plum_crypto::Signature;
+use plum_crypto::{Signature, SignatureType};
 
 use crate::unsigned_message::UnsignedMessage;
 
@@ -13,6 +14,31 @@ pub struct SignedMessage {
     pub message: UnsignedMessage,
     /// The signature.
     pub signature: Signature,
+}
+
+impl SignedMessage {
+    /// Convert to the CID.
+    pub fn cid(&self) -> Cid {
+        if self.signature.r#type() == SignatureType::Bls {
+            return self.message.cid();
+        }
+        let data = serde_cbor::to_vec(self)
+            .expect("CBOR serialization of SignedMessage shouldn't be failed");
+        let hash = multihash::Blake2b256::digest(&data);
+        Cid::new_v1(Codec::DagCBOR, hash)
+    }
+
+    /// Convert to the CID with the given CBOR serialized data of SignedMessage.
+    ///
+    /// For cases where serialized data of the SignedMessage is already known,
+    /// it's more cheaper than `cid`.
+    pub fn cid_with_data(&self, data: impl AsRef<[u8]>) -> Cid {
+        if self.signature.r#type() == SignatureType::Bls {
+            return self.message.cid();
+        }
+        let hash = multihash::Blake2b256::digest(data.as_ref());
+        Cid::new_v1(Codec::DagCBOR, hash)
+    }
 }
 
 impl ser::Serialize for SignedMessage {

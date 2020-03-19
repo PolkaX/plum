@@ -6,12 +6,12 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
+cid = { version = "0.4", features = ["impl-serde"] }
+multihash = "0.10"
 serde = { version = "1.0", features = ["derive"] }
 serde_bytes = "0.11"
+serde_cbor = { version = "0.11.1", features = ["tags"] }
 
 plum_address = { path = "../address" }
 plum_bigint = { path = "../bigint" }
 plum_crypto = { path = "../../crypto" }
-
-[dev-dependencies]
-serde_cbor = "0.11"

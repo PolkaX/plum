@@ -77,28 +77,21 @@ pub mod cbor {
             gas_used,
         })
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use serde::{Deserialize, Serialize};
-
-    use super::MessageReceipt;
-
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    struct CborMessageReceipt(#[serde(with = "super::cbor")] MessageReceipt);
 
     #[test]
     fn message_receipt_cbor_serde() {
+        #[derive(Debug, PartialEq, Serialize, Deserialize)]
+        struct CborMessageReceipt(#[serde(with = "self")] MessageReceipt);
+
         let receipt = CborMessageReceipt(MessageReceipt {
             exit_code: 127u8,
             ret: b"ret".to_vec(),
             gas_used: 1_776_234.into(),
         });
-        let expected = [131, 24, 127, 67, 114, 101, 116, 68, 0, 27, 26, 106];
+        let expected = vec![131, 24, 127, 67, 114, 101, 116, 68, 0, 27, 26, 106];
 
         let ser = serde_cbor::to_vec(&receipt).unwrap();
-        assert_eq!(ser, &expected[..]);
+        assert_eq!(ser, expected);
         let de = serde_cbor::from_slice::<CborMessageReceipt>(&ser).unwrap();
         assert_eq!(de, receipt);
     }
