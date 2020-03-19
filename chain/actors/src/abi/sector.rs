@@ -5,7 +5,7 @@ use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use cid::Cid;
 
 use plum_bigint::BigInt;
-use primitive_types::H256;
+use plum_hash::H256;
 use types::chain_epoch::ChainEpoch;
 
 use super::serde_helper;
@@ -130,9 +130,9 @@ pub struct OnChainSealVerifyInfo {
 pub struct SealVerifyInfo {
     pub sector: SectorID,
     pub on_chain: OnChainSealVerifyInfo,
-    #[serde(with = "serde_support::h256::raw")]
+    #[serde(with = "plum_hash::h256_raw")]
     pub seal_randomness: Randomness,
-    #[serde(with = "serde_support::h256::raw")]
+    #[serde(with = "plum_hash::h256_raw")]
     pub interactive_randomness: Randomness,
     pub unsealed_cid: Cid, // CommD
 }
@@ -141,7 +141,7 @@ pub struct SealVerifyInfo {
 pub struct PoStCandidate {
     pub proof: RegisteredProof,
     /// Optional —  will eventually be omitted for SurprisePoSt verification, needed for now.
-    #[serde(with = "serde_support::h256::option")]
+    #[serde(with = "plum_hash::h256_option")]
     pub partial_ticket: Option<PartialTicket>,
     /// Optional — should be ommitted for verification.
     #[serde(with = "serde_helper::option_prev_post_candidate_proof")]
@@ -197,7 +197,7 @@ pub struct OnChainElectionPoStVerifyInfo {
     pub candidates: Vec<PoStCandidate>,
     /// each PoStProof has its own RegisteredProof
     pub proofs: Vec<PoStProof>,
-    #[serde(with = "serde_support::h256::raw")]
+    #[serde(with = "plum_hash::h256_raw")]
     pub randomness: Randomness,
 }
 
