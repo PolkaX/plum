@@ -92,6 +92,16 @@ impl Address {
         &self.payload
     }
 
+    /// Return the actual public key of the address.
+    pub fn pubkey(&self) -> Result<&[u8], AddressError> {
+        match self.protocol() {
+            Protocol::ID => Err(AddressError::UnknownPublicKey),
+            Protocol::SECP256K1 => Ok(self.payload()),
+            Protocol::Actor => Err(AddressError::UnknownPublicKey),
+            Protocol::BLS => Ok(self.payload())
+        }
+    }
+
     /// Return the encoded bytes of address (protocol + payload).
     pub fn as_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(1 + self.payload.len());

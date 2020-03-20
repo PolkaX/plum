@@ -38,8 +38,19 @@ impl convert::TryFrom<u8> for Protocol {
     }
 }
 
+impl From<Protocol> for u8 {
+    fn from(protocol: Protocol) -> Self {
+        match protocol {
+            Protocol::ID => 0,
+            Protocol::SECP256K1 => 1,
+            Protocol::Actor => 2,
+            Protocol::BLS => 3,
+        }
+    }
+}
+
 impl fmt::Display for Protocol {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", *self as u8)
+        write!(f, "{}", u8::from(*self))
     }
 }
