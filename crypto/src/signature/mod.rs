@@ -85,7 +85,7 @@ impl Signature {
         M: AsRef<[u8]>,
     {
         match ty {
-            SignatureType::Secp256k1 => Self::sign_secp2526k1(privkey, msg),
+            SignatureType::Secp256k1 => Self::sign_secp256k1(privkey, msg),
             SignatureType::Bls => Self::sign_bls(privkey, msg),
         }
     }
@@ -93,7 +93,7 @@ impl Signature {
     /// Sign the message with the given secp256k1 private key.
     ///
     /// Return the secp256k1 signature.
-    pub fn sign_secp2526k1<K, M>(privkey: K, msg: M) -> Result<Self, CryptoError>
+    pub fn sign_secp256k1<K, M>(privkey: K, msg: M) -> Result<Self, CryptoError>
     where
         K: AsRef<[u8]>,
         M: AsRef<[u8]>,
@@ -187,7 +187,7 @@ mod tests {
         let pubkey = PublicKey::from_privkey(&privkey);
         let (privkey, pubkey) = (privkey.into_vec(), pubkey.into_vec());
         let msg = "hello, world";
-        let signature = Signature::sign_secp2526k1(privkey, msg).unwrap();
+        let signature = Signature::sign_secp256k1(privkey, msg).unwrap();
         let res = signature.verify_secp256k1(pubkey, msg);
         assert_eq!(res, Ok(true))
     }
