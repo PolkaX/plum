@@ -4,7 +4,6 @@ mod actor;
 mod ask;
 mod block_header;
 mod block_msg;
-pub mod chain_epoch;
 mod fil;
 mod full_block;
 pub mod key_info;
