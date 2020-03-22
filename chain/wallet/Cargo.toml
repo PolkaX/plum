@@ -14,7 +14,7 @@ serde_json = "1.0"
 thiserror = "1.0"
 
 sigs = { path = "../../sigs" }
-types = { path = "../types" }
+types = { package = "chain-types", path = "../types" }
 
 plum_address = { path = "../../primitives/address" }
 plum_hashing = { path = "../../hashing" }

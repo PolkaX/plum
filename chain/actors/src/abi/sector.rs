@@ -6,7 +6,7 @@ use cid::Cid;
 
 use plum_bigint::BigInt;
 use plum_hash::H256;
-use types::chain_epoch::ChainEpoch;
+use plum_types::chain_epoch::ChainEpoch;
 
 use super::serde_helper;
 

@@ -9,7 +9,7 @@ pub enum CronEventType {
     TempFault,
 }
 
-struct CronEventPayload {
+pub struct CronEventPayload {
     pub event_type: CronEventType,
     pub sectors: Option<BitField>,
     pub registered_proof: RegisteredProof,

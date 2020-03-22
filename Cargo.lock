@@ -11,15 +11,16 @@ dependencies = [
  "multihash",
  "plum_address",
  "plum_bigint",
+ "plum_crypto",
  "plum_hash",
  "plum_types",
+ "rust-ipld-cbor",
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_repr",
  "serde_tuple",
  "thiserror",
- "types",
 ]
 
 [[package]]
@@ -329,6 +330,9 @@ name = "bytes"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "130aac562c0dd69c56b3b1cc8ffd2e17be31d0b6c25b61c96b76231aa23e39e1"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "c_linked_list"
@@ -356,6 +360,28 @@ dependencies = [
  "data-encoding",
  "lazy_static",
  "plum_address",
+]
+
+[[package]]
+name = "chain-types"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "byteorder 1.3.4",
+ "bytes 0.5.4",
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log",
+ "multihash",
+ "plum_address",
+ "plum_bigint",
+ "rust-block-format",
+ "serde",
+ "serde_bytes",
+ "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json",
+ "serde_tuple",
+ "thiserror",
+ "unsigned-varint 0.3.2",
 ]
 
 [[package]]
@@ -628,6 +654,9 @@ name = "either"
 version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb1f6b1ce1c140482ea30ddd3335fc0024ac7ee112895426e0a629a6c20adfe3"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "enum-repr-derive"
@@ -2716,6 +2745,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-ipld-cbor"
+version = "0.1.0"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#430294308a72255edfbfca155282a7ed43c459f7"
+dependencies = [
+ "bytes 0.5.4",
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "either",
+ "multihash",
+ "rust-block-format",
+ "rust-ipld-format",
+ "serde",
+ "serde_bytes",
+ "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "rust-ipld-format"
+version = "0.1.0"
+source = "git+https://github.com/PolkaX/rust-ipfs?branch=filecoin-master#430294308a72255edfbfca155282a7ed43c459f7"
+dependencies = [
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static",
+ "multihash",
+ "rust-block-format",
+ "thiserror",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3433,28 +3492,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d2783fe2d6b8c1101136184eb41be8b1ad379e4657050b8aaff0c79ee7575f9"
 
 [[package]]
-name = "types"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "byteorder 1.3.4",
- "bytes 0.5.4",
- "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "log",
- "multihash",
- "plum_address",
- "plum_bigint",
- "rust-block-format",
- "serde",
- "serde_bytes",
- "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json",
- "serde_tuple",
- "thiserror",
- "unsigned-varint 0.3.2",
-]
-
-[[package]]
 name = "uint"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3565,6 +3602,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bls-signatures",
+ "chain-types",
  "libsecp256k1",
  "plum_address",
  "plum_hashing",
@@ -3573,7 +3611,6 @@ dependencies = [
  "sigs",
  "tempfile",
  "thiserror",
- "types",
 ]
 
 [[package]]

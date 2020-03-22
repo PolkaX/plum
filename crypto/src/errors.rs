@@ -2,6 +2,10 @@
 
 use thiserror::Error;
 
+use plum_address::Protocol;
+
+use crate::signature::SignatureType;
+
 /// The error type about crypto.
 #[derive(Debug, Eq, PartialEq, Error)]
 pub enum CryptoError {
@@ -14,6 +18,12 @@ pub enum CryptoError {
     /// BLS error.
     #[error("BLS error: {0}")]
     Bls(String),
+    /// Signature and Address are not match
+    #[error("signature and address is not same type, signature:{:0?}, addr:{1}")]
+    NotSameType(SignatureType, Protocol),
+    /// Signature verify failed
+    #[error("signature verify failed")]
+    VerifyFailed,
 }
 
 impl From<bls::Error> for CryptoError {
