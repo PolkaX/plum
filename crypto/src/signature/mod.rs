@@ -5,6 +5,7 @@ pub mod serde;
 
 use std::convert::TryFrom;
 
+use plum_address::{Address, Protocol};
 use plum_hashing::blake2b_256;
 
 use crate::errors::CryptoError;
@@ -173,6 +174,24 @@ impl Signature {
     /// Return the actual signature bytes.
     pub fn as_bytes(&self) -> &[u8] {
         self.bytes.as_slice()
+    }
+
+    /// helper function to check signture type is same with address type
+    pub fn check_address_type(&self, addr: &Address) -> Result<(), CryptoError> {
+        let protocol = addr.protocol();
+        match self.ty {
+            SignatureType::Secp256k1 => {
+                if protocol != Protocol::SECP256K1 {
+                    return Err(CryptoError::NotSameType(self.ty, protocol));
+                }
+            }
+            SignatureType::Bls => {
+                if protocol != Protocol::BLS {
+                    return Err(CryptoError::NotSameType(self.ty, protocol));
+                }
+            }
+        }
+        Ok(())
     }
 }
 

@@ -98,7 +98,7 @@ impl Address {
             Protocol::ID => Err(AddressError::UnknownPublicKey),
             Protocol::SECP256K1 => Ok(self.payload()),
             Protocol::Actor => Err(AddressError::UnknownPublicKey),
-            Protocol::BLS => Ok(self.payload())
+            Protocol::BLS => Ok(self.payload()),
         }
     }
 

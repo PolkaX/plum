@@ -1,10 +1,8 @@
-use serde::{Deserialize, Serialize};
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 
 use cid::Cid;
 use plum_address::Address;
-use plum_types::{DealId, DealWeight, PeerId, TokenAmount};
-use types::chain_epoch::ChainEpoch;
+use plum_types::{chain_epoch::ChainEpoch, DealId, DealWeight, PeerId, TokenAmount};
 
 use crate::abi::bitfield::BitField;
 use crate::abi::sector::{SectorNumber, SectorSize};
