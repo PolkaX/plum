@@ -5,12 +5,12 @@ use plum_hashing::sha256;
 
 use crate::errors::CryptoError;
 
-/// The bls public key for verifying VRF.
+/// The `BLS` public key for verifying VRF.
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct VrfPublicKey(bls::PublicKey);
 
 impl VrfPublicKey {
-    /// Unwrap the VRF public key to the bls public key.
+    /// Unwrap the VRF public key to the `BLS` public key.
     pub fn into_inner(self) -> bls::PublicKey {
         self.0
     }
@@ -34,12 +34,12 @@ impl From<bls::PublicKey> for VrfPublicKey {
     }
 }
 
-/// The bls private key for computing VRF.
+/// The `BLS` private key for computing VRF.
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct VrfPrivateKey(bls::PrivateKey);
 
 impl VrfPrivateKey {
-    /// Unwrap the VRF private key to the bls private key.
+    /// Unwrap the VRF private key to the `BLS` private key.
     pub fn into_inner(self) -> bls::PrivateKey {
         self.0
     }
@@ -63,12 +63,12 @@ impl From<bls::PrivateKey> for VrfPrivateKey {
     }
 }
 
-/// The bls signature.
+/// The `BLS` signature.
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct VrfProof(bls::Signature);
 
 impl VrfProof {
-    /// Unwrap the VRF proof key to the bls signature.
+    /// Unwrap the VRF proof key to the `BLS` signature.
     pub fn into_inner(self) -> bls::Signature {
         self.0
     }
@@ -92,9 +92,9 @@ impl From<bls::Signature> for VrfProof {
     }
 }
 
-/// Computing VRF with the given bls private key and VRF params(miner address must be ID address).
+/// Computing VRF with the given `BLS` private key and VRF params(miner address must be ID address).
 ///
-/// Return the bls signature.
+/// Return the `BLS` signature.
 pub fn compute_vrf<M>(
     privkey: &VrfPrivateKey,
     personalization: u64,
@@ -109,8 +109,8 @@ where
     VrfProof(signature)
 }
 
-/// Verify VRF with the given bls public key, VRF params(miner address must be ID address)
-/// and bls signature.
+/// Verify VRF with the given `BLS` public key, VRF params(miner address must be ID address)
+/// and `BLS` signature.
 ///
 /// Return the result of VRF verification.
 pub fn verify_vrf<M>(
@@ -124,7 +124,7 @@ where
     M: AsRef<[u8]>,
 {
     let msg = hash_vrf_base(personalization, msg, miner);
-    // When signing with bls privkey, the message will be hashed in `bls::PrivateKey::sign`,
+    // When signing with `BLS` privkey, the message will be hashed in `bls::PrivateKey::sign`,
     // so the message here needs to be hashed before the signature is verified.
     let hashed_msg = bls::hash(msg.as_ref());
     bls::verify(&proof.0, &[hashed_msg], &[pubkey.0])
@@ -136,7 +136,7 @@ where
 {
     assert_eq!(
         miner.protocol(),
-        Protocol::ID,
+        Protocol::Id,
         "Miner address must be a ID address"
     );
     let miner_bytes = miner.as_bytes();

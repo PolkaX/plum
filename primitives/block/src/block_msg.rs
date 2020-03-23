@@ -10,9 +10,9 @@ use crate::header::BlockHeader;
 pub struct BlockMsg {
     /// The block header.
     pub header: BlockHeader,
-    /// The CIDs of bls messages.
+    /// The CIDs of `BLS` messages.
     pub bls_msgs: Vec<Cid>,
-    /// The CIDs of secp256k1 messages.
+    /// The CIDs of `Secp256k1` messages.
     pub secp_msgs: Vec<Cid>,
 }
 

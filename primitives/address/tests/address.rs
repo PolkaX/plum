@@ -8,7 +8,7 @@ use plum_address::*;
 fn test_random_id_address() {
     let id = rand::random::<u64>();
     let addr = Address::new_id_addr(id).unwrap();
-    assert_eq!(addr.protocol(), Protocol::ID);
+    assert_eq!(addr.protocol(), Protocol::Id);
 
     let decoded = Address::from_str(&addr.to_string()).unwrap();
     assert_eq!(decoded, addr);
@@ -31,7 +31,7 @@ fn test_id_address() {
 
     for (id, expect) in test_cases {
         let addr = Address::new_id_addr(id).unwrap();
-        assert_eq!(addr.protocol(), Protocol::ID);
+        assert_eq!(addr.protocol(), Protocol::Id);
         assert_eq!(addr.to_string(), expect);
     }
 }
@@ -41,7 +41,7 @@ fn test_random_secp256k1_address() {
     let seckey = secp256k1::SecretKey::random(&mut rand::rngs::OsRng);
     let pubkey = secp256k1::PublicKey::from_secret_key(&seckey);
     let addr = Address::new_secp256k1_addr(&pubkey.serialize()).unwrap();
-    assert_eq!(addr.protocol(), Protocol::SECP256K1);
+    assert_eq!(addr.protocol(), Protocol::Secp256k1);
 
     let decoded = Address::from_str(&addr.to_string()).unwrap();
     assert_eq!(decoded, addr);
@@ -111,7 +111,7 @@ fn test_secp256k1_address() {
 
     for (pubkey, expect) in test_cases {
         let addr = Address::new_secp256k1_addr(&pubkey).unwrap();
-        assert_eq!(addr.protocol(), Protocol::SECP256K1);
+        assert_eq!(addr.protocol(), Protocol::Secp256k1);
         assert_eq!(addr.to_string(), expect);
     }
 }
@@ -182,7 +182,7 @@ fn test_random_bls_address() {
     let privkey = bls::PrivateKey::generate(&mut rand::rngs::OsRng);
     let pubkey = privkey.public_key();
     let addr = Address::new_bls_addr(&pubkey.as_bytes()).unwrap();
-    assert_eq!(addr.protocol(), Protocol::BLS);
+    assert_eq!(addr.protocol(), Protocol::Bls);
 
     let decoded = Address::from_str(&addr.to_string()).unwrap();
     assert_eq!(decoded, addr);
@@ -243,7 +243,7 @@ fn test_bls_address() {
 
     for (pubkey, expect) in test_cases {
         let addr = Address::new_bls_addr(&pubkey).unwrap();
-        assert_eq!(addr.protocol(), Protocol::BLS);
+        assert_eq!(addr.protocol(), Protocol::Bls);
         assert_eq!(addr.to_string(), expect);
     }
 }

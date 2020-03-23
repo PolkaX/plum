@@ -219,8 +219,8 @@ impl Wallet {
         match self {
             Wallet::New { key_type } => {
                 let keytype = match key_type {
-                    KeyType::Bls => key_types::BLS,
-                    KeyType::Secp256k1 => key_types::SECP256K1,
+                    KeyType::Bls => key_types::Bls,
+                    KeyType::Secp256k1 => key_types::Secp256k1,
                 };
                 wallet::Wallet::new_address(keytype.to_owned())
             }
@@ -228,8 +228,8 @@ impl Wallet {
             Wallet::Export { pubkey } => wallet::Wallet::export(pubkey.to_string()),
             Wallet::Import { key_type, privkey } => {
                 let keytype = match key_type {
-                    KeyType::Bls => key_types::BLS,
-                    KeyType::Secp256k1 => key_types::SECP256K1,
+                    KeyType::Bls => key_types::Bls,
+                    KeyType::Secp256k1 => key_types::Secp256k1,
                 };
                 wallet::Wallet::import(keytype, privkey.to_string())
             }
