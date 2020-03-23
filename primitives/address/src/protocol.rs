@@ -8,19 +8,19 @@ use crate::errors::AddressError;
 /// Protocol Identifier.
 #[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
 pub enum Protocol {
-    /// ID protocol, identifier: 0.
-    ID = 0,
-    /// SECP256K1 protocol, identifier: 1.
-    SECP256K1 = 1,
-    /// Actor protocol, identifier: 2.
+    /// `ID` protocol, identifier: 0.
+    Id = 0,
+    /// `Secp256k1` protocol, identifier: 1.
+    Secp256k1 = 1,
+    /// `Actor` protocol, identifier: 2.
     Actor = 2,
-    /// BLS protocol, identifier: 3.
-    BLS = 3,
+    /// `BLS` protocol, identifier: 3.
+    Bls = 3,
 }
 
 impl Default for Protocol {
     fn default() -> Self {
-        Protocol::ID
+        Protocol::Id
     }
 }
 
@@ -29,10 +29,10 @@ impl convert::TryFrom<u8> for Protocol {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Protocol::ID),
-            1 => Ok(Protocol::SECP256K1),
+            0 => Ok(Protocol::Id),
+            1 => Ok(Protocol::Secp256k1),
             2 => Ok(Protocol::Actor),
-            3 => Ok(Protocol::BLS),
+            3 => Ok(Protocol::Bls),
             _ => Err(AddressError::UnknownProtocol),
         }
     }
@@ -41,10 +41,10 @@ impl convert::TryFrom<u8> for Protocol {
 impl From<Protocol> for u8 {
     fn from(protocol: Protocol) -> Self {
         match protocol {
-            Protocol::ID => 0,
-            Protocol::SECP256K1 => 1,
+            Protocol::Id => 0,
+            Protocol::Secp256k1 => 1,
             Protocol::Actor => 2,
-            Protocol::BLS => 3,
+            Protocol::Bls => 3,
         }
     }
 }

@@ -7,7 +7,7 @@ license = "GPL-3.0"
 
 [dependencies]
 base64 = "0.12"
-bls = { package = "bls-signatures", version = "0.5" }
+bls-signatures = "0.5"
 libsecp256k1 = "0.3"
 rand = "0.7"
 serde = { version = "1.0", features = ["derive"] }

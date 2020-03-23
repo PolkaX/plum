@@ -5,9 +5,9 @@ use crate::errors::CryptoError;
 /// The general public key.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PublicKey {
-    /// Secp256k1 public key
+    /// `Secp256k1` public key
     Secp256k1(secp256k1::PublicKey),
-    /// Bls public key
+    /// `BLS` public key
     Bls(bls::PublicKey),
 }
 
@@ -18,7 +18,7 @@ impl PublicKey {
         Ok(PublicKey::Secp256k1(pubkey))
     }
 
-    /// Create a `bls` public key with the given bytes.
+    /// Create a `BLS` public key with the given bytes.
     pub fn new_bls<K: AsRef<[u8]>>(pubkey: K) -> Result<Self, CryptoError> {
         use bls::Serialize;
         let pubkey = bls::PublicKey::from_bytes(pubkey.as_ref())?;
@@ -54,9 +54,9 @@ impl PublicKey {
 /// The general private key.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PrivateKey {
-    /// Secp256k1 private key
+    /// `Secp256k1` private key
     Secp256k1(secp256k1::SecretKey),
-    /// Bls private key
+    /// `BLS` private key
     Bls(bls::PrivateKey),
 }
 

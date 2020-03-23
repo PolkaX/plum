@@ -22,9 +22,9 @@ mod constant {
     pub const BLS_DIGEST_LEN: usize = 96;
 
     /// The max length of an address encoded as a string,
-    /// which includes the network prefix, protocol, and bls public key.
+    /// which includes the network prefix, protocol, and `BLS` public key.
     pub const MAX_ADDRESS_STRING_LEN: usize = 2 + 84;
-    /// The hash length taken over addresses using the Actor and SECP256K1 protocols.
+    /// The hash length taken over addresses using the `Actor` and `Secp256k1` protocols.
     pub const PAYLOAD_HASH_LEN: usize = 20;
     /// The hash length used for calculating address checksums.
     pub const CHECKSUM_HASH_LEN: usize = 4;

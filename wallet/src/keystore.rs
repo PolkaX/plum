@@ -210,11 +210,11 @@ mod tests {
 
         // Generate a key of a different type
         let keypair = st.generate_key(KeyType::default()).unwrap();
-        let bls_addr: Address = Account::BLS(keypair.pubkey).try_into().unwrap();
+        let bls_addr: Address = Account::Bls(keypair.pubkey).try_into().unwrap();
         println!("{}\n", bls_addr.encode(Network::Test).unwrap());
 
-        let keypair = st.generate_key(key_types::SECP256K1).unwrap();
-        let secp_addr: Address = Account::SECP256K1(keypair.pubkey).try_into().unwrap();
+        let keypair = st.generate_key(key_types::Secp256k1).unwrap();
+        let secp_addr: Address = Account::Secp256k1(keypair.pubkey).try_into().unwrap();
         println!("{}\n", secp_addr.encode(Network::Test).unwrap());
     }
 }

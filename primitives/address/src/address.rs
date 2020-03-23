@@ -14,10 +14,10 @@ use crate::protocol::Protocol;
 /// The general address structure.
 #[derive(PartialEq, Eq, Clone, Debug, Hash)]
 pub struct Address {
-    // ID protocol: payload is VarInt encoding.
-    // SECP256K1 protocol: payload is pubkey (length = 20)
-    // Actor protocol: payload length = 20
-    // BLS protocol: payload is pubkey (length = 48)
+    // `ID` protocol: payload is VarInt encoding.
+    // `Secp256k1` protocol: payload is pubkey (length = 20)
+    // `Actor` protocol: payload length = 20
+    // `BLS` protocol: payload is pubkey (length = 48)
     protocol: Protocol,
     payload: Vec<u8>,
 }
@@ -30,13 +30,13 @@ impl Address {
     ) -> Result<Self, AddressError> {
         let payload = payload.into();
         match protocol {
-            Protocol::ID => {}
-            Protocol::SECP256K1 | Protocol::Actor => {
+            Protocol::Id => {}
+            Protocol::Secp256k1 | Protocol::Actor => {
                 if payload.len() != constant::PAYLOAD_HASH_LEN {
                     return Err(AddressError::InvalidPayload);
                 }
             }
-            Protocol::BLS => {
+            Protocol::Bls => {
                 if payload.len() != constant::BLS_PUBLIC_KEY_LEN {
                     return Err(AddressError::InvalidPayload);
                 }
@@ -46,26 +46,26 @@ impl Address {
         Ok(Self { protocol, payload })
     }
 
-    /// Create an address using the ID protocol.
+    /// Create an address using the `Id` protocol.
     pub fn new_id_addr(id: u64) -> Result<Self, AddressError> {
         let mut payload_buf = unsigned_varint::encode::u64_buffer();
         let payload = unsigned_varint::encode::u64(id, &mut payload_buf);
-        Self::new(Protocol::ID, payload)
+        Self::new(Protocol::Id, payload)
     }
 
-    /// Create an address using the SECP256k1 protocol.
+    /// Create an address using the `Secp256k1` protocol.
     pub fn new_secp256k1_addr(pubkey: &[u8]) -> Result<Self, AddressError> {
-        Self::new(Protocol::SECP256K1, address_hash(pubkey))
+        Self::new(Protocol::Secp256k1, address_hash(pubkey))
     }
 
-    /// Create an address using the Actor protocol.
+    /// Create an address using the `Actor` protocol.
     pub fn new_actor_addr(data: &[u8]) -> Result<Self, AddressError> {
         Self::new(Protocol::Actor, address_hash(data))
     }
 
-    /// Create an address using the BLS protocol.
+    /// Create an address using the `BLS` protocol.
     pub fn new_bls_addr(pubkey: &[u8]) -> Result<Self, AddressError> {
-        Self::new(Protocol::BLS, pubkey)
+        Self::new(Protocol::Bls, pubkey)
     }
 
     /// Create an address represented by the encoding bytes `addr` (protocol + payload).
@@ -134,7 +134,7 @@ impl Address {
 impl Display for Address {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.protocol() {
-            Protocol::ID => {
+            Protocol::Id => {
                 let id = unsigned_varint::decode::u64(self.payload())
                     .expect("unsigned varint decode shouldn't be fail")
                     .0;
@@ -146,7 +146,7 @@ impl Display for Address {
                     id
                 )
             }
-            Protocol::SECP256K1 | Protocol::Actor | Protocol::BLS => {
+            Protocol::Secp256k1 | Protocol::Actor | Protocol::Bls => {
                 let mut payload_and_checksum = self.payload().to_vec();
                 payload_and_checksum.extend_from_slice(&checksum(&self.as_bytes()));
                 let base32 = base32_encode(payload_and_checksum);
@@ -180,17 +180,17 @@ impl FromStr for Address {
         }
 
         let protocol = match &s[1..2] {
-            "0" => Protocol::ID,
-            "1" => Protocol::SECP256K1,
+            "0" => Protocol::Id,
+            "1" => Protocol::Secp256k1,
             "2" => Protocol::Actor,
-            "3" => Protocol::BLS,
+            "3" => Protocol::Bls,
             _ => return Err(AddressError::UnknownProtocol),
         };
 
         let raw = &s[2..];
 
         match protocol {
-            Protocol::ID => {
+            Protocol::Id => {
                 if raw.len() > constant::MAX_U64_LEN {
                     return Err(AddressError::InvalidLength);
                 }
@@ -199,16 +199,16 @@ impl FromStr for Address {
                     Err(_) => Err(AddressError::InvalidPayload),
                 }
             }
-            Protocol::SECP256K1 => Self::new_with_check(
-                Protocol::SECP256K1,
+            Protocol::Secp256k1 => Self::new_with_check(
+                Protocol::Secp256k1,
                 raw.as_bytes(),
                 constant::PAYLOAD_HASH_LEN,
             ),
             Protocol::Actor => {
                 Self::new_with_check(Protocol::Actor, raw.as_bytes(), constant::PAYLOAD_HASH_LEN)
             }
-            Protocol::BLS => {
-                Self::new_with_check(Protocol::BLS, raw.as_bytes(), constant::BLS_PUBLIC_KEY_LEN)
+            Protocol::Bls => {
+                Self::new_with_check(Protocol::Bls, raw.as_bytes(), constant::BLS_PUBLIC_KEY_LEN)
             }
         }
     }

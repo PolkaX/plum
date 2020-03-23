@@ -4,6 +4,8 @@
 
 #![deny(missing_docs)]
 
+extern crate bls_signatures as bls;
+
 mod error;
 mod keystore;
 mod wallet;

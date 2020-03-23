@@ -16,9 +16,9 @@ pub const SIGNATURE_MAX_LENGTH: u32 = 200;
 /// The signature type.
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub enum SignatureType {
-    /// The secp256k1 signature.
+    /// The `Secp256k1` signature.
     Secp256k1 = 1,
-    /// The bls signature.
+    /// The `BLS` signature.
     Bls = 2,
 }
 
@@ -72,7 +72,7 @@ impl Signature {
         Self::new(SignatureType::Secp256k1, bytes)
     }
 
-    /// Create a BLS signature with the given raw bytes.
+    /// Create a `BLS` signature with the given raw bytes.
     pub fn new_bls<T: Into<Vec<u8>>>(bytes: T) -> Self {
         Self::new(SignatureType::Bls, bytes)
     }
@@ -109,9 +109,9 @@ impl Signature {
         })
     }
 
-    /// Sign the message with the given bls private key.
+    /// Sign the message with the given `BLS` private key.
     ///
-    /// Return the bls signature.
+    /// Return the `BLS` signature.
     pub fn sign_bls<K, M>(privkey: K, msg: M) -> Result<Self, CryptoError>
     where
         K: AsRef<[u8]>,
@@ -151,7 +151,7 @@ impl Signature {
         Ok(secp256k1::verify(&msg, &signature, &pubkey))
     }
 
-    /// Verify the bls signature with the given bls public key and message.
+    /// Verify the `BLS` signature with the given `BLS` public key and message.
     fn verify_bls<K, M>(&self, pubkey: K, msg: M) -> Result<bool, CryptoError>
     where
         K: AsRef<[u8]>,
@@ -159,7 +159,7 @@ impl Signature {
     {
         use bls::Serialize;
         let pubkey = bls::PublicKey::from_bytes(pubkey.as_ref())?;
-        // When signing with bls privkey, the message will be hashed in `bls::PrivateKey::sign`,
+        // When signing with `BLS` privkey, the message will be hashed in `bls::PrivateKey::sign`,
         // so the message here needs to be hashed before the signature is verified.
         let hashed_msg = bls::hash(msg.as_ref());
         let signature = bls::Signature::from_bytes(&self.bytes)?;
@@ -181,12 +181,12 @@ impl Signature {
         let protocol = addr.protocol();
         match self.ty {
             SignatureType::Secp256k1 => {
-                if protocol != Protocol::SECP256K1 {
+                if protocol != Protocol::Secp256k1 {
                     return Err(CryptoError::NotSameType(self.ty, protocol));
                 }
             }
             SignatureType::Bls => {
-                if protocol != Protocol::BLS {
+                if protocol != Protocol::Bls {
                     return Err(CryptoError::NotSameType(self.ty, protocol));
                 }
             }
