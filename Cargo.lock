@@ -2157,7 +2157,6 @@ name = "plum"
 version = "0.1.0"
 dependencies = [
  "cli",
- "wallet",
 ]
 
 [[package]]
@@ -2331,6 +2330,20 @@ dependencies = [
 [[package]]
 name = "plum_vm"
 version = "0.1.0"
+
+[[package]]
+name = "plum_wallet"
+version = "0.1.0"
+dependencies = [
+ "bls-signatures",
+ "libsecp256k1",
+ "plum_address",
+ "plum_crypto",
+ "rand 0.7.3",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+]
 
 [[package]]
 name = "ppv-lite86"
@@ -3595,23 +3608,6 @@ name = "void"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
-
-[[package]]
-name = "wallet"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bls-signatures",
- "chain-types",
- "libsecp256k1",
- "plum_address",
- "plum_hashing",
- "rand 0.7.3",
- "serde_json",
- "sigs",
- "tempfile",
- "thiserror",
-]
 
 [[package]]
 name = "wasi"

@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use types::SignKeyType;
+use plum_crypto::SignatureType;
 
 const KEYSTORE_PATH: &str = "/.plum/keystore/";
 
@@ -8,7 +8,7 @@ const KEYSTORE_PATH: &str = "/.plum/keystore/";
 #[derive(Clone, Debug)]
 pub struct SignKeyInfo {
     /// The key type.
-    pub ty: SignKeyType,
+    pub ty: SignatureType,
     /// The private key corresponding to key type.
     pub privkey: Vec<u8>,
 }

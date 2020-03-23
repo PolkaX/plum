@@ -14,7 +14,6 @@ path = "src/bin/main.rs"
 
 [dependencies]
 cli = { path = "./cli" }
-wallet = { path = "./chain/wallet" }
 
 [replace]
 "cid:0.4.0" = { git = "https://github.com/PolkaX/rust-cid", branch = "impl-serde" }

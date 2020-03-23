@@ -1,23 +1,19 @@
 [package]
-name = "wallet"
+name = "plum_wallet"
 version = "0.1.0"
 authors = ["The PolkaX Authors"]
 edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-anyhow = "1.0"
 bls = { package = "bls-signatures", version = "0.5" }
 libsecp256k1 = "0.3"
 rand = "0.7"
 serde_json = "1.0"
 thiserror = "1.0"
 
-sigs = { path = "../../sigs" }
-types = { package = "chain-types", path = "../types" }
-
 plum_address = { path = "../../primitives/address" }
-plum_hashing = { path = "../../hashing" }
+plum_crypto = { path = "../../crypto" }
 
 [dev-dependencies]
 tempfile = "3.1"
