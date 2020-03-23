@@ -2,6 +2,8 @@
 
 use std::str::FromStr;
 
+use bls_signatures as bls;
+
 use plum_address::*;
 
 #[test]

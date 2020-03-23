@@ -5,6 +5,8 @@
 
 #![deny(missing_docs)]
 
+extern crate bls_signatures as bls;
+
 mod errors;
 mod key; // just a simple wrapper for public key and private key.
 mod signature;
