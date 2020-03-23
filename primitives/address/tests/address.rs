@@ -1,8 +1,8 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use std::str::FromStr;
+extern crate bls_signatures as bls;
 
-use bls_signatures as bls;
+use std::str::FromStr;
 
 use plum_address::*;
 

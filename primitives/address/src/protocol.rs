@@ -8,13 +8,13 @@ use crate::errors::AddressError;
 /// Protocol Identifier.
 #[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
 pub enum Protocol {
-    /// ID protocol, identifier: 0.
+    /// `ID` protocol, identifier: 0.
     Id = 0,
-    /// Secp256k1 protocol, identifier: 1.
+    /// `Secp256k1` protocol, identifier: 1.
     Secp256k1 = 1,
-    /// Actor protocol, identifier: 2.
+    /// `Actor` protocol, identifier: 2.
     Actor = 2,
-    /// BLS protocol, identifier: 3.
+    /// `BLS` protocol, identifier: 3.
     Bls = 3,
 }
 
