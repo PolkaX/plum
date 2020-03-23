@@ -1,13 +1,14 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::str::FromStr;
 
 use plum_address::Address;
 use plum_crypto::{Signature, SignatureType};
 
 use crate::error::{Result, WalletError};
-use crate::keystore::{KeyStore, SignKeyInfo};
+use crate::keystore::{KeyInfo, KeyStore, KeyType};
 
 const KNAME_PREFIX: &str = "wallet-";
 const KDEFAULT: &str = "default";
@@ -15,15 +16,15 @@ const KDEFAULT: &str = "default";
 ///
 #[derive(Clone, Debug)]
 pub struct Key {
-    info: SignKeyInfo,
+    info: KeyInfo,
     pubkey: Vec<u8>,
     address: Address,
 }
 
 impl Key {
     /// Create a new `Key` with given `KeyInfo`.
-    pub fn new(info: SignKeyInfo) -> Result<Self> {
-        match info.ty {
+    pub fn new(info: KeyInfo) -> Result<Self> {
+        match info.ty.clone().try_into()? {
             SignatureType::Secp256k1 => {
                 let seckey = secp256k1::SecretKey::parse_slice(&info.privkey)?;
                 let pubkey = secp256k1::PublicKey::from_secret_key(&seckey)
@@ -80,13 +81,9 @@ impl<KS: KeyStore> Wallet<KS> {
     ///
     pub fn sign(&self, addr: &Address, msg: &[u8]) -> Result<Signature> {
         let key = self.find_key(addr).ok_or(WalletError::KeyNotFound)?;
-        match key.info.ty {
-            SignatureType::Secp256k1 => {
-                Ok(Signature::sign_secp2526k1(key.info.privkey, msg)?)
-            }
-            SignatureType::Bls => {
-                Ok(Signature::sign_bls(key.info.privkey, msg)?)
-            }
+        match key.info.ty.try_into()? {
+            SignatureType::Secp256k1 => Ok(Signature::sign_secp256k1(key.info.privkey, msg)?),
+            SignatureType::Bls => Ok(Signature::sign_bls(key.info.privkey, msg)?),
         }
     }
 
@@ -138,14 +135,14 @@ impl<KS: KeyStore> Wallet<KS> {
     }
 
     /// Export the key-info by the address.
-    pub fn export(&self, addr: &Address) -> Result<SignKeyInfo> {
+    pub fn export(&self, addr: &Address) -> Result<KeyInfo> {
         let key = self.find_key(addr).ok_or(WalletError::KeyNotFound)?;
         // TODO: export from keystore
         Ok(key.info)
     }
 
     /// Import address by key info.
-    pub fn import(&mut self, info: SignKeyInfo) -> Result<Address> {
+    pub fn import(&mut self, info: KeyInfo) -> Result<Address> {
         let key = Key::new(info)?;
         match self
             .keystore
@@ -173,8 +170,8 @@ pub fn generate_key(key_type: SignatureType) -> Result<Key> {
         SignatureType::Secp256k1 => {
             let secret = secp256k1::SecretKey::random(&mut rand::rngs::OsRng);
             let privkey = secret.serialize().to_vec();
-            Key::new(SignKeyInfo {
-                ty: SignatureType::Secp256k1,
+            Key::new(KeyInfo {
+                ty: KeyType::Secp256k1,
                 privkey,
             })
         }
@@ -182,8 +179,8 @@ pub fn generate_key(key_type: SignatureType) -> Result<Key> {
             use bls::Serialize;
             let privkey = bls::PrivateKey::generate(&mut rand::rngs::OsRng);
             let privkey = privkey.as_bytes();
-            Key::new(SignKeyInfo {
-                ty: SignatureType::Bls,
+            Key::new(KeyInfo {
+                ty: KeyType::Bls,
                 privkey,
             })
         }

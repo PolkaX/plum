@@ -18,6 +18,9 @@ pub enum WalletError {
     /// Crypto error.
     #[error("Crypto error")]
     Crypto(#[from] plum_crypto::CryptoError),
+    /// Key type error.
+    #[error("{0}")]
+    KeyType(#[from] crate::keystore::KeyTypeError),
     /// Key not found.
     #[error("Key not found")]
     KeyNotFound,
