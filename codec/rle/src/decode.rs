@@ -1,3 +1,5 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 use std::ops::{Deref, DerefMut};
 
 use crate::bitset::DynamicBitSet;
@@ -35,13 +37,14 @@ impl DerefMut for BitSetHelper {
     }
 }
 
+///
 pub fn rle_decode<Item: Number>(data: Vec<u8>) -> Result<Vec<Item>> {
     let content: DynamicBitSet = data.into();
     let helper = &mut BitSetHelper::new(content);
 
     let two: Item = get_span(helper, 2)?;
     if helper.size() < config::SMALL_BLOCK_LENGTH || (two == Item::one()) {
-        return Err(RLEDecodeError::VersionMismatch);
+        return Err(RleDecodeError::VersionMismatch);
     }
     let one: Item = get_span(helper, 1)?;
     helper.magnitude = one == Item::one();
@@ -63,7 +66,7 @@ pub fn rle_decode<Item: Number>(data: Vec<u8>) -> Result<Vec<Item>> {
     }
     let max_size = config::OBJECT_MAX_SIZE / std::mem::size_of::<Item>();
     if output.len() > max_size {
-        return Err(RLEDecodeError::MaxSizeExceed);
+        return Err(RleDecodeError::MaxSizeExceed);
     }
 
     Ok(output)
@@ -72,7 +75,7 @@ pub fn rle_decode<Item: Number>(data: Vec<u8>) -> Result<Vec<Item>> {
 fn get_span<Item: Number>(helper: &mut BitSetHelper, count: usize) -> Result<Item> {
     let end = helper.index + count;
     if helper.size() < end {
-        return Err(RLEDecodeError::DataIndexFailure);
+        return Err(RleDecodeError::DataIndexFailure);
     }
     let mut value = Item::zero();
     let mut shift = Item::zero();
@@ -152,7 +155,7 @@ fn unpack<Item: Number>(data: Vec<u8>) -> Result<Item> {
     let mut value = Item::zero();
     for byte in data {
         if shift > max_shift {
-            return Err(RLEDecodeError::UnpackOverflow);
+            return Err(RleDecodeError::UnpackOverflow);
         }
         let byte = byte as usize;
         if byte < config::BYTE_SLICE_VALUE {

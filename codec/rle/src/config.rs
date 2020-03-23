@@ -1,3 +1,5 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 /// Num of bits to store small block value
 pub const SMALL_BLOCK_LENGTH: usize = 0x04;
 
@@ -17,4 +19,4 @@ pub const UNPACK_BYTE_MASK: usize = 0x7F;
 pub const BYTE_SLICE_VALUE: usize = 0x80;
 
 /// Maximum object size to encode or decode
-pub const OBJECT_MAX_SIZE: usize = 0x100000;
+pub const OBJECT_MAX_SIZE: usize = 0x100_000;

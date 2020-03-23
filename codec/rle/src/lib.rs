@@ -1,3 +1,9 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
+//!
+
+#![deny(missing_docs)]
+
 mod bitset;
 mod config;
 mod decode;
@@ -5,8 +11,9 @@ mod encode;
 mod error;
 mod traits;
 
-pub use decode::rle_decode;
-pub use encode::rle_encode;
+pub use self::decode::rle_decode;
+pub use self::encode::rle_encode;
+pub use self::error::RleDecodeError;
 
 #[cfg(test)]
 mod tests {
@@ -46,16 +53,16 @@ mod tests {
 
     #[test]
     fn test_bit_content() {
-        let except = vec![0b1000010 as u8, 0b0010100];
+        let except = vec![0b100_0010 as u8, 0b001_0100];
         assert_equal(except);
 
-        let except = vec![0b0 as u8, 0b0010100];
+        let except = vec![0b0 as u8, 0b001_0100];
         assert_equal(except);
 
-        let except = vec![0b11111111 as u8, 0b0010100];
+        let except = vec![0b1111_1111 as u8, 0b001_0100];
         assert_equal(except);
 
-        let except = vec![0b0 as u8, 0b0010100, 0b01011010];
+        let except = vec![0b0 as u8, 0b001_0100, 0b0101_1010];
         assert_equal(except);
     }
 
@@ -88,14 +95,14 @@ mod tests {
             (set!(0), vec![12]),
             (set!(1), vec![24]),
             (
-                set!(1000, 10000000000),
+                set!(1000, 10_000_000_000),
                 vec![0, 253, 32, 151, 192, 175, 160, 37, 1],
             ),
             (set!(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), vec![116, 1]),
             (set!(10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0), vec![116, 1]),
             (set!(10, 5, 0), vec![44, 149, 2]),
             (
-                set!(100000000000, 2000000, 3),
+                set!(100_000_000_000, 2_000_000, 3),
                 vec![112, 194, 143, 168, 151, 127, 227, 112, 97, 122, 129],
             ),
         ];
