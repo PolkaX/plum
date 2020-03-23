@@ -23,7 +23,6 @@ cli = { path = "./cli" }
 members = [
   "chain/actors",
   "chain/types",
-  "chain/wallet",
   "chain",
   "cli",
   "codec/rle",
@@ -42,4 +41,5 @@ members = [
   "primitives/types",
   "sigs",
   "vm",
+  "wallet",
 ]
