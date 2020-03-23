@@ -21,8 +21,7 @@ cli = { path = "./cli" }
 
 [workspace]
 members = [
-  "chain/actors",
-  "chain/types",
+  "chain/actor",
   "chain",
   "cli",
   "codec/rle",
@@ -39,7 +38,6 @@ members = [
   "primitives/ticket",
   "primitives/tipset",
   "primitives/types",
-  "sigs",
   "vm",
   "wallet",
 ]
