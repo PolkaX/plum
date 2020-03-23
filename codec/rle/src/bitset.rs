@@ -1,6 +1,11 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
+///
 pub const BYTE_LEN: u8 = 8;
+///
 pub const MASK: u8 = BYTE_LEN - 1;
 
+///
 pub struct DynamicBitSet {
     content: Vec<u8>,
     bit_count: usize,
@@ -20,6 +25,7 @@ fn bit_mask(pos: usize) -> u8 {
 }
 
 impl DynamicBitSet {
+    ///
     pub fn new() -> Self {
         DynamicBitSet {
             content: vec![],
@@ -27,6 +33,7 @@ impl DynamicBitSet {
         }
     }
 
+    ///
     pub fn push(&mut self, bit: bool) {
         let index = index(self.bit_count);
         if self.content.get(index).is_none() {
@@ -40,15 +47,18 @@ impl DynamicBitSet {
         self.bit_count += 1;
     }
 
+    ///
     pub fn clear(&mut self) {
         self.content.clear();
         self.bit_count = 0;
     }
 
+    ///
     pub fn size(&self) -> usize {
         self.bit_count
     }
 
+    ///
     pub fn bit(&self, pos: usize) -> bool {
         assert!(pos < self.bit_count);
         let index = index(pos);

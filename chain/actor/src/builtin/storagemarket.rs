@@ -76,7 +76,7 @@ impl StorageDealProposal {
             let buf = serde_cbor::to_vec(&unsigned)?;
             if let Some(ref sign) = self.proposer_signature {
                 sign.check_address_type(&self.client)?;
-                let pk = self.client.pubkey()?;
+                let pk = self.client.payload();
                 if sign.verify(pk, buf)? {
                     Ok(())
                 } else {

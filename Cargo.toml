@@ -14,7 +14,6 @@ path = "src/bin/main.rs"
 
 [dependencies]
 cli = { path = "./cli" }
-wallet = { path = "./chain/wallet" }
 
 [replace]
 "cid:0.4.0" = { git = "https://github.com/PolkaX/rust-cid", branch = "impl-serde" }
@@ -22,9 +21,7 @@ wallet = { path = "./chain/wallet" }
 
 [workspace]
 members = [
-  "chain/actors",
-  "chain/types",
-  "chain/wallet",
+  "chain/actor",
   "chain",
   "cli",
   "codec/rle",
@@ -41,6 +38,6 @@ members = [
   "primitives/ticket",
   "primitives/tipset",
   "primitives/types",
-  "sigs",
   "vm",
+  "wallet",
 ]

@@ -16,9 +16,6 @@ pub enum AddressError {
     /// Unknown address protocol.
     #[error("Unknown protocol")]
     UnknownProtocol,
-    /// Unknown public key type.
-    #[error("Unknown public key type")]
-    UnknownPublicKey,
     /// Invalid address payload.
     #[error("Invalid address payload")]
     InvalidPayload,

@@ -1,3 +1,5 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 use std::iter::Iterator;
 use std::ops::Deref;
 
@@ -5,6 +7,7 @@ use crate::bitset::{DynamicBitSet, BYTE_LEN};
 use crate::config;
 use crate::traits::{Cast, Number};
 
+///
 pub fn rle_encode<Item: Number, T: Deref<Target = Item>, I: Iterator<Item = T>>(
     input: I,
 ) -> Vec<u8> {
@@ -31,7 +34,7 @@ fn get_periods<Item: Number, T: Deref<Target = Item>, I: Iterator<Item = T>>(
     mut input: I,
 ) -> (Option<Item>, Vec<Item>) {
     let (first, mut prev) = input
-        .nth(0)
+        .next()
         .map(|i| (Some(*i), *i))
         .unwrap_or((None, Item::zero()));
 
@@ -46,9 +49,11 @@ fn get_periods<Item: Number, T: Deref<Target = Item>, I: Iterator<Item = T>>(
 
     periods.push(Item::one());
     for item in input {
-        let diff: Item = *item - prev.clone();
+        let diff: Item = *item - prev;
         if diff.is_one() {
-            periods.last_mut().map(|last| *last += Item::one());
+            if let Some(last) = periods.last_mut() {
+                *last += Item::one();
+            }
         } else if diff > Item::one() {
             periods.push(diff - Item::one());
             periods.push(Item::one());
