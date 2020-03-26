@@ -21,16 +21,11 @@ pub trait KeyStore {
     ///
     /// If the KeyStore did not have this key present, None is returned.
     /// If the KeyStore did have this key present, the Some(&KeyInfo) is returned.
-    fn get<K: AsRef<str>>(&self, key: K) -> Result<Option<&KeyInfo>, Self::Error>;
+    fn get<K: AsRef<str>>(&self, key: K) -> Result<Option<KeyInfo>, Self::Error>;
 
     /// Saves a key info under given name.
-    ///
-    /// If the KeyStore did not have this key present, None is returned.
-    /// If the KeyStore did have this key present, the KeyInfo is updated, and the old value is returned.
-    fn put(&mut self, key: String, info: KeyInfo) -> Result<Option<KeyInfo>, Self::Error>;
+    fn put(&mut self, key: String, info: KeyInfo) -> Result<(), Self::Error>;
 
     /// Removes a KeyInfo from the KeyStore corresponding to the named key.
-    ///
-    /// Return the KeyInfo at the key if the key was previously in the KeyStore.
-    fn delete<K: AsRef<str>>(&mut self, key: K) -> Result<Option<KeyInfo>, Self::Error>;
+    fn delete<K: AsRef<str>>(&mut self, key: K) -> Result<(), Self::Error>;
 }

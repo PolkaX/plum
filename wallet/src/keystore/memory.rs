@@ -26,15 +26,17 @@ impl KeyStore for MemKeyStore {
         Ok(self.map.keys().cloned().collect())
     }
 
-    fn get<K: AsRef<str>>(&self, key: K) -> Result<Option<&KeyInfo>, Self::Error> {
-        Ok(self.map.get(key.as_ref()))
+    fn get<K: AsRef<str>>(&self, key: K) -> Result<Option<KeyInfo>, Self::Error> {
+        Ok(self.map.get(key.as_ref()).cloned())
     }
 
-    fn put(&mut self, key: String, info: KeyInfo) -> Result<Option<KeyInfo>, Self::Error> {
-        Ok(self.map.insert(key, info))
+    fn put(&mut self, key: String, info: KeyInfo) -> Result<(), Self::Error> {
+        let _ = self.map.insert(key, info);
+        Ok(())
     }
 
-    fn delete<K: AsRef<str>>(&mut self, key: K) -> Result<Option<KeyInfo>, Self::Error> {
-        Ok(self.map.remove(key.as_ref()))
+    fn delete<K: AsRef<str>>(&mut self, key: K) -> Result<(), Self::Error> {
+        let _ = self.map.remove(key.as_ref());
+        Ok(())
     }
 }

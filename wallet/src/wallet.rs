@@ -266,8 +266,7 @@ impl<KS: KeyStore> WalletImpl<KS> {
         self.keystore
             .delete(DEFAULT_KEY_NAME)
             .map_err(|err| WalletError::KeyStore(err.to_string()))?;
-        let _default = self
-            .keystore
+        self.keystore
             .put(DEFAULT_KEY_NAME.to_string(), key_info)
             .map_err(|err| WalletError::KeyStore(err.to_string()))?;
         Ok(())
@@ -278,14 +277,12 @@ impl<KS: KeyStore> WalletImpl<KS> {
         let key = generate_key(key_type)?;
 
         // generate a random key info and save it into key store and memory.
-        let old = self
-            .keystore
+        self.keystore
             .put(
                 format!("{}{}", WALLET_NAME_PREFIX, key.address),
                 key.info.clone(),
             )
             .map_err(|err| WalletError::KeyStore(err.to_string()))?;
-        assert_eq!(old, None);
         let address = key.address.clone();
         let key_info = key.info.clone();
         let old = self.keys.insert(address.clone(), key);
@@ -298,11 +295,9 @@ impl<KS: KeyStore> WalletImpl<KS> {
             .map_err(|err| WalletError::KeyStore(err.to_string()))?
             .is_none()
         {
-            let old_default = self
-                .keystore
+            self.keystore
                 .put(DEFAULT_KEY_NAME.to_string(), key_info)
                 .map_err(|err| WalletError::KeyStore(err.to_string()))?;
-            assert_eq!(old_default, None);
         }
 
         Ok(address)
