@@ -6,8 +6,10 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
+base64 = "0.12"
 bls-signatures = "0.5"
 libsecp256k1 = "0.3"
+parking_lot = "0.10"
 rand = "0.7"
 serde = { version = "1.0", features = ["derive"] }
 serde_bytes = "0.11"

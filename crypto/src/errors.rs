@@ -10,13 +10,13 @@ use crate::signature::SignatureType;
 #[derive(Debug, Eq, PartialEq, Error)]
 pub enum CryptoError {
     /// Unknown signature type.
-    #[error("Unknown signature type: {0}")]
+    #[error("unknown signature type: {0}")]
     UnknownSignatureType(u8),
     /// Secp256k1 error.
-    #[error("Secp256k1 error: {0}")]
+    #[error("secp256k1 error: {0}")]
     Secp256k1(#[from] secp256k1::Error),
     /// BLS error.
-    #[error("BLS error: {0}")]
+    #[error("bls error: {0}")]
     Bls(String),
     /// Signature and Address are not match
     #[error("signature and address is not same type, signature:{:0?}, addr:{1}")]

@@ -2313,8 +2313,10 @@ version = "0.1.0"
 name = "plum_wallet"
 version = "0.1.0"
 dependencies = [
+ "base64 0.12.0",
  "bls-signatures",
  "libsecp256k1",
+ "parking_lot 0.10.0",
  "plum_address",
  "plum_crypto",
  "rand 0.7.3",
