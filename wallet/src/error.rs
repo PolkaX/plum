@@ -7,26 +7,23 @@ pub type Result<T> = std::result::Result<T, WalletError>;
 #[derive(Debug, thiserror::Error)]
 pub enum WalletError {
     /// IO error.
-    #[error("Invalid password")]
+    #[error("invalid password")]
     Io(#[from] std::io::Error),
     /// JSON error.
-    #[error("JSON error")]
+    #[error("JSON serialize/deserialize error")]
     Json(#[from] serde_json::Error),
     /// Address error.
-    #[error("Address error")]
+    #[error("{0}")]
     Address(#[from] plum_address::AddressError),
     /// Crypto error.
-    #[error("Crypto error")]
-    Crypto(#[from] plum_crypto::CryptoError),
-    /// Key type error.
     #[error("{0}")]
-    KeyType(#[from] crate::keystore::KeyTypeError),
-    /// Key not found.
-    #[error("Key not found")]
-    KeyNotFound,
-    /// Keystore error.
-    #[error("Keystore error")]
-    KeyStore,
+    Crypto(#[from] plum_crypto::CryptoError),
+    /// Unknown key type error.
+    #[error("unknown key type")]
+    UnknownKeyType,
+    /// Key store error.
+    #[error("key store error: {0}")]
+    KeyStore(String),
 }
 
 impl From<secp256k1::Error> for WalletError {
