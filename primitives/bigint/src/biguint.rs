@@ -22,8 +22,7 @@ pub mod cbor {
         } else {
             v.insert(0, 0);
         }
-        let value = Bytes::new(&v);
-        value.serialize(serializer)
+        Bytes::new(&v).serialize(serializer)
     }
 
     /// CBOR deserialization

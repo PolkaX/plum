@@ -49,14 +49,14 @@ pub mod cbor {
     use super::EPostTicket;
 
     #[derive(Serialize)]
-    struct TupleEPostTicketRef<'a>(#[serde(with = "serde_bytes")] &'a [u8], &'a u64, &'a u64);
+    struct CborEPostTicketRef<'a>(#[serde(with = "serde_bytes")] &'a [u8], &'a u64, &'a u64);
 
     /// CBOR serialization
     pub fn serialize<S>(epost_ticket: &EPostTicket, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
-        TupleEPostTicketRef(
+        CborEPostTicketRef(
             &epost_ticket.partial,
             &epost_ticket.sector_id,
             &epost_ticket.challenge_index,
@@ -65,15 +65,15 @@ pub mod cbor {
     }
 
     #[derive(Deserialize)]
-    struct TupleEPostTicket(#[serde(with = "serde_bytes")] Vec<u8>, u64, u64);
+    struct CborEPostTicket(#[serde(with = "serde_bytes")] Vec<u8>, u64, u64);
 
     /// CBOR deserialization
     pub fn deserialize<'de, D>(deserializer: D) -> Result<EPostTicket, D::Error>
     where
         D: de::Deserializer<'de>,
     {
-        let TupleEPostTicket(partial, sector_id, challenge_index) =
-            TupleEPostTicket::deserialize(deserializer)?;
+        let CborEPostTicket(partial, sector_id, challenge_index) =
+            CborEPostTicket::deserialize(deserializer)?;
         Ok(EPostTicket {
             partial,
             sector_id,

@@ -52,7 +52,7 @@ pub mod cbor {
     #[derive(Serialize)]
     struct CborCidRef<'a>(#[serde(with = "cid::ipld_dag_cbor")] &'a Cid);
     #[derive(Serialize)]
-    struct TupleBlockMsgRef<'a>(
+    struct CborBlockMsgRef<'a>(
         #[serde(with = "crate::header::cbor")] &'a BlockHeader,
         &'a [CborCidRef<'a>],
         &'a [CborCidRef<'a>],
@@ -63,7 +63,7 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        TupleBlockMsgRef(
+        CborBlockMsgRef(
             &block.header,
             &block
                 .bls_msgs
@@ -82,7 +82,7 @@ pub mod cbor {
     #[derive(Deserialize)]
     struct CborCid(#[serde(with = "cid::ipld_dag_cbor")] Cid);
     #[derive(Deserialize)]
-    struct TupleBlockMsg(
+    struct CborBlockMsg(
         #[serde(with = "crate::header::cbor")] BlockHeader,
         Vec<CborCid>,
         Vec<CborCid>,
@@ -93,7 +93,7 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let TupleBlockMsg(header, bls_msgs, secp_msgs) = TupleBlockMsg::deserialize(deserializer)?;
+        let CborBlockMsg(header, bls_msgs, secp_msgs) = CborBlockMsg::deserialize(deserializer)?;
         Ok(BlockMsg {
             header,
             bls_msgs: bls_msgs.into_iter().map(|cid| cid.0).collect(),

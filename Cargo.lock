@@ -2302,7 +2302,9 @@ dependencies = [
 name = "plum_types"
 version = "0.1.0"
 dependencies = [
- "num-bigint",
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "plum_bigint",
+ "serde",
 ]
 
 [[package]]
@@ -2321,9 +2323,7 @@ dependencies = [
  "plum_crypto",
  "rand 0.7.3",
  "serde",
- "serde_bytes",
  "serde_json",
- "tempfile",
  "thiserror",
 ]
 

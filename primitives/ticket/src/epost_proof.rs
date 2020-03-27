@@ -43,7 +43,7 @@ pub mod cbor {
     struct CborEPostTicketRef<'a>(#[serde(with = "crate::epost_ticket::cbor")] &'a EPostTicket);
 
     #[derive(Serialize)]
-    struct TupleEPostProofRef<'a>(
+    struct CborEPostProofRef<'a>(
         #[serde(with = "serde_bytes")] &'a [u8],
         #[serde(with = "serde_bytes")] &'a [u8],
         &'a [CborEPostTicketRef<'a>],
@@ -54,7 +54,7 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        TupleEPostProofRef(
+        CborEPostProofRef(
             &epost_proof.proof,
             &epost_proof.post_rand,
             &epost_proof
@@ -70,7 +70,7 @@ pub mod cbor {
     struct CborEPostTicket(#[serde(with = "crate::epost_ticket::cbor")] EPostTicket);
 
     #[derive(Deserialize)]
-    struct TupleEPostProof(
+    struct CborEPostProof(
         #[serde(with = "serde_bytes")] Vec<u8>,
         #[serde(with = "serde_bytes")] Vec<u8>,
         Vec<CborEPostTicket>,
@@ -81,8 +81,8 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let TupleEPostProof(proof, post_rand, candidates) =
-            TupleEPostProof::deserialize(deserializer)?;
+        let CborEPostProof(proof, post_rand, candidates) =
+            CborEPostProof::deserialize(deserializer)?;
         let candidates = candidates
             .into_iter()
             .map(|candidate| candidate.0)

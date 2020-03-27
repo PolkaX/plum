@@ -48,12 +48,12 @@ pub mod option {
     where
         S: ser::Serializer,
     {
-        let bytes = Bytes::new(
+        Bytes::new(
             h256.as_ref()
                 .map(|hash| hash.as_bytes())
                 .unwrap_or_default(),
-        );
-        bytes.serialize(serializer)
+        )
+        .serialize(serializer)
     }
 
     /// Deserialization of Option<H256>.

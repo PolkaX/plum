@@ -56,7 +56,7 @@ pub mod cbor {
     use super::MsgMeta;
 
     #[derive(Serialize)]
-    struct TupleMsgMetaRef<'a>(
+    struct CborMsgMetaRef<'a>(
         #[serde(with = "cid::ipld_dag_cbor")] &'a Cid,
         #[serde(with = "cid::ipld_dag_cbor")] &'a Cid,
     );
@@ -66,11 +66,11 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        TupleMsgMetaRef(&msg_meta.bls_msg, &msg_meta.secp_msg).serialize(serializer)
+        CborMsgMetaRef(&msg_meta.bls_msg, &msg_meta.secp_msg).serialize(serializer)
     }
 
     #[derive(Deserialize)]
-    struct TupleMsgMeta(
+    struct CborMsgMeta(
         #[serde(with = "cid::ipld_dag_cbor")] Cid,
         #[serde(with = "cid::ipld_dag_cbor")] Cid,
     );
@@ -80,7 +80,7 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let TupleMsgMeta(bls_msg, secp_msg) = TupleMsgMeta::deserialize(deserializer)?;
+        let CborMsgMeta(bls_msg, secp_msg) = CborMsgMeta::deserialize(deserializer)?;
         Ok(MsgMeta { bls_msg, secp_msg })
     }
 }

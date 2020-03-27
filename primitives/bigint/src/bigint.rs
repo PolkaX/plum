@@ -33,8 +33,7 @@ pub mod cbor {
                 v
             }
         };
-        let value = Bytes::new(&v);
-        value.serialize(serializer)
+        Bytes::new(&v).serialize(serializer)
     }
 
     /// CBOR deserialization
