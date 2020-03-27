@@ -95,7 +95,7 @@ pub mod cbor {
     #[derive(Serialize)]
     struct CborCidRef<'a>(#[serde(with = "cid::ipld_dag_cbor")] &'a Cid);
     #[derive(Serialize)]
-    struct TupleBlockHeaderRef<'a>(
+    struct CborBlockHeaderRef<'a>(
         #[serde(with = "address_cbor")] &'a Address,
         #[serde(with = "ticket_cbor")] &'a Ticket,
         #[serde(with = "epost_proof_cbor")] &'a EPostProof,
@@ -116,7 +116,7 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        TupleBlockHeaderRef(
+        CborBlockHeaderRef(
             &header.miner,
             &header.ticket,
             &header.epost_proof,
@@ -141,7 +141,7 @@ pub mod cbor {
     #[derive(Deserialize)]
     struct CborCid(#[serde(with = "cid::ipld_dag_cbor")] Cid);
     #[derive(Deserialize)]
-    struct TupleBlockHeader(
+    struct CborBlockHeader(
         #[serde(with = "address_cbor")] Address,
         #[serde(with = "ticket_cbor")] Ticket,
         #[serde(with = "epost_proof_cbor")] EPostProof,
@@ -162,7 +162,7 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let TupleBlockHeader(
+        let CborBlockHeader(
             miner,
             ticket,
             epost_proof,
@@ -176,7 +176,7 @@ pub mod cbor {
             timestamp,
             block_sig,
             fork_signaling,
-        ) = TupleBlockHeader::deserialize(deserializer)?;
+        ) = CborBlockHeader::deserialize(deserializer)?;
         Ok(BlockHeader {
             miner,
             ticket,

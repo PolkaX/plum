@@ -156,7 +156,7 @@ pub mod cbor {
     #[derive(Serialize)]
     struct CborBlockHeaderRef<'a>(#[serde(with = "block_header_cbor")] &'a BlockHeader);
     #[derive(Serialize)]
-    struct TupleTipsetRef<'a>(
+    struct CborTipsetRef<'a>(
         #[serde(with = "crate::key::cbor")] &'a TipsetKey,
         &'a [CborBlockHeaderRef<'a>],
         &'a u64,
@@ -167,7 +167,7 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        TupleTipsetRef(
+        CborTipsetRef(
             &tipset.key,
             &tipset
                 .blocks
@@ -182,7 +182,7 @@ pub mod cbor {
     #[derive(Deserialize)]
     struct CborBlockHeader(#[serde(with = "block_header_cbor")] BlockHeader);
     #[derive(Deserialize)]
-    struct TupleTipset(
+    struct CborTipset(
         #[serde(with = "crate::key::cbor")] TipsetKey,
         Vec<CborBlockHeader>,
         u64,
@@ -193,11 +193,10 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let TupleTipset(key, blocks, height) = TupleTipset::deserialize(deserializer)?;
-        let blocks = blocks.into_iter().map(|block| block.0).collect();
+        let CborTipset(key, blocks, height) = CborTipset::deserialize(deserializer)?;
         Ok(Tipset {
             key,
-            blocks,
+            blocks: blocks.into_iter().map(|block| block.0).collect(),
             height,
         })
     }

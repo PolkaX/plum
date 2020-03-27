@@ -40,8 +40,7 @@ pub mod cbor {
         S: ser::Serializer,
     {
         let bytes = address.as_bytes();
-        let value = Bytes::new(&bytes);
-        value.serialize(serializer)
+        Bytes::new(&bytes).serialize(serializer)
     }
 
     /// CBOR deserialization
@@ -69,8 +68,7 @@ pub mod json {
     where
         S: ser::Serializer,
     {
-        let value = address.to_string();
-        value.serialize(serializer)
+        address.to_string().serialize(serializer)
     }
 
     /// JSON deserialization

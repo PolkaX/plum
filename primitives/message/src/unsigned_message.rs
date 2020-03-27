@@ -80,7 +80,7 @@ pub mod cbor {
     use super::UnsignedMessage;
 
     #[derive(Serialize)]
-    struct TupleUnsignedMessageRef<'a>(
+    struct CborUnsignedMessageRef<'a>(
         #[serde(with = "address_cbor")] &'a Address,
         #[serde(with = "address_cbor")] &'a Address,
         &'a u64,
@@ -96,7 +96,7 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        let tuple_unsigned_msg = TupleUnsignedMessageRef(
+        CborUnsignedMessageRef(
             &unsigned_msg.to,
             &unsigned_msg.from,
             &unsigned_msg.nonce,
@@ -105,12 +105,12 @@ pub mod cbor {
             &unsigned_msg.gas_limit,
             &unsigned_msg.method,
             &unsigned_msg.params,
-        );
-        tuple_unsigned_msg.serialize(serializer)
+        )
+        .serialize(serializer)
     }
 
     #[derive(Deserialize)]
-    struct TupleUnsignedMessage(
+    struct CborUnsignedMessage(
         #[serde(with = "address_cbor")] Address,
         #[serde(with = "address_cbor")] Address,
         u64,
@@ -126,8 +126,8 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let TupleUnsignedMessage(to, from, nonce, value, gas_price, gas_limit, method, params) =
-            TupleUnsignedMessage::deserialize(deserializer)?;
+        let CborUnsignedMessage(to, from, nonce, value, gas_price, gas_limit, method, params) =
+            CborUnsignedMessage::deserialize(deserializer)?;
         Ok(UnsignedMessage {
             to,
             from,

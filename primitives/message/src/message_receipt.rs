@@ -42,7 +42,7 @@ pub mod cbor {
     use super::MessageReceipt;
 
     #[derive(Serialize)]
-    struct TupleMessageReceiptRef<'a>(
+    struct CborMessageReceiptRef<'a>(
         &'a u8,
         #[serde(with = "serde_bytes")] &'a Vec<u8>,
         #[serde(with = "bigint_cbor")] &'a BigInt,
@@ -53,12 +53,12 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        TupleMessageReceiptRef(&receipt.exit_code, &receipt.ret, &receipt.gas_used)
+        CborMessageReceiptRef(&receipt.exit_code, &receipt.ret, &receipt.gas_used)
             .serialize(serializer)
     }
 
     #[derive(Deserialize)]
-    struct TupleMessageReceipt(
+    struct CborMessageReceipt(
         u8,
         #[serde(with = "serde_bytes")] Vec<u8>,
         #[serde(with = "bigint_cbor")] BigInt,
@@ -69,8 +69,8 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let TupleMessageReceipt(exit_code, ret, gas_used) =
-            TupleMessageReceipt::deserialize(deserializer)?;
+        let CborMessageReceipt(exit_code, ret, gas_used) =
+            CborMessageReceipt::deserialize(deserializer)?;
         Ok(MessageReceipt {
             exit_code,
             ret,
