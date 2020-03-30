@@ -30,6 +30,7 @@ members = [
   "libp2p",
   "network",
   "peermgr",
+  "params",
   "primitives/address",
   "primitives/bigint",
   "primitives/block",
