@@ -9,7 +9,7 @@ mod block_msg;
 mod header;
 mod msg_meta;
 
-pub use self::block::{cbor as block_cbor, Block};
-pub use self::block_msg::{cbor as block_msg_cbor, BlockMsg};
+pub use self::block::{cbor as block_cbor, json as block_json, Block};
+pub use self::block_msg::{cbor as block_msg_cbor, json as block_msg_json, BlockMsg};
 pub use self::header::{cbor as block_header_cbor, json as block_header_json, BlockHeader};
-pub use self::msg_meta::{cbor as msg_meta_cbor, MsgMeta};
+pub use self::msg_meta::{cbor as msg_meta_cbor, json as msg_meta_json, MsgMeta};

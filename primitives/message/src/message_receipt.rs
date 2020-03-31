@@ -96,3 +96,82 @@ pub mod cbor {
         assert_eq!(de, receipt);
     }
 }
+
+/// MessageReceipt JSON serialization/deserialization.
+pub mod json {
+    use serde::{de, ser, Deserialize, Serialize};
+
+    use plum_bigint::{bigint_json, BigInt};
+
+    use super::MessageReceipt;
+
+    #[derive(Serialize)]
+    struct JsonMessageReceiptRef<'a> {
+        #[serde(rename = "ExitCode")]
+        exit_code: &'a u8,
+        #[serde(rename = "Return")]
+        ret: String,
+        #[serde(rename = "GasUsed")]
+        #[serde(with = "bigint_json")]
+        gas_used: &'a BigInt,
+    }
+
+    /// JSON serialization.
+    pub fn serialize<S>(receipt: &MessageReceipt, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        JsonMessageReceiptRef {
+            exit_code: &receipt.exit_code,
+            ret: base64::encode(&receipt.ret),
+            gas_used: &receipt.gas_used,
+        }
+        .serialize(serializer)
+    }
+
+    #[derive(Deserialize)]
+    struct JsonMessageReceipt {
+        #[serde(rename = "ExitCode")]
+        exit_code: u8,
+        #[serde(rename = "Return")]
+        ret: String,
+        #[serde(rename = "GasUsed")]
+        #[serde(with = "bigint_json")]
+        gas_used: BigInt,
+    }
+
+    /// JSON deserialization.
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<MessageReceipt, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let JsonMessageReceipt {
+            exit_code,
+            ret,
+            gas_used,
+        } = JsonMessageReceipt::deserialize(deserializer)?;
+        Ok(MessageReceipt {
+            exit_code,
+            ret: base64::decode(ret).expect("base64 decode shouldn't be fail"),
+            gas_used,
+        })
+    }
+
+    #[test]
+    fn message_receipt_json_serde() {
+        #[derive(Debug, PartialEq, Serialize, Deserialize)]
+        struct JsonMessageReceipt(#[serde(with = "self")] MessageReceipt);
+
+        let receipt = JsonMessageReceipt(MessageReceipt {
+            exit_code: 127u8,
+            ret: b"ret".to_vec(),
+            gas_used: 1_776_234.into(),
+        });
+        let expected = "{\"ExitCode\":127,\"Return\":\"cmV0\",\"GasUsed\":\"1776234\"}";
+
+        let ser = serde_json::to_string(&receipt).unwrap();
+        assert_eq!(ser, expected);
+        let de = serde_json::from_str::<JsonMessageReceipt>(&ser).unwrap();
+        assert_eq!(de, receipt);
+    }
+}

@@ -141,6 +141,97 @@ pub mod cbor {
     }
 }
 
+/// UnsignedMessage JSON serialization/deserialization.
+pub mod json {
+    use serde::{de, ser, Deserialize, Serialize};
+
+    use plum_address::{address_json, Address};
+    use plum_bigint::{bigint_json, BigInt};
+
+    use super::UnsignedMessage;
+
+    #[derive(Serialize)]
+    #[serde(rename_all = "PascalCase")]
+    struct JsonUnsignedMessageRef<'a> {
+        #[serde(with = "address_json")]
+        to: &'a Address,
+        #[serde(with = "address_json")]
+        from: &'a Address,
+        nonce: &'a u64,
+        #[serde(with = "bigint_json")]
+        value: &'a BigInt,
+        #[serde(with = "bigint_json")]
+        gas_price: &'a BigInt,
+        #[serde(with = "bigint_json")]
+        gas_limit: &'a BigInt,
+        method: &'a u64,
+        params: String,
+    }
+
+    /// JSON serialization.
+    pub fn serialize<S>(unsigned_msg: &UnsignedMessage, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        JsonUnsignedMessageRef {
+            to: &unsigned_msg.to,
+            from: &unsigned_msg.from,
+            nonce: &unsigned_msg.nonce,
+            value: &unsigned_msg.value,
+            gas_price: &unsigned_msg.gas_price,
+            gas_limit: &unsigned_msg.gas_limit,
+            method: &unsigned_msg.method,
+            params: base64::encode(&unsigned_msg.params),
+        }
+        .serialize(serializer)
+    }
+
+    #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
+    struct JsonUnsignedMessage {
+        #[serde(with = "address_json")]
+        to: Address,
+        #[serde(with = "address_json")]
+        from: Address,
+        nonce: u64,
+        #[serde(with = "bigint_json")]
+        value: BigInt,
+        #[serde(with = "bigint_json")]
+        gas_price: BigInt,
+        #[serde(with = "bigint_json")]
+        gas_limit: BigInt,
+        method: u64,
+        params: String,
+    }
+
+    /// JSON deserialization.
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<UnsignedMessage, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let JsonUnsignedMessage {
+            to,
+            from,
+            nonce,
+            value,
+            gas_price,
+            gas_limit,
+            method,
+            params,
+        } = JsonUnsignedMessage::deserialize(deserializer)?;
+        Ok(UnsignedMessage {
+            to,
+            from,
+            nonce,
+            value,
+            gas_price,
+            gas_limit,
+            method,
+            params: base64::decode(params).expect("base64 decode shouldn't be fail"),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use serde::{Deserialize, Serialize};
@@ -182,7 +273,7 @@ mod tests {
             set_network(Network::Test);
         }
         let unsigned_message = CborUnsignedMessage(new_unsigned_message());
-        let expected = [
+        let expected = vec![
             136, 88, 49, 3, 82, 253, 252, 7, 33, 130, 101, 79, 22, 63, 95, 15, 154, 98, 29, 114,
             149, 102, 199, 77, 16, 3, 124, 77, 123, 187, 4, 7, 209, 226, 198, 73, 129, 133, 90,
             216, 104, 29, 13, 134, 209, 233, 30, 0, 22, 121, 57, 203, 88, 49, 3, 47, 130, 130, 203,
@@ -195,8 +286,34 @@ mod tests {
         ];
 
         let ser = serde_cbor::to_vec(&unsigned_message).unwrap();
-        assert_eq!(ser, &expected[..]);
+        assert_eq!(ser, expected);
         let de = serde_cbor::from_slice::<CborUnsignedMessage>(&ser).unwrap();
+        assert_eq!(de, unsigned_message);
+    }
+
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    struct JsonUnsignedMessage(#[serde(with = "super::json")] UnsignedMessage);
+
+    #[test]
+    fn unsigned_message_json_serde() {
+        unsafe {
+            set_network(Network::Test);
+        }
+        let unsigned_message = JsonUnsignedMessage(new_unsigned_message());
+        let expected = "{\
+            \"To\":\"t3kl67ybzbqjsu6fr7l4hzuyq5okkwnr2ncabxytl3xmcapupcyzeydbk23bub2dmg2hur4aawpe44w3wptsvq\",\
+            \"From\":\"t3f6bifs7c7fuw6mkeycvez3kw3pmwpxbis6agv4563ctdvsqw4gfwq25a3qqiz7womw6xbir5uabgwykazd5a\",\
+            \"Nonce\":197,\
+            \"Value\":\"0\",\
+            \"GasPrice\":\"1776234\",\
+            \"GasLimit\":\"126723\",\
+            \"Method\":1231254,\
+            \"Params\":\"c29tZSBieXRlcywgaWRrLiBwcm9iYWJseSBhdCBsZWFzdCB0ZW4gb2YgdGhlbQ==\"\
+        }";
+
+        let ser = serde_json::to_string(&unsigned_message).unwrap();
+        assert_eq!(ser, expected);
+        let de = serde_json::from_str::<JsonUnsignedMessage>(&ser).unwrap();
         assert_eq!(de, unsigned_message);
     }
 }

@@ -101,3 +101,76 @@ pub mod cbor {
         })
     }
 }
+
+/// BlockMsg JSON serialization/deserialization
+pub mod json {
+    use cid::Cid;
+    use serde::{de, ser, Deserialize, Serialize};
+
+    use super::BlockMsg;
+    use crate::header::BlockHeader;
+
+    #[derive(Serialize)]
+    struct JsonCidRef<'a>(#[serde(with = "cid::ipld_dag_json")] &'a Cid);
+    #[derive(Serialize)]
+    struct JsonBlockMsgRef<'a> {
+        #[serde(rename = "Header")]
+        #[serde(with = "crate::header::json")]
+        header: &'a BlockHeader,
+        #[serde(rename = "BlsMessages")]
+        bls_msgs: &'a [JsonCidRef<'a>],
+        #[serde(rename = "SecpkMessages")]
+        secp_msgs: &'a [JsonCidRef<'a>],
+    }
+
+    /// JSON serialization
+    pub fn serialize<S>(block: &BlockMsg, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        JsonBlockMsgRef {
+            header: &block.header,
+            bls_msgs: &block
+                .bls_msgs
+                .iter()
+                .map(|cid| JsonCidRef(cid))
+                .collect::<Vec<_>>(),
+            secp_msgs: &block
+                .secp_msgs
+                .iter()
+                .map(|cid| JsonCidRef(cid))
+                .collect::<Vec<_>>(),
+        }
+        .serialize(serializer)
+    }
+
+    #[derive(Deserialize)]
+    struct JsonCid(#[serde(with = "cid::ipld_dag_json")] Cid);
+    #[derive(Deserialize)]
+    struct JsonBlockMsg {
+        #[serde(rename = "Header")]
+        #[serde(with = "crate::header::json")]
+        header: BlockHeader,
+        #[serde(rename = "BlsMessages")]
+        bls_msgs: Vec<JsonCid>,
+        #[serde(rename = "SecpkMessages")]
+        secp_msgs: Vec<JsonCid>,
+    }
+
+    /// JSON deserialization
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<BlockMsg, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let JsonBlockMsg {
+            header,
+            bls_msgs,
+            secp_msgs,
+        } = JsonBlockMsg::deserialize(deserializer)?;
+        Ok(BlockMsg {
+            header,
+            bls_msgs: bls_msgs.into_iter().map(|cid| cid.0).collect(),
+            secp_msgs: secp_msgs.into_iter().map(|cid| cid.0).collect(),
+        })
+    }
+}
