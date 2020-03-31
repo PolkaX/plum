@@ -48,7 +48,7 @@ impl<'de> de::Deserialize<'de> for MsgMeta {
     }
 }
 
-/// Block CBOR serialization/deserialization
+/// MsgMeta CBOR serialization/deserialization
 pub mod cbor {
     use cid::Cid;
     use serde::{de, ser, Deserialize, Serialize};
@@ -81,6 +81,55 @@ pub mod cbor {
         D: de::Deserializer<'de>,
     {
         let CborMsgMeta(bls_msg, secp_msg) = CborMsgMeta::deserialize(deserializer)?;
+        Ok(MsgMeta { bls_msg, secp_msg })
+    }
+}
+
+/// MsgMeta JSON serialization/deserialization
+pub mod json {
+    use cid::Cid;
+    use serde::{de, ser, Deserialize, Serialize};
+
+    use super::MsgMeta;
+
+    #[derive(Serialize)]
+    struct JsonMsgMetaRef<'a> {
+        #[serde(rename = "BlsMessages")]
+        #[serde(with = "cid::ipld_dag_json")]
+        bls_msg: &'a Cid,
+        #[serde(rename = "SecpkMessages")]
+        #[serde(with = "cid::ipld_dag_json")]
+        secp_msg: &'a Cid,
+    }
+
+    /// JSON serialization
+    pub fn serialize<S>(msg_meta: &MsgMeta, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        JsonMsgMetaRef {
+            bls_msg: &msg_meta.bls_msg,
+            secp_msg: &msg_meta.secp_msg,
+        }
+        .serialize(serializer)
+    }
+
+    #[derive(Deserialize)]
+    struct JsonMsgMeta {
+        #[serde(rename = "BlsMessages")]
+        #[serde(with = "cid::ipld_dag_json")]
+        bls_msg: Cid,
+        #[serde(rename = "SecpkMessages")]
+        #[serde(with = "cid::ipld_dag_json")]
+        secp_msg: Cid,
+    }
+
+    /// JSON deserialization
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<MsgMeta, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let JsonMsgMeta { bls_msg, secp_msg } = JsonMsgMeta::deserialize(deserializer)?;
         Ok(MsgMeta { bls_msg, secp_msg })
     }
 }

@@ -110,3 +110,83 @@ pub mod cbor {
         })
     }
 }
+
+/// Block JSON serialization/deserialization
+pub mod json {
+    use serde::{de, ser, Deserialize, Serialize};
+
+    use plum_message::{
+        signed_message_json, unsigned_message_json, SignedMessage, UnsignedMessage,
+    };
+
+    use super::Block;
+    use crate::header::BlockHeader;
+
+    #[derive(Serialize)]
+    struct JsonUnsignedMessageRef<'a>(#[serde(with = "unsigned_message_json")] &'a UnsignedMessage);
+    #[derive(Serialize)]
+    struct JsonSignedMessageRef<'a>(#[serde(with = "signed_message_json")] &'a SignedMessage);
+    #[derive(Serialize)]
+    struct JsonBlockRef<'a> {
+        #[serde(rename = "Header")]
+        #[serde(with = "crate::header::json")]
+        header: &'a BlockHeader,
+        #[serde(rename = "BlsMessages")]
+        bls_msgs: &'a [JsonUnsignedMessageRef<'a>],
+        #[serde(rename = "SecpkMessages")]
+        secp_msgs: &'a [JsonSignedMessageRef<'a>],
+    }
+
+    /// JSON serialization
+    pub fn serialize<S>(block: &Block, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        JsonBlockRef {
+            header: &block.header,
+            bls_msgs: &block
+                .bls_msgs
+                .iter()
+                .map(|bls_msg| JsonUnsignedMessageRef(bls_msg))
+                .collect::<Vec<_>>(),
+            secp_msgs: &block
+                .secp_msgs
+                .iter()
+                .map(|secp_msg| JsonSignedMessageRef(secp_msg))
+                .collect::<Vec<_>>(),
+        }
+        .serialize(serializer)
+    }
+
+    #[derive(Deserialize)]
+    struct JsonUnsignedMessage(#[serde(with = "unsigned_message_json")] UnsignedMessage);
+    #[derive(Deserialize)]
+    struct JsonSignedMessage(#[serde(with = "signed_message_json")] SignedMessage);
+    #[derive(Deserialize)]
+    struct JsonBlock {
+        #[serde(rename = "Header")]
+        #[serde(with = "crate::header::json")]
+        header: BlockHeader,
+        #[serde(rename = "BlsMessages")]
+        bls_msgs: Vec<JsonUnsignedMessage>,
+        #[serde(rename = "SecpkMessages")]
+        secp_msgs: Vec<JsonSignedMessage>,
+    }
+
+    /// JSON deserialization
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Block, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let JsonBlock {
+            header,
+            bls_msgs,
+            secp_msgs,
+        } = JsonBlock::deserialize(deserializer)?;
+        Ok(Block {
+            header,
+            bls_msgs: bls_msgs.into_iter().map(|bls_msg| bls_msg.0).collect(),
+            secp_msgs: secp_msgs.into_iter().map(|secp_msg| secp_msg.0).collect(),
+        })
+    }
+}
