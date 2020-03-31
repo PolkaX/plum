@@ -1,2 +1,2 @@
+pub mod market;
 pub mod miner;
-pub mod storagemarket;

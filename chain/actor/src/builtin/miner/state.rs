@@ -2,10 +2,11 @@ use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 
 use cid::Cid;
 use plum_address::Address;
-use plum_types::{chain_epoch::ChainEpoch, DealId, DealWeight, PeerId, TokenAmount};
+use plum_types::{
+    chain_epoch::ChainEpoch, DealId, DealWeight, PeerId, SectorNumber, SectorSize, TokenAmount,
+};
 
 use crate::abi::bitfield::BitField;
-use crate::abi::sector::{SectorNumber, SectorSize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize_tuple, Deserialize_tuple)]
 pub struct State {

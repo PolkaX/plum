@@ -6,13 +6,9 @@ use cid::Cid;
 
 use plum_bigint::BigInt;
 use plum_hash::H256;
-use plum_types::chain_epoch::ChainEpoch;
+use plum_types::{chain_epoch::ChainEpoch, ActorID, SectorNumber, SectorSize};
 
 use super::serde_helper;
-
-pub type ActorID = u64;
-pub type SectorNumber = u64;
-pub type SectorSize = u64;
 
 // The unit of sector weight (power-epochs)
 pub type SectorWeight = BigInt;

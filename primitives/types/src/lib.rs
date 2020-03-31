@@ -19,3 +19,9 @@ pub type DealWeight = BigInt;
 pub type TokenAmount = BigInt;
 ///
 pub type PeerId = String;
+///
+pub type ActorID = u64;
+///
+pub type SectorNumber = u64;
+///
+pub type SectorSize = u64;

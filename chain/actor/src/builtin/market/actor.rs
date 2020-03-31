@@ -1,30 +1,16 @@
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
-use thiserror::Error;
 
 use cid::Cid;
 use plum_address::Address;
 use plum_bigint::BigInt;
 use plum_crypto::Signature;
+use plum_types::DealId;
 
 use ipld_cbor::IpldNode;
 
-#[derive(Debug, Error)]
-pub enum StorageMarketError {
-    #[error("this proposal already do sign before")]
-    AlreadySigned,
-    #[error("this proposal do not have signature")]
-    NotSigned,
-    #[error("sign error: {0}")]
-    Sign(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
-    #[error("sign error: {0}")]
-    Ipld(#[from] ipld_cbor::IpldCborError),
-    #[error("address error: {0}")]
-    Address(#[from] plum_address::AddressError),
-    #[error("crypto error: {0}")]
-    Crypto(#[from] plum_crypto::CryptoError),
-    #[error("cbor error: {0}")]
-    Cbor(#[from] serde_cbor::Error),
-}
+use super::error::StorageMarketError;
+use crate::abi::sector::RegisteredProof;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize_tuple, Deserialize_tuple)]
 pub struct StorageDealProposal {
@@ -97,5 +83,35 @@ impl StorageDealProposal {
             verify_func()?;
         }
         Ok(())
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize_tuple, Deserialize_tuple)]
+pub struct ComputeDataCommitmentParams {
+    pub deal_ids: Vec<DealId>,
+    pub sector_type: RegisteredProof,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct OnMinerSectorsTerminateParams {
+    pub deal_ids: Vec<DealId>,
+}
+
+impl Serialize for OnMinerSectorsTerminateParams {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        (&self.deal_ids,).serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for OnMinerSectorsTerminateParams {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let r: (Vec<DealId>,) = Deserialize::deserialize(deserializer)?;
+        Ok(OnMinerSectorsTerminateParams { deal_ids: r.0 })
     }
 }
