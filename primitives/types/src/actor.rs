@@ -1,6 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use cid::Cid;
+use serde::{de, ser};
 
 use plum_bigint::BigInt;
 
@@ -15,6 +16,24 @@ pub struct Actor {
     pub nonce: u64,
     ///
     pub balance: BigInt,
+}
+
+impl ser::Serialize for Actor {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        self::cbor::serialize(self, serializer)
+    }
+}
+
+impl<'de> de::Deserialize<'de> for Actor {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        self::cbor::deserialize(deserializer)
+    }
 }
 
 /// Actor CBOR serialization/deserialization
