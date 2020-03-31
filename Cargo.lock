@@ -2272,6 +2272,9 @@ dependencies = [
 [[package]]
 name = "plum_params"
 version = "0.1.0"
+dependencies = [
+ "plum_types",
+]
 
 [[package]]
 name = "plum_ticket"

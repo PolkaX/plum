@@ -1,5 +1,5 @@
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
-use serde::{Deserialize, Serialize, Serializer, Deserializer, de::Error};
 
 use cid::Cid;
 use plum_address::Address;
@@ -37,8 +37,8 @@ impl StorageDealProposal {
     }
 
     pub fn sign<F>(&mut self, sign_func: F) -> Result<(), StorageMarketError>
-        where
-            F: Fn(&[u8]) -> Signature,
+    where
+        F: Fn(&[u8]) -> Signature,
     {
         if self.proposer_signature.is_some() {
             return Err(StorageMarketError::AlreadySigned);
@@ -77,7 +77,7 @@ impl StorageDealProposal {
             if self.client != addr {
                 verify_func()?;
             }
-            // worker is same as client, do nothing
+        // worker is same as client, do nothing
         } else {
             // worker is none
             verify_func()?;
@@ -85,7 +85,6 @@ impl StorageDealProposal {
         Ok(())
     }
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize_tuple, Deserialize_tuple)]
 pub struct ComputeDataCommitmentParams {
@@ -95,22 +94,24 @@ pub struct ComputeDataCommitmentParams {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OnMinerSectorsTerminateParams {
-    pub deal_ids: Vec<DealID>
+    pub deal_ids: Vec<DealId>,
 }
 
 impl Serialize for OnMinerSectorsTerminateParams {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
         (&self.deal_ids,).serialize(serializer)
     }
 }
 
 impl<'de> Deserialize<'de> for OnMinerSectorsTerminateParams {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where D: Deserializer<'de> {
-        let r : (Vec<DealID>, ) = Deserialize::deserialize(deserializer)?;
-        Ok(OnMinerSectorsTerminateParams {
-            deal_ids: r.0
-        })
+    where
+        D: Deserializer<'de>,
+    {
+        let r: (Vec<DealId>,) = Deserialize::deserialize(deserializer)?;
+        Ok(OnMinerSectorsTerminateParams { deal_ids: r.0 })
     }
 }
