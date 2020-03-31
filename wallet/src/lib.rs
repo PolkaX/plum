@@ -11,7 +11,9 @@ mod keystore;
 mod wallet;
 
 pub use self::error::{Result, WalletError};
-pub use self::keystore::{KeyInfo, KeyStore, KeyType, MemKeyStore, DEFAULT_KEYSTORE_PATH};
+pub use self::keystore::{
+    key_info_json, key_type_json, KeyInfo, KeyStore, KeyType, MemKeyStore, DEFAULT_KEYSTORE_PATH,
+};
 pub use self::wallet::{generate_key, Wallet};
 
 #[test]
