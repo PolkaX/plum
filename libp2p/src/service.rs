@@ -1,29 +1,23 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use futures::{Async, Stream};
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+use futures::Stream;
 use libp2p::{
-    core,
-    core::muxing::StreamMuxerBox,
-    core::nodes::Substream,
-    core::transport::boxed::Boxed,
+    core::PeerId,
     gossipsub::{MessageId, TopicHash},
     identity::Keypair,
-    mplex, secio, yamux, Multiaddr, PeerId, Swarm, Transport,
+    swarm::Swarm,
 };
-use log::{error, info};
-use std::io::{Error, ErrorKind};
-use std::time::Duration;
 
 use crate::behaviour::{Behaviour, BehaviourEvent};
-use crate::config::Libp2pConfig;
-use crate::rpc::RPCEvent;
+use crate::config::{Libp2pConfig, HELLO_TOPIC};
+use crate::transport::build_transport;
 
-type Libp2pStream = Boxed<(PeerId, StreamMuxerBox), Error>;
-type Libp2pBehaviour = Behaviour<Substream<StreamMuxerBox>>;
-
-/// The Libp2pService listens to events from the LIBP2P swarm.
+/// The Libp2pService listens to events from the Libp2p swarm.
 pub struct Libp2pService {
-    pub swarm: Swarm<Libp2pStream, Libp2pBehaviour>,
+    pub swarm: Swarm<Behaviour>,
 }
 
 impl Libp2pService {
@@ -31,39 +25,30 @@ impl Libp2pService {
     pub fn new(config: &Libp2pConfig) -> Self {
         let net_keypair = generate_new_keypair();
         let peer_id = PeerId::from(net_keypair.public());
-
         info!("Local peer id: {:?}", peer_id);
 
         let transport = build_transport(net_keypair.clone());
 
         let mut swarm = {
             let behaviour = Behaviour::new(&net_keypair);
-            Swarm::new(transport, behaviour, peer_id.clone())
+            Swarm::new(transport, behaviour, peer_id)
         };
 
-        // helper closure for dialing peers
-        let mut dial_addr = |multiaddr: Multiaddr| {
-            match Swarm::dial_addr(&mut swarm, multiaddr.clone()) {
-                Ok(()) => {
-                    info!("Dialing libp2p peer address: {}", multiaddr);
-                }
-                Err(err) => error!(
-                    "Could not connect to peer, address {}, error: {:?}",
-                    multiaddr, err
-                ),
-            };
-        };
-
-        for node in config.bootnodes.clone() {
-            dial_addr(node);
+        for node in &config.bootnodes {
+            match Swarm::dial_addr(&mut swarm, node.clone()) {
+                Ok(_) => info!("Dialed libp2p peer address: {}", node),
+                Err(err) => warn!("Dial address {} failed: {}", node, err),
+            }
         }
 
         Swarm::listen_on(&mut swarm, config.listen_address.clone())
             .expect(&format!("Failed to listen on {}", config.listen_address));
 
+        /*
         swarm
             .kad
             .add_address(&peer_id, config.listen_address.clone());
+        */
 
         for topic in config.pubsub_topics.clone() {
             swarm.subscribe(topic);
@@ -73,82 +58,63 @@ impl Libp2pService {
     }
 }
 
+/*
 impl Stream for Libp2pService {
     type Item = Libp2pEvent;
-    type Error = ();
 
-    fn poll(&mut self) -> Result<Async<Option<Self::Item>>, Self::Error> {
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         loop {
-            match self.swarm.poll() {
-                Ok(Async::Ready(Some(event))) => match event {
-                    BehaviourEvent::DiscoveredPeer(peer) => {
-                        libp2p::Swarm::dial(&mut self.swarm, peer);
+            match self.swarm.poll_next(cx) {
+                Poll::Ready(Some(event)) => match event {
+                    BehaviourEvent::MdnsDiscoveredPeer(peer) => {
+                        Swarm::dial(&mut self.swarm, peer);
                     }
-                    BehaviourEvent::HelloSubscribed(peer) => {
-                        return Ok(Async::Ready(Some(Libp2pEvent::HelloSubscribed(peer))));
-                    }
-                    BehaviourEvent::RPC(peer, rpc_event) => {
-                        return Ok(Async::Ready(Some(Libp2pEvent::RPC(peer, rpc_event))));
-                    }
-                    BehaviourEvent::ExpiredPeer(_) => {}
-                    BehaviourEvent::GossipMessage {
-                        id,
-                        source,
-                        topics,
+                    BehaviourEvent::MdnsExpiredPeer(_) => {}
+                    BehaviourEvent::GossipsubMessage {
+                        peer_id,
+                        message_id,
                         data,
+                        topics,
                     } => {
-                        return Ok(Async::Ready(Some(Libp2pEvent::PubsubMessage {
-                            id,
-                            source,
-                            topics,
+                        return Poll::Ready(Some(Libp2pEvent::GossipsubMessage {
+                            peer_id,
+                            message_id,
                             data,
-                        })));
+                            topics,
+                        }));
+                    }
+                    BehaviourEvent::GossipsubSubscribed { peer_id, topic } => {
+                        if topic.as_str() == HELLO_TOPIC {
+                            return Poll::Ready(Some(Libp2pEvent::GossipsubSubscribedHello(
+                                peer_id,
+                            )));
+                        }
                     }
                 },
-                Ok(Async::Ready(None)) => break,
-                Ok(Async::NotReady) => break,
-                _ => break,
+                Poll::Ready(None) => break,
+                Poll::Pending => break,
             }
         }
-        Ok(Async::NotReady)
+        Poll::Pending
     }
 }
 
-/// LIBP2P event that will be delivered to the NetworkService.
+/// Libp2p event that will be delivered to the NetworkService.
 pub enum Libp2pEvent {
-    PubsubMessage {
-        id: MessageId,
-        source: PeerId,
-        topics: Vec<TopicHash>,
+    GossipsubMessage {
+        peer_id: PeerId,
+        message_id: MessageId,
         data: Vec<u8>,
+        topics: Vec<TopicHash>,
     },
-    HelloSubscribed(PeerId),
-    RPC(PeerId, RPCEvent),
+    GossipsubSubscribedHello(PeerId),
 }
+*/
 
-pub fn build_transport(local_key: Keypair) -> Boxed<(PeerId, StreamMuxerBox), Error> {
-    let transport = libp2p::tcp::TcpConfig::new().nodelay(true);
-    let transport = libp2p::dns::DnsConfig::new(transport);
-
-    transport
-        .upgrade(core::upgrade::Version::V1)
-        .authenticate(secio::SecioConfig::new(local_key))
-        .multiplex(core::upgrade::SelectUpgrade::new(
-            yamux::Config::default(),
-            mplex::MplexConfig::new(),
-        ))
-        .map(|(peer, muxer), _| (peer, core::muxing::StreamMuxerBox::new(muxer)))
-        .timeout(Duration::from_secs(20))
-        .map_err(|err| Error::new(ErrorKind::Other, err))
-        .boxed()
-}
-
+// TODO: save to the disk
 /// Generate a new libp2p keypair
 fn generate_new_keypair() -> Keypair {
     let generated_keypair = Keypair::generate_ed25519();
     info!("Generated new keypair!");
-
-    // TODO: save to the disk
-
     generated_keypair
 }

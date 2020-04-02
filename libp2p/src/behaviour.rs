@@ -1,126 +1,79 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use futures::Async;
-use libp2p::core::identity::Keypair;
-use libp2p::core::PeerId;
-use libp2p::gossipsub::{Gossipsub, GossipsubConfig, GossipsubEvent, MessageId, Topic, TopicHash};
-use libp2p::identify::{Identify, IdentifyEvent};
-use libp2p::kad::{record::store::MemoryStore, Kademlia, KademliaEvent};
-use libp2p::mdns::{Mdns, MdnsEvent};
-use libp2p::ping::{Ping, PingEvent};
-use libp2p::swarm::{NetworkBehaviourAction, NetworkBehaviourEventProcess};
-use libp2p::tokio_io::{AsyncRead, AsyncWrite};
-use libp2p::NetworkBehaviour;
-use log::debug;
+use std::task::{Context, Poll};
 
-use crate::config::{generate_kad_config, HELLO_TOPIC};
-use crate::rpc::{RPCEvent, RPCMessage, RPC};
+use libp2p::{
+    core::{identity, PeerId},
+    gossipsub::{Gossipsub, GossipsubConfig, GossipsubEvent, MessageId, Topic, TopicHash},
+    identify::{Identify, IdentifyEvent},
+    mdns::{Mdns, MdnsEvent},
+    ping::{Ping, PingEvent, PingFailure, PingSuccess},
+    swarm::{NetworkBehaviourAction, NetworkBehaviourEventProcess, PollParameters},
+    NetworkBehaviour,
+};
 
 #[derive(NetworkBehaviour)]
 #[behaviour(out_event = "BehaviourEvent", poll_method = "poll")]
-pub struct Behaviour<TSubstream: AsyncRead + AsyncWrite> {
-    pub rpc: RPC<TSubstream>,
-    pub kad: Kademlia<TSubstream, MemoryStore>,
-    pub ping: Ping<TSubstream>,
-    pub mdns: Mdns<TSubstream>,
-    pub identify: Identify<TSubstream>,
-    pub gossipsub: Gossipsub<TSubstream>,
+pub struct Behaviour {
+    pub ping: Ping,
+    pub identify: Identify,
+    pub mdns: Mdns,
+    pub gossipsub: Gossipsub,
     #[behaviour(ignore)]
     events: Vec<BehaviourEvent>,
 }
 
 pub enum BehaviourEvent {
-    RPC(PeerId, RPCEvent),
-    HelloSubscribed(PeerId),
-    DiscoveredPeer(PeerId),
-    ExpiredPeer(PeerId),
-    GossipMessage {
-        id: MessageId,
-        source: PeerId,
-        topics: Vec<TopicHash>,
+    MdnsDiscoveredPeer(PeerId),
+    MdnsExpiredPeer(PeerId),
+    GossipsubMessage {
+        /// Id of the peer that published this message.
+        peer_id: PeerId,
+        /// Id of gossipsub message.
+        message_id: MessageId,
+        /// Content of the message. Its meaning is out of scope of this library.
         data: Vec<u8>,
+        /// List of topics this message belongs to.
+        topics: Vec<TopicHash>,
+    },
+    GossipsubSubscribed {
+        /// Remote that has subscribed.
+        peer_id: PeerId,
+        /// The topic it has subscribed to.
+        topic: TopicHash,
+    },
+    GossipsubUnsubscribed {
+        /// Remote that has subscribed.
+        peer_id: PeerId,
+        /// The topic it has subscribed to.
+        topic: TopicHash,
     },
 }
 
-impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<RPCMessage>
-    for Behaviour<TSubstream>
-{
-    fn inject_event(&mut self, event: RPCMessage) {
-        match event {
-            RPCMessage::PeerDialed(_peer_id) => {
-                // self.events.push(BehaviourEvent::PeerDialed(peer_id))
+impl NetworkBehaviourEventProcess<PingEvent> for Behaviour {
+    fn inject_event(&mut self, event: PingEvent) {
+        match event.result {
+            Ok(PingSuccess::Ping { rtt }) => {
+                debug!(
+                    "PingSuccess::Ping rtt to {} is {} ms",
+                    event.peer.to_base58(),
+                    rtt.as_millis()
+                );
             }
-            RPCMessage::PeerDisconnected(_peer_id) => {
-                // self.events.push(BehaviourEvent::PeerDisconnected(peer_id))
+            Ok(PingSuccess::Pong) => {
+                debug!("PingSuccess::Pong from {}", event.peer.to_base58());
             }
-            RPCMessage::RPC(peer_id, rpc_event) => {
-                self.events.push(BehaviourEvent::RPC(peer_id, rpc_event))
+            Err(PingFailure::Timeout) => {
+                debug!("PingFailure::Timeout {}", event.peer.to_base58());
             }
-        }
-    }
-}
-
-impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<MdnsEvent>
-    for Behaviour<TSubstream>
-{
-    fn inject_event(&mut self, event: MdnsEvent) {
-        match event {
-            MdnsEvent::Discovered(list) => {
-                for (peer, _) in list {
-                    self.events.push(BehaviourEvent::DiscoveredPeer(peer))
-                }
-            }
-            MdnsEvent::Expired(list) => {
-                for (peer, _) in list {
-                    if !self.mdns.has_node(&peer) {
-                        self.events.push(BehaviourEvent::ExpiredPeer(peer))
-                    }
-                }
+            Err(PingFailure::Other { error }) => {
+                debug!("PingFailure::Other {}: {}", event.peer.to_base58(), error);
             }
         }
     }
 }
 
-impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<KademliaEvent>
-    for Behaviour<TSubstream>
-{
-    fn inject_event(&mut self, _event: KademliaEvent) {
-        // TODO: PeerDiscovered via kad bootstrap.
-    }
-}
-
-impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<GossipsubEvent>
-    for Behaviour<TSubstream>
-{
-    fn inject_event(&mut self, event: GossipsubEvent) {
-        match event {
-            GossipsubEvent::Message(source, id, message) => {
-                self.events.push(BehaviourEvent::GossipMessage {
-                    id,
-                    source,
-                    topics: message.topics,
-                    data: message.data,
-                })
-            }
-            GossipsubEvent::Subscribed { peer_id, topic } => {
-                if topic == TopicHash::from_raw(HELLO_TOPIC) {
-                    self.events.push(BehaviourEvent::HelloSubscribed(peer_id));
-                }
-            }
-            GossipsubEvent::Unsubscribed { .. } => {}
-        }
-    }
-}
-
-impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<PingEvent>
-    for Behaviour<TSubstream>
-{
-    fn inject_event(&mut self, _event: PingEvent) {}
-}
-
-impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<IdentifyEvent>
-    for Behaviour<TSubstream>
-{
+impl NetworkBehaviourEventProcess<IdentifyEvent> for Behaviour {
     fn inject_event(&mut self, event: IdentifyEvent) {
         match event {
             IdentifyEvent::Received {
@@ -141,36 +94,71 @@ impl<TSubstream: AsyncRead + AsyncWrite> NetworkBehaviourEventProcess<IdentifyEv
     }
 }
 
-impl<TSubstream: AsyncRead + AsyncWrite> Behaviour<TSubstream> {
-    /// Consume the libp2p event when polled.
-    fn poll<TBehaviourIn>(
-        &mut self,
-    ) -> Async<NetworkBehaviourAction<TBehaviourIn, BehaviourEvent>> {
-        if !self.events.is_empty() {
-            return Async::Ready(NetworkBehaviourAction::GenerateEvent(self.events.remove(0)));
+impl NetworkBehaviourEventProcess<MdnsEvent> for Behaviour {
+    fn inject_event(&mut self, event: MdnsEvent) {
+        match event {
+            MdnsEvent::Discovered(discovered_addrs) => {
+                for (peer, _addr) in discovered_addrs {
+                    self.events.push(BehaviourEvent::MdnsDiscoveredPeer(peer))
+                }
+            }
+            MdnsEvent::Expired(expired_addrs) => {
+                for (peer, _addr) in expired_addrs {
+                    if !self.mdns.has_node(&peer) {
+                        self.events.push(BehaviourEvent::MdnsExpiredPeer(peer))
+                    }
+                }
+            }
         }
-        Async::NotReady
     }
 }
 
-impl<TSubstream: AsyncRead + AsyncWrite> Behaviour<TSubstream> {
-    pub fn new(local_key: &Keypair) -> Self {
-        let local_peer_id = local_key.public().into_peer_id();
-        let (kad_cfg, kad_store) = generate_kad_config(&local_peer_id);
-        Self {
-            rpc: RPC::new(),
-            kad: Kademlia::with_config(local_peer_id.clone(), kad_store, kad_cfg),
-            ping: Ping::default(),
-            mdns: Mdns::new().expect("Failed to create mDNS service"),
-            events: vec![],
-            identify: Identify::new("plum/libp2p".into(), "0.0.1".into(), local_key.public()),
-            gossipsub: Gossipsub::new(local_peer_id, GossipsubConfig::default()),
+impl NetworkBehaviourEventProcess<GossipsubEvent> for Behaviour {
+    fn inject_event(&mut self, event: GossipsubEvent) {
+        match event {
+            GossipsubEvent::Message(peer_id, message_id, message) => {
+                self.events.push(BehaviourEvent::GossipsubMessage {
+                    peer_id,
+                    message_id,
+                    data: message.data,
+                    topics: message.topics,
+                })
+            }
+            GossipsubEvent::Subscribed { peer_id, topic } => {
+                self.events
+                    .push(BehaviourEvent::GossipsubSubscribed { peer_id, topic });
+            }
+            GossipsubEvent::Unsubscribed { peer_id, topic } => self
+                .events
+                .push(BehaviourEvent::GossipsubUnsubscribed { peer_id, topic }),
         }
     }
+}
 
-    /// Sends an RPC Request/Response via the RPC protocol.
-    pub fn send_rpc(&mut self, peer_id: PeerId, rpc_event: RPCEvent) {
-        self.rpc.send_rpc(peer_id, rpc_event);
+impl Behaviour {
+    /// Consumes the event list when polled.
+    fn poll<TBehaviourIn>(
+        &mut self,
+        _cx: &mut Context<'_>,
+        _params: &mut impl PollParameters,
+    ) -> Poll<NetworkBehaviourAction<TBehaviourIn, BehaviourEvent>> {
+        if !self.events.is_empty() {
+            return Poll::Ready(NetworkBehaviourAction::GenerateEvent(self.events.remove(0)));
+        }
+        Poll::Pending
+    }
+}
+
+impl Behaviour {
+    pub fn new(local_key: &identity::Keypair) -> Self {
+        let local_peer_id = local_key.public().into_peer_id();
+        Self {
+            ping: Ping::default(),
+            identify: Identify::new("plum/libp2p".into(), "0.0.1".into(), local_key.public()),
+            mdns: Mdns::new().expect("Failed to create mDNS service"),
+            gossipsub: Gossipsub::new(local_peer_id, GossipsubConfig::default()),
+            events: vec![],
+        }
     }
 
     /// Publish gossipsub topic.
@@ -182,4 +170,16 @@ impl<TSubstream: AsyncRead + AsyncWrite> Behaviour<TSubstream> {
     pub fn subscribe(&mut self, topic: Topic) -> bool {
         self.gossipsub.subscribe(topic)
     }
+
+    /// Unsubscribe gossipsub topic.
+    pub fn unsubscribe(&mut self, topic: Topic) -> bool {
+        self.gossipsub.unsubscribe(topic)
+    }
+
+    /*
+    /// Sends an RPC Request/Response via the RPC protocol.
+    pub fn send_rpc(&mut self, peer_id: PeerId, rpc_event: RPCEvent) {
+        self.rpc.send_rpc(peer_id, rpc_event);
+    }
+    */
 }

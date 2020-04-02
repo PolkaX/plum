@@ -1,12 +1,12 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+#[macro_use]
+extern crate log;
+
 pub mod behaviour;
 pub mod config;
-pub mod rpc;
+// pub mod rpc;
 pub mod service;
+pub mod transport;
 
 pub use config::Libp2pConfig;
-
-// Reexport for avoiding the multiple version issues.
-pub use libp2p::gossipsub::{MessageId, TopicHash};
-pub use libp2p::{Multiaddr, PeerId};

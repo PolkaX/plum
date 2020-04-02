@@ -1,9 +1,11 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use cid::{Cid, Codec};
-use libp2p::gossipsub::Topic;
-use libp2p::kad::{record::store::MemoryStore, KademliaConfig};
-use libp2p::{Multiaddr, PeerId};
+use libp2p::{
+    core::{Multiaddr, PeerId},
+    gossipsub::Topic,
+    kad::{record::store::MemoryStore, KademliaConfig},
+};
 
 pub const GENESIS: &[u8] = b"filecoin plum";
 
@@ -37,7 +39,7 @@ pub fn genesis_hash() -> Cid {
     Cid::new_v1(Codec::DagProtobuf, hash)
 }
 
-pub fn generate_kad_config(peer_id: &PeerId) -> (KademliaConfig, MemoryStore) {
+pub fn kad_config(peer_id: &PeerId) -> (KademliaConfig, MemoryStore) {
     let mut cfg = KademliaConfig::default();
     cfg.set_query_timeout(std::time::Duration::from_secs(5 * 60));
     let store = MemoryStore::new(peer_id.clone());
