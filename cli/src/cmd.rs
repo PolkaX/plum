@@ -1,9 +1,8 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use plum_libp2p::Multiaddr;
 use structopt::StructOpt;
 
-use crate::run_lp2p;
+use plum_network::Multiaddr;
 
 #[derive(StructOpt, Debug, Clone)]
 pub enum Auth {
@@ -94,12 +93,14 @@ pub enum Network {
 }
 
 impl Network {
+    /*
     pub fn execute(&self) {
         match self {
             Network::Connect { peer } => run_lp2p(Some(peer.to_owned())),
             _ => unimplemented!(),
         }
     }
+    */
 }
 
 #[derive(StructOpt, Debug, Clone)]

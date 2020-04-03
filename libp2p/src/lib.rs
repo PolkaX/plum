@@ -9,4 +9,6 @@ pub mod config;
 pub mod service;
 pub mod transport;
 
-pub use config::Libp2pConfig;
+pub use self::config::Libp2pConfig;
+
+pub use libp2p::core::Multiaddr;
