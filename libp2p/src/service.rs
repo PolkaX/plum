@@ -44,12 +44,6 @@ impl Libp2pService {
         Swarm::listen_on(&mut swarm, config.listen_address.clone())
             .expect(&format!("Failed to listen on {}", config.listen_address));
 
-        /*
-        swarm
-            .kad
-            .add_address(&peer_id, config.listen_address.clone());
-        */
-
         for topic in config.pubsub_topics.clone() {
             swarm.subscribe(topic);
         }
@@ -67,7 +61,7 @@ impl Stream for Libp2pService {
             match self.swarm.poll_next(cx) {
                 Poll::Ready(Some(event)) => match event {
                     BehaviourEvent::MdnsDiscoveredPeer(peer) => {
-                        Swarm::dial(&mut self.swarm, peer);
+                        Swarm::dial(&mut self.swarm, &peer);
                     }
                     BehaviourEvent::MdnsExpiredPeer(_) => {}
                     BehaviourEvent::GossipsubMessage {

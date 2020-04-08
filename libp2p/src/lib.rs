@@ -6,6 +6,7 @@ extern crate log;
 pub mod behaviour;
 pub mod config;
 // pub mod rpc;
+pub mod new_rpc;
 pub mod service;
 pub mod transport;
 

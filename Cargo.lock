@@ -1889,15 +1889,21 @@ dependencies = [
 name = "plum_libp2p"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "fnv",
  "futures",
+ "futures_codec",
  "libp2p",
  "log",
  "multihash",
+ "plum_bigint",
+ "plum_block",
+ "plum_message",
  "serde",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "smallvec 1.2.0",
+ "thiserror",
 ]
 
 [[package]]
