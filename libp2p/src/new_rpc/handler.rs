@@ -4,14 +4,13 @@ use std::fmt;
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
 
-use std::collections::HashMap;
-
+use fnv::FnvHashMap;
 use futures_codec::Framed;
 use libp2p::{
     core::{InboundUpgrade, OutboundUpgrade},
     swarm::{
         protocols_handler::{
-            InboundUpgradeSend, KeepAlive, OneShotHandler, OutboundUpgradeSend, ProtocolsHandler,
+            InboundUpgradeSend, KeepAlive, OutboundUpgradeSend, ProtocolsHandler,
             ProtocolsHandlerEvent, ProtocolsHandlerUpgrErr, SubstreamProtocol,
         },
         NegotiatedSubstream,
@@ -48,10 +47,10 @@ pub struct RpcHandler {
 
     /// Map of current inbound substreams awaiting processing a response to the request.
     /// The `RequestId` is maintained by the application sending the request.
-    inbound_substreams: HashMap<RequestId, InboundSubstreamState>,
+    inbound_substreams: FnvHashMap<RequestId, InboundSubstreamState>,
     /// Map of outbound substreams that need to be driven to completion.
     /// The `RequestId` is maintained by the application sending the request.
-    outbound_substreams: HashMap<RequestId, OutboundSubstreamState>,
+    outbound_substreams: FnvHashMap<RequestId, OutboundSubstreamState>,
     /// Sequential ID for new substreams.
     current_substream_id: RequestId,
 }
@@ -60,31 +59,32 @@ type InboundFramed = Framed<NegotiatedSubstream, InboundCodec>;
 type OutboundFramed = Framed<NegotiatedSubstream, OutboundCodec>;
 
 /// State of the inbound substream
+/// Either waiting for a response, or in the process of sending.
 enum InboundSubstreamState {
-    /// Request has been received, local peer is waiting to send a response to the remote peer.
-    PendingSendResponse {
+    /// A request has been received, pending sending back the response.
+    ResponsePendingSend {
         /// The framed negotiated substream used to send the response.
         substream: InboundFramed,
         /// The time when the substream is closed.
         timeout: Instant,
     },
+    /// The substream is attempting to shutdown.
+    Closing(InboundFramed),
     /// An error occurred during processing.
     Poisoned,
 }
 
 /// State of the outbound substream
 enum OutboundSubstreamState {
-    /// Local is waiting to send a response to the remote.
-    PendingSendResponse {
-        substream: InboundFramed,
-        response: RpcResponse,
-    },
-    /// Request has been sent, local is waiting to received a response from the remote.
-    PendingRecvResponse {
+    /// A request has been sent, and we are awaiting a response.
+    RequestPendingResponse {
+        /// The framed negotiated substream used to receive the response.
         substream: OutboundFramed,
-        event: RpcMessage, // RPC Response or RPC Error
-        timeout: Instant,
+        /// Keeps track of the actual request sent.
+        request: RpcRequest,
     },
+    /// Closing an outbound substream.
+    Closing(OutboundFramed),
     /// An error occurred during processing.
     Poisoned,
 }
@@ -103,8 +103,8 @@ impl RpcHandler {
             keep_alive: KeepAlive::Yes,
             config,
 
-            inbound_substreams: HashMap::new(),
-            outbound_substreams: HashMap::new(),
+            inbound_substreams: FnvHashMap::default(),
+            outbound_substreams: FnvHashMap::default(),
             current_substream_id: 1,
         }
     }
@@ -115,7 +115,25 @@ impl RpcHandler {
         self.dial_negotiated + self.dial_queue.len() as u32
     }
 
-    /// Opens an outbound substream with `message`.
+    /// Returns a reference to the listen protocol configuration.
+    ///
+    /// > **Note**: If you modify the protocol, modifications will only applies to future inbound
+    /// >           substreams, not the ones already being negotiated.
+    #[inline]
+    pub fn listen_protocol_ref(&self) -> &SubstreamProtocol<InboundProtocol> {
+        &self.listen_protocol
+    }
+
+    /// Returns a mutable reference to the listen protocol configuration.
+    ///
+    /// > **Note**: If you modify the protocol, modifications will only applies to future inbound
+    /// >           substreams, not the ones already being negotiated.
+    #[inline]
+    pub fn listen_protocol_mut(&mut self) -> &mut SubstreamProtocol<InboundProtocol> {
+        &mut self.listen_protocol
+    }
+
+    /// Opens an outbound substream with a `message`.
     #[inline]
     pub fn send_request(&mut self, message: RpcMessage) {
         self.keep_alive = KeepAlive::Yes;
@@ -175,22 +193,20 @@ impl ProtocolsHandler for RpcHandler {
         &mut self,
         out: <Self::InboundProtocol as InboundUpgrade<NegotiatedSubstream>>::Output,
     ) {
-        let (request, substream) = out;
+        // If we're shutting down the connection for inactivity, reset the timeout.
+        // update the keep alive timeout if there are no more remaining outbound streams.
+        if !self.keep_alive.is_yes() {
+            self.keep_alive = KeepAlive::Until(Instant::now() + self.config.inactive_timeout);
+        }
 
-        // New inbound request. Store the stream.
-        let inbound_substream_state = InboundSubstreamState::PendingSendResponse {
+        let (request, substream) = out;
+        // New inbound request. Store the substream used to send back the response.
+        let inbound_substream_state = InboundSubstreamState::ResponsePendingSend {
             substream,
             timeout: Instant::now() + self.config.inactive_timeout,
         };
         self.inbound_substreams
             .insert(self.current_substream_id, inbound_substream_state);
-
-        /*
-        // If we're shutting down the connection for inactivity, reset the timeout.
-        if !self.keep_alive.is_yes() {
-            self.keep_alive = KeepAlive::Until(Instant::now() + self.config.inactive_timeout);
-        }
-        */
 
         self.events_out
             .push(RpcMessage::Request(self.current_substream_id, request));
@@ -209,11 +225,29 @@ impl ProtocolsHandler for RpcHandler {
     ) {
         self.dial_negotiated -= 1;
 
-        if self.dial_negotiated == 0 && self.dial_queue.is_empty() {
+        if self.dial_negotiated == 0
+            && self.dial_queue.is_empty()
+            && self.outbound_substreams.is_empty()
+        {
             self.keep_alive = KeepAlive::Until(Instant::now() + self.config.inactive_timeout);
+        } else {
+            self.keep_alive = KeepAlive::Yes;
         }
 
-        self.events_out.push(out.into());
+        match info {
+            RpcMessage::Request(request_id, request) => {
+                if request.expect_response() {
+                    // New outbound request. Store the substream used to receive the response.
+                    let outbound_substream_state = OutboundSubstreamState::RequestPendingResponse {
+                        substream: out,
+                        request,
+                    };
+                    self.outbound_substreams
+                        .insert(request_id, outbound_substream_state);
+                }
+            }
+            RpcMessage::Response(_, _) => {} // response is not expected, drop the stream
+        }
     }
 
     /// Injects an event coming from the outside in the handler.
@@ -221,24 +255,7 @@ impl ProtocolsHandler for RpcHandler {
     fn inject_event(&mut self, event: Self::InEvent) {
         match event {
             RpcMessage::Request(_, _) => self.send_request(event),
-            // Note: If the substream has closed due to inactivity or the substream is in the
-            // wrong state, a response will fail silently.
-            RpcMessage::Response(request_id, response) => {
-                // check if the stream matching the response still exists
-                if let Some(inbound_substream_state) = self.inbound_substreams.remove(&request_id) {
-                    match inbound_substream_state {
-                        InboundSubstreamState::PendingSendResponse { substream, timeout } => {}
-                    }
-                    // only send one response per stream. This must be in the waiting state
-                    self.outbound_substreams
-                        .push(OutboundSubstreamState::PendingSendResponse {
-                            substream: inbound_substream_state.substream,
-                            response: inbound_substream_state,
-                        });
-                }
-            }
-            // We do not send errors as responses
-            RpcMessage::Error(_, _) => {}
+            RpcMessage::Response(_request_id, _response) => {}
         }
     }
 
@@ -254,7 +271,6 @@ impl ProtocolsHandler for RpcHandler {
         let request_id = match info {
             RpcMessage::Request(request_id, _) => request_id,
             RpcMessage::Response(_, _) => 0,
-            RpcMessage::Error(_, _) => 0,
         };
         if self.pending_error.is_none() {
             self.pending_error = Some((request_id, error));
@@ -270,7 +286,7 @@ impl ProtocolsHandler for RpcHandler {
     /// Should behave like `Stream::poll()`.
     fn poll(
         &mut self,
-        _cx: &mut Context,
+        _cx: &mut Context<'_>,
     ) -> Poll<
         ProtocolsHandlerEvent<
             Self::OutboundProtocol,
@@ -279,29 +295,6 @@ impl ProtocolsHandler for RpcHandler {
             Self::Error,
         >,
     > {
-        if let Some(err) = self.pending_error.take() {
-            return Poll::Ready(ProtocolsHandlerEvent::Close(err));
-        }
-
-        if !self.events_out.is_empty() {
-            return Poll::Ready(ProtocolsHandlerEvent::Custom(self.events_out.remove(0)));
-        } else {
-            self.events_out.shrink_to_fit();
-        }
-
-        if !self.dial_queue.is_empty() {
-            if self.dial_negotiated < self.max_dial_negotiated {
-                self.dial_negotiated += 1;
-                return Poll::Ready(ProtocolsHandlerEvent::OutboundSubstreamRequest {
-                    protocol: SubstreamProtocol::new(self.dial_queue.remove(0))
-                        .with_timeout(self.config.substream_timeout),
-                    info: (),
-                });
-            }
-        } else {
-            self.dial_queue.shrink_to_fit();
-        }
-
-        Poll::Pending
+        unimplemented!()
     }
 }

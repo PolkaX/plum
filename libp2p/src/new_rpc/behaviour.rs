@@ -95,6 +95,7 @@ impl NetworkBehaviour for Rpc {
         if !self.events.is_empty() {
             return Poll::Ready(self.events.remove(0));
         }
+
         Poll::Pending
     }
 }

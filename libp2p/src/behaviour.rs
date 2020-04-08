@@ -12,6 +12,8 @@ use libp2p::{
     NetworkBehaviour,
 };
 
+use crate::new_rpc::{Rpc, RpcEvent, RpcMessage};
+
 #[derive(NetworkBehaviour)]
 #[behaviour(out_event = "BehaviourEvent", poll_method = "poll")]
 pub struct Behaviour {
@@ -19,6 +21,7 @@ pub struct Behaviour {
     pub identify: Identify,
     pub mdns: Mdns,
     pub gossipsub: Gossipsub,
+    pub rpc: Rpc,
     #[behaviour(ignore)]
     events: Vec<BehaviourEvent>,
 }
@@ -48,6 +51,9 @@ pub enum BehaviourEvent {
         /// The topic it has subscribed to.
         topic: TopicHash,
     },
+    RpcPeerDialed(PeerId),
+    RpcPeerDisconnected(PeerId),
+    RpcMessage(PeerId, RpcMessage),
 }
 
 impl NetworkBehaviourEventProcess<PingEvent> for Behaviour {
@@ -135,6 +141,23 @@ impl NetworkBehaviourEventProcess<GossipsubEvent> for Behaviour {
     }
 }
 
+impl NetworkBehaviourEventProcess<RpcEvent> for Behaviour {
+    fn inject_event(&mut self, event: RpcEvent) {
+        match event {
+            RpcEvent::PeerDialed(peer_id) => {
+                self.events.push(BehaviourEvent::RpcPeerDialed(peer_id));
+            }
+            RpcEvent::PeerDisconnected(peer_id) => {
+                self.events
+                    .push(BehaviourEvent::RpcPeerDisconnected(peer_id));
+            }
+            RpcEvent::Message(peer_id, message) => self
+                .events
+                .push(BehaviourEvent::RpcMessage(peer_id, message)),
+        }
+    }
+}
+
 impl Behaviour {
     /// Consumes the event list when polled.
     fn poll<TBehaviourIn>(
@@ -145,6 +168,7 @@ impl Behaviour {
         if !self.events.is_empty() {
             return Poll::Ready(NetworkBehaviourAction::GenerateEvent(self.events.remove(0)));
         }
+
         Poll::Pending
     }
 }
@@ -157,6 +181,7 @@ impl Behaviour {
             identify: Identify::new("plum/libp2p".into(), "0.0.1".into(), local_key.public()),
             mdns: Mdns::new().expect("Failed to create mDNS service"),
             gossipsub: Gossipsub::new(local_peer_id, GossipsubConfig::default()),
+            rpc: Rpc::default(),
             events: vec![],
         }
     }
@@ -176,10 +201,8 @@ impl Behaviour {
         self.gossipsub.unsubscribe(topic)
     }
 
-    /*
-    /// Sends an RPC Request/Response via the RPC protocol.
-    pub fn send_rpc(&mut self, peer_id: PeerId, rpc_event: RPCEvent) {
-        self.rpc.send_rpc(peer_id, rpc_event);
+    /// Sends an RPC message (Request/Response) via the RPC protocol.
+    pub fn send_rpc(&mut self, peer_id: PeerId, message: RpcMessage) {
+        self.rpc.send_rpc(peer_id, message);
     }
-    */
 }
