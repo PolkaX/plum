@@ -1,18 +1,9 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use std::pin::Pin;
-use std::task::{Context, Poll};
+use libp2p::{core::PeerId, identity::Keypair, swarm::Swarm};
 
-use futures::Stream;
-use libp2p::{
-    core::PeerId,
-    gossipsub::{MessageId, TopicHash},
-    identity::Keypair,
-    swarm::Swarm,
-};
-
-use crate::behaviour::{Behaviour, BehaviourEvent};
-use crate::config::{Libp2pConfig, HELLO_TOPIC};
+use crate::behaviour::Behaviour;
+use crate::config::Libp2pConfig;
 use crate::transport::build_transport;
 
 /// The Libp2pService listens to events from the Libp2p swarm.
@@ -108,7 +99,6 @@ pub enum Libp2pEvent {
 // TODO: save to the disk
 /// Generate a new libp2p keypair
 fn generate_new_keypair() -> Keypair {
-    let generated_keypair = Keypair::generate_ed25519();
     info!("Generated new keypair!");
-    generated_keypair
+    Keypair::generate_ed25519()
 }

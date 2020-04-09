@@ -1,20 +1,17 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use std::fmt;
+use std::mem;
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
 
 use fnv::FnvHashMap;
 use futures_codec::Framed;
-use libp2p::{
-    core::{InboundUpgrade, OutboundUpgrade},
-    swarm::{
-        protocols_handler::{
-            InboundUpgradeSend, KeepAlive, OutboundUpgradeSend, ProtocolsHandler,
-            ProtocolsHandlerEvent, ProtocolsHandlerUpgrErr, SubstreamProtocol,
-        },
-        NegotiatedSubstream,
+use libp2p::swarm::{
+    protocols_handler::{
+        InboundUpgradeSend, KeepAlive, OutboundUpgradeSend, ProtocolsHandler,
+        ProtocolsHandlerEvent, ProtocolsHandlerUpgrErr, SubstreamProtocol,
     },
+    NegotiatedSubstream,
 };
 use smallvec::SmallVec;
 
@@ -23,6 +20,8 @@ use crate::new_rpc::protocol::{
     InboundCodec, InboundProtocol, OutboundCodec, OutboundProtocol, RequestId, RpcError,
     RpcMessage, RpcRequest, RpcResponse, RpcResponseFailure, RpcResponseSuccess,
 };
+
+const RESPONSE_TIMEOUT: u64 = 10;
 
 /// Implementation of `ProtocolsHandler` that opens a new substream for each individual message.
 ///
@@ -61,32 +60,37 @@ type OutboundFramed = Framed<NegotiatedSubstream, OutboundCodec>;
 /// State of the inbound substream
 /// Either waiting for a response, or in the process of sending.
 enum InboundSubstreamState {
-    /// A request has been received, pending sending back the response.
+    /// A request has been received, waiting for sending back the response.
     ResponsePendingSend {
         /// The framed negotiated substream used to send the response.
         substream: InboundFramed,
-        /// The time when the substream is closed.
+        /// Keeps track of the actual request received.
+        request: RpcRequest,
+        /// The time when the response is timeout.
         timeout: Instant,
     },
-    /// The substream is attempting to shutdown.
-    Closing(InboundFramed),
-    /// An error occurred during processing.
-    Poisoned,
 }
 
 /// State of the outbound substream
 enum OutboundSubstreamState {
-    /// A request has been sent, and we are awaiting a response.
+    /// Waiting to send a response to the remote.
+    ResponsePendingSend {
+        /// The framed negotiated substream used to send the response.
+        substream: InboundFramed,
+        /// Keeps track of the actual response will send.
+        response: RpcResponse,
+        /// The time when the response is timeout.
+        timeout: Instant,
+    },
+    /// A request has been sent, waiting for receiving the response.
     RequestPendingResponse {
         /// The framed negotiated substream used to receive the response.
         substream: OutboundFramed,
         /// Keeps track of the actual request sent.
         request: RpcRequest,
+        /// The time when the response is timeout.
+        timeout: Instant,
     },
-    /// Closing an outbound substream.
-    Closing(OutboundFramed),
-    /// An error occurred during processing.
-    Poisoned,
 }
 
 impl RpcHandler {
@@ -191,7 +195,7 @@ impl ProtocolsHandler for RpcHandler {
     #[inline]
     fn inject_fully_negotiated_inbound(
         &mut self,
-        out: <Self::InboundProtocol as InboundUpgrade<NegotiatedSubstream>>::Output,
+        out: <Self::InboundProtocol as InboundUpgradeSend>::Output,
     ) {
         // If we're shutting down the connection for inactivity, reset the timeout.
         // update the keep alive timeout if there are no more remaining outbound streams.
@@ -203,7 +207,8 @@ impl ProtocolsHandler for RpcHandler {
         // New inbound request. Store the substream used to send back the response.
         let inbound_substream_state = InboundSubstreamState::ResponsePendingSend {
             substream,
-            timeout: Instant::now() + self.config.inactive_timeout,
+            request: request.clone(),
+            timeout: Instant::now() + Duration::from_secs(RESPONSE_TIMEOUT),
         };
         self.inbound_substreams
             .insert(self.current_substream_id, inbound_substream_state);
@@ -220,7 +225,7 @@ impl ProtocolsHandler for RpcHandler {
     #[inline]
     fn inject_fully_negotiated_outbound(
         &mut self,
-        out: <Self::OutboundProtocol as OutboundUpgrade<NegotiatedSubstream>>::Output,
+        out: <Self::OutboundProtocol as OutboundUpgradeSend>::Output,
         info: Self::OutboundOpenInfo,
     ) {
         self.dial_negotiated -= 1;
@@ -234,6 +239,7 @@ impl ProtocolsHandler for RpcHandler {
             self.keep_alive = KeepAlive::Yes;
         }
 
+        // add the stream to substreams if we expect a response, otherwise drop the stream.
         match info {
             RpcMessage::Request(request_id, request) => {
                 if request.expect_response() {
@@ -241,6 +247,7 @@ impl ProtocolsHandler for RpcHandler {
                     let outbound_substream_state = OutboundSubstreamState::RequestPendingResponse {
                         substream: out,
                         request,
+                        timeout: Instant::now() + Duration::from_secs(RESPONSE_TIMEOUT),
                     };
                     self.outbound_substreams
                         .insert(request_id, outbound_substream_state);
@@ -255,7 +262,25 @@ impl ProtocolsHandler for RpcHandler {
     fn inject_event(&mut self, event: Self::InEvent) {
         match event {
             RpcMessage::Request(_, _) => self.send_request(event),
-            RpcMessage::Response(_request_id, _response) => {}
+            RpcMessage::Response(request_id, response) => {
+                if let Some(inbound_substream_state) = self.inbound_substreams.remove(&request_id) {
+                    // only send one response per stream. This must be in the waiting state
+                    match inbound_substream_state {
+                        InboundSubstreamState::ResponsePendingSend {
+                            substream, timeout, ..
+                        } => {
+                            self.outbound_substreams.insert(
+                                request_id,
+                                OutboundSubstreamState::ResponsePendingSend {
+                                    substream,
+                                    response,
+                                    timeout,
+                                },
+                            );
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -264,9 +289,7 @@ impl ProtocolsHandler for RpcHandler {
     fn inject_dial_upgrade_error(
         &mut self,
         info: Self::OutboundOpenInfo,
-        error: ProtocolsHandlerUpgrErr<
-            <Self::OutboundProtocol as OutboundUpgrade<NegotiatedSubstream>>::Error,
-        >,
+        error: ProtocolsHandlerUpgrErr<<Self::OutboundProtocol as OutboundUpgradeSend>::Error>,
     ) {
         let request_id = match info {
             RpcMessage::Request(request_id, _) => request_id,
@@ -295,6 +318,40 @@ impl ProtocolsHandler for RpcHandler {
             Self::Error,
         >,
     > {
-        unimplemented!()
+        if let Some((request_id, err)) = self.pending_error.take() {
+            // Returning an error here will result in dropping the peer.
+            error!("{} => {}", request_id, err);
+        }
+
+        // return any events that need to be reported
+        if !self.events_out.is_empty() {
+            return Poll::Ready(ProtocolsHandlerEvent::Custom(self.events_out.remove(0)));
+        } else {
+            self.events_out.shrink_to_fit();
+        }
+
+        // purge expired inbound substreams and send an response with error
+        // purge expired outbound substreams
+
+        // drive inbound streams that need to be processed
+        // drive outbound streams that need to be processed
+
+
+        // establish outbound substreams
+        if !self.dial_queue.is_empty() && self.dial_negotiated < self.max_dial_negotiated {
+            self.dial_negotiated += 1;
+
+            let message = self.dial_queue.remove(0);
+            self.dial_queue.shrink_to_fit();
+
+            if let RpcMessage::Request(request_id, request) = message {
+                return Poll::Ready(ProtocolsHandlerEvent::OutboundSubstreamRequest {
+                    protocol: SubstreamProtocol::new(OutboundProtocol(request.clone())),
+                    info: RpcMessage::Request(request_id, request),
+                });
+            }
+        }
+
+        Poll::Pending
     }
 }

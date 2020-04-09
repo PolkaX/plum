@@ -164,7 +164,7 @@ where
 }
 
 /// Protocol upgrade of outbound.
-pub struct OutboundProtocol(RpcRequest);
+pub struct OutboundProtocol(pub(crate) RpcRequest);
 
 impl UpgradeInfo for OutboundProtocol {
     type Info = &'static [u8];
