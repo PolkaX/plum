@@ -23,7 +23,7 @@ plum_block = { path = "../primitives/block" }
 plum_message = { path = "../primitives/message" }
 
 [dependencies.libp2p]
-version = "0.17"
+version = "0.18"
 default-features = false
 features = [
     "dns",
