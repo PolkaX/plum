@@ -96,6 +96,41 @@ pub mod cbor {
         let CborSignedMessage(message, signature) = CborSignedMessage::deserialize(deserializer)?;
         Ok(SignedMessage { message, signature })
     }
+
+    /// Vec<SignedMessage> CBOR serialization/deserialization.
+    pub mod vec {
+        use super::*;
+
+        #[derive(Serialize)]
+        struct CborSignedMessageRef<'a>(#[serde(with = "super")] &'a SignedMessage);
+
+        /// CBOR serialization of Vec<SignedMessage>.
+        pub fn serialize<S>(signed_msgs: &[SignedMessage], serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            signed_msgs
+                .iter()
+                .map(|signed_msg| CborSignedMessageRef(signed_msg))
+                .collect::<Vec<_>>()
+                .serialize(serializer)
+        }
+
+        #[derive(Deserialize)]
+        struct CborSignedMessage(#[serde(with = "super")] SignedMessage);
+
+        /// CBOR deserialization of Vec<SignedMessage>.
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<SignedMessage>, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            let signed_msgs = <Vec<CborSignedMessage>>::deserialize(deserializer)?;
+            Ok(signed_msgs
+                .into_iter()
+                .map(|CborSignedMessage(signed_msg)| signed_msg)
+                .collect())
+        }
+    }
 }
 
 /// SignedMessage JSON serialization/deserialization.
@@ -145,5 +180,40 @@ pub mod json {
         let JsonSignedMessage { message, signature } =
             JsonSignedMessage::deserialize(deserializer)?;
         Ok(SignedMessage { message, signature })
+    }
+
+    /// Vec<SignedMessage> JSON serialization/deserialization.
+    pub mod vec {
+        use super::*;
+
+        #[derive(Serialize)]
+        struct JsonSignedMessageRef<'a>(#[serde(with = "super")] &'a SignedMessage);
+
+        /// JSON serialization of Vec<SignedMessage>.
+        pub fn serialize<S>(signed_msgs: &[SignedMessage], serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            signed_msgs
+                .iter()
+                .map(|signed_msg| JsonSignedMessageRef(signed_msg))
+                .collect::<Vec<_>>()
+                .serialize(serializer)
+        }
+
+        #[derive(Deserialize)]
+        struct JsonSignedMessage(#[serde(with = "super")] SignedMessage);
+
+        /// JSON deserialization of Vec<SignedMessage>.
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<SignedMessage>, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            let signed_msgs = <Vec<JsonSignedMessage>>::deserialize(deserializer)?;
+            Ok(signed_msgs
+                .into_iter()
+                .map(|JsonSignedMessage(signed_msg)| signed_msg)
+                .collect())
+        }
     }
 }

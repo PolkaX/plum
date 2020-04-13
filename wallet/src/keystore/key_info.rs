@@ -120,12 +120,12 @@ pub mod key_info_json {
     use super::{KeyInfo, KeyType};
 
     #[derive(Serialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonKeyInfoRef<'a> {
-        #[serde(rename = "Type")]
         #[serde(with = "super::key_type_json")]
-        ty: &'a KeyType,
-        #[serde(rename = "PrivateKey")]
-        privkey: String,
+        r#type: &'a KeyType,
+        #[serde(with = "plum_types::base64")]
+        private_key: &'a [u8],
     }
 
     /// JSON serialization
@@ -134,19 +134,19 @@ pub mod key_info_json {
         S: ser::Serializer,
     {
         JsonKeyInfoRef {
-            ty: &key_info.ty,
-            privkey: base64::encode(&key_info.privkey),
+            r#type: &key_info.ty,
+            private_key: &key_info.privkey,
         }
         .serialize(serializer)
     }
 
     #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonKeyInfo {
-        #[serde(rename = "Type")]
         #[serde(with = "super::key_type_json")]
-        ty: KeyType,
-        #[serde(rename = "PrivateKey")]
-        privkey: String,
+        r#type: KeyType,
+        #[serde(with = "plum_types::base64")]
+        private_key: Vec<u8>,
     }
 
     /// JSON deserialization
@@ -156,8 +156,8 @@ pub mod key_info_json {
     {
         let key_info = JsonKeyInfo::deserialize(deserializer)?;
         Ok(KeyInfo {
-            ty: key_info.ty,
-            privkey: base64::decode(key_info.privkey).expect("base64 decode shouldn't be fail"),
+            ty: key_info.r#type,
+            privkey: key_info.private_key,
         })
     }
 }

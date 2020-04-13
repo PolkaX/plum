@@ -50,15 +50,15 @@ impl<'de> de::Deserialize<'de> for MsgMeta {
 
 /// MsgMeta CBOR serialization/deserialization
 pub mod cbor {
-    use cid::Cid;
+    use cid::{ipld_dag_cbor as cid_cbor, Cid};
     use serde::{de, ser, Deserialize, Serialize};
 
     use super::MsgMeta;
 
     #[derive(Serialize)]
     struct CborMsgMetaRef<'a>(
-        #[serde(with = "cid::ipld_dag_cbor")] &'a Cid,
-        #[serde(with = "cid::ipld_dag_cbor")] &'a Cid,
+        #[serde(with = "cid_cbor")] &'a Cid,
+        #[serde(with = "cid_cbor")] &'a Cid,
     );
 
     /// CBOR serialization
@@ -71,8 +71,8 @@ pub mod cbor {
 
     #[derive(Deserialize)]
     struct CborMsgMeta(
-        #[serde(with = "cid::ipld_dag_cbor")] Cid,
-        #[serde(with = "cid::ipld_dag_cbor")] Cid,
+        #[serde(with = "cid_cbor")] Cid,
+        #[serde(with = "cid_cbor")] Cid,
     );
 
     /// CBOR deserialization
@@ -87,7 +87,7 @@ pub mod cbor {
 
 /// MsgMeta JSON serialization/deserialization
 pub mod json {
-    use cid::Cid;
+    use cid::{ipld_dag_json as cid_json, Cid};
     use serde::{de, ser, Deserialize, Serialize};
 
     use super::MsgMeta;
@@ -95,10 +95,10 @@ pub mod json {
     #[derive(Serialize)]
     struct JsonMsgMetaRef<'a> {
         #[serde(rename = "BlsMessages")]
-        #[serde(with = "cid::ipld_dag_json")]
+        #[serde(with = "cid_json")]
         bls_msg: &'a Cid,
         #[serde(rename = "SecpkMessages")]
-        #[serde(with = "cid::ipld_dag_json")]
+        #[serde(with = "cid_json")]
         secp_msg: &'a Cid,
     }
 
@@ -117,10 +117,10 @@ pub mod json {
     #[derive(Deserialize)]
     struct JsonMsgMeta {
         #[serde(rename = "BlsMessages")]
-        #[serde(with = "cid::ipld_dag_json")]
+        #[serde(with = "cid_json")]
         bls_msg: Cid,
         #[serde(rename = "SecpkMessages")]
-        #[serde(with = "cid::ipld_dag_json")]
+        #[serde(with = "cid_json")]
         secp_msg: Cid,
     }
 

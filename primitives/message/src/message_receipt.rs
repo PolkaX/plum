@@ -10,7 +10,7 @@ pub struct MessageReceipt {
     /// The exit code of VM.
     pub exit_code: u8,
     /// The return bytes.
-    pub ret: Vec<u8>,
+    pub r#return: Vec<u8>,
     /// The used number of gas.
     pub gas_used: BigInt,
 }
@@ -53,7 +53,7 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        CborMessageReceiptRef(&receipt.exit_code, &receipt.ret, &receipt.gas_used)
+        CborMessageReceiptRef(&receipt.exit_code, &receipt.r#return, &receipt.gas_used)
             .serialize(serializer)
     }
 
@@ -69,11 +69,11 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let CborMessageReceipt(exit_code, ret, gas_used) =
+        let CborMessageReceipt(exit_code, r#return, gas_used) =
             CborMessageReceipt::deserialize(deserializer)?;
         Ok(MessageReceipt {
             exit_code,
-            ret,
+            r#return,
             gas_used,
         })
     }
@@ -85,7 +85,7 @@ pub mod cbor {
 
         let receipt = CborMessageReceipt(MessageReceipt {
             exit_code: 127u8,
-            ret: b"ret".to_vec(),
+            r#return: b"ret".to_vec(),
             gas_used: 1_776_234.into(),
         });
         let expected = vec![131, 24, 127, 67, 114, 101, 116, 68, 0, 27, 26, 106];
@@ -106,12 +106,11 @@ pub mod json {
     use super::MessageReceipt;
 
     #[derive(Serialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonMessageReceiptRef<'a> {
-        #[serde(rename = "ExitCode")]
         exit_code: &'a u8,
-        #[serde(rename = "Return")]
-        ret: String,
-        #[serde(rename = "GasUsed")]
+        #[serde(with = "plum_types::base64")]
+        r#return: &'a [u8],
         #[serde(with = "bigint_json")]
         gas_used: &'a BigInt,
     }
@@ -123,19 +122,18 @@ pub mod json {
     {
         JsonMessageReceiptRef {
             exit_code: &receipt.exit_code,
-            ret: base64::encode(&receipt.ret),
+            r#return: &receipt.r#return,
             gas_used: &receipt.gas_used,
         }
         .serialize(serializer)
     }
 
     #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonMessageReceipt {
-        #[serde(rename = "ExitCode")]
         exit_code: u8,
-        #[serde(rename = "Return")]
-        ret: String,
-        #[serde(rename = "GasUsed")]
+        #[serde(with = "plum_types::base64")]
+        r#return: Vec<u8>,
         #[serde(with = "bigint_json")]
         gas_used: BigInt,
     }
@@ -147,12 +145,12 @@ pub mod json {
     {
         let JsonMessageReceipt {
             exit_code,
-            ret,
+            r#return,
             gas_used,
         } = JsonMessageReceipt::deserialize(deserializer)?;
         Ok(MessageReceipt {
             exit_code,
-            ret: base64::decode(ret).expect("base64 decode shouldn't be fail"),
+            r#return,
             gas_used,
         })
     }
@@ -164,7 +162,7 @@ pub mod json {
 
         let receipt = JsonMessageReceipt(MessageReceipt {
             exit_code: 127u8,
-            ret: b"ret".to_vec(),
+            r#return: b"ret".to_vec(),
             gas_used: 1_776_234.into(),
         });
         let expected = "{\"ExitCode\":127,\"Return\":\"cmV0\",\"GasUsed\":\"1776234\"}";

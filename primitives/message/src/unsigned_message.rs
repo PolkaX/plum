@@ -139,6 +139,44 @@ pub mod cbor {
             params,
         })
     }
+
+    /// Vec<UnsignedMessage> CBOR serialization/deserialization.
+    pub mod vec {
+        use super::*;
+
+        #[derive(Serialize)]
+        struct CborUnsignedMessageRef<'a>(#[serde(with = "super")] &'a UnsignedMessage);
+
+        /// CBOR serialization of Vec<UnsignedMessage>.
+        pub fn serialize<S>(
+            unsigned_msgs: &[UnsignedMessage],
+            serializer: S,
+        ) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            unsigned_msgs
+                .iter()
+                .map(|unsigned_msg| CborUnsignedMessageRef(unsigned_msg))
+                .collect::<Vec<_>>()
+                .serialize(serializer)
+        }
+
+        #[derive(Deserialize)]
+        struct CborUnsignedMessage(#[serde(with = "super")] UnsignedMessage);
+
+        /// CBOR deserialization of Vec<UnsignedMessage>.
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<UnsignedMessage>, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            let unsigned_msgs = <Vec<CborUnsignedMessage>>::deserialize(deserializer)?;
+            Ok(unsigned_msgs
+                .into_iter()
+                .map(|CborUnsignedMessage(unsigned_msg)| unsigned_msg)
+                .collect())
+        }
+    }
 }
 
 /// UnsignedMessage JSON serialization/deserialization.
@@ -165,7 +203,8 @@ pub mod json {
         #[serde(with = "bigint_json")]
         gas_limit: &'a BigInt,
         method: &'a u64,
-        params: String,
+        #[serde(with = "plum_types::base64")]
+        params: &'a [u8],
     }
 
     /// JSON serialization.
@@ -181,7 +220,7 @@ pub mod json {
             gas_price: &unsigned_msg.gas_price,
             gas_limit: &unsigned_msg.gas_limit,
             method: &unsigned_msg.method,
-            params: base64::encode(&unsigned_msg.params),
+            params: &unsigned_msg.params,
         }
         .serialize(serializer)
     }
@@ -201,7 +240,8 @@ pub mod json {
         #[serde(with = "bigint_json")]
         gas_limit: BigInt,
         method: u64,
-        params: String,
+        #[serde(with = "plum_types::base64")]
+        params: Vec<u8>,
     }
 
     /// JSON deserialization.
@@ -227,8 +267,46 @@ pub mod json {
             gas_price,
             gas_limit,
             method,
-            params: base64::decode(params).expect("base64 decode shouldn't be fail"),
+            params,
         })
+    }
+
+    /// Vec<UnsignedMessage> JSON serialization/deserialization.
+    pub mod vec {
+        use super::*;
+
+        #[derive(Serialize)]
+        struct JsonUnsignedMessageRef<'a>(#[serde(with = "super")] &'a UnsignedMessage);
+
+        /// JSON serialization of Vec<UnsignedMessage>.
+        pub fn serialize<S>(
+            unsigned_msgs: &[UnsignedMessage],
+            serializer: S,
+        ) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            unsigned_msgs
+                .iter()
+                .map(|unsigned_msg| JsonUnsignedMessageRef(unsigned_msg))
+                .collect::<Vec<_>>()
+                .serialize(serializer)
+        }
+
+        #[derive(Deserialize)]
+        struct JsonUnsignedMessage(#[serde(with = "super")] UnsignedMessage);
+
+        /// JSON deserialization of Vec<UnsignedMessage>.
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<UnsignedMessage>, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            let unsigned_msgs = <Vec<JsonUnsignedMessage>>::deserialize(deserializer)?;
+            Ok(unsigned_msgs
+                .into_iter()
+                .map(|JsonUnsignedMessage(unsigned_msg)| unsigned_msg)
+                .collect())
+        }
     }
 }
 

@@ -47,13 +47,13 @@ impl Display for TipsetKey {
 
 /// TipsetKey CBOR serialization/deserialization, need to use `serde_cbor::Serializer` and `serde_cbor::Deserializer`
 pub mod cbor {
-    use cid::Cid;
+    use cid::{ipld_dag_cbor as cid_cbor, Cid};
     use serde::{de, ser, Deserialize, Serialize};
 
     use super::TipsetKey;
 
     #[derive(Serialize)]
-    struct CborCidRef<'a>(#[serde(with = "cid::ipld_dag_cbor")] &'a Cid);
+    struct CborCidRef<'a>(#[serde(with = "cid_cbor")] &'a Cid);
 
     /// CBOR serialization.
     pub fn serialize<S>(key: &TipsetKey, serializer: S) -> Result<S::Ok, S::Error>
@@ -69,7 +69,7 @@ pub mod cbor {
     }
 
     #[derive(Deserialize)]
-    struct CborCid(#[serde(with = "cid::ipld_dag_cbor")] Cid);
+    struct CborCid(#[serde(with = "cid_cbor")] Cid);
 
     /// CBOR deserialization.
     pub fn deserialize<'de, D>(deserializer: D) -> Result<TipsetKey, D::Error>
@@ -85,13 +85,13 @@ pub mod cbor {
 
 /// TipsetKey JSON serialization/deserialization
 pub mod json {
-    use cid::Cid;
+    use cid::{ipld_dag_json as cid_json, Cid};
     use serde::{de, ser, Deserialize, Serialize};
 
     use super::TipsetKey;
 
     #[derive(Serialize)]
-    struct JsonCidRef<'a>(#[serde(with = "cid::ipld_dag_json")] &'a Cid);
+    struct JsonCidRef<'a>(#[serde(with = "cid_json")] &'a Cid);
 
     /// JSON serialization.
     pub fn serialize<S>(key: &TipsetKey, serializer: S) -> Result<S::Ok, S::Error>
@@ -107,7 +107,7 @@ pub mod json {
     }
 
     #[derive(Deserialize)]
-    struct JsonCid(#[serde(with = "cid::ipld_dag_json")] Cid);
+    struct JsonCid(#[serde(with = "cid_json")] Cid);
 
     /// JSON deserialization.
     pub fn deserialize<'de, D>(deserializer: D) -> Result<TipsetKey, D::Error>

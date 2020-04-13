@@ -14,6 +14,7 @@ use crate::errors::CryptoError;
 pub const SIGNATURE_MAX_LENGTH: u32 = 200;
 
 /// The signature type.
+#[repr(u8)]
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub enum SignatureType {
     /// The `Secp256k1` signature.
@@ -53,28 +54,28 @@ impl From<SignatureType> for u8 {
 #[derive(Eq, PartialEq, Debug, Clone, Hash)]
 pub struct Signature {
     /// The signature type.
-    ty: SignatureType,
+    r#type: SignatureType,
     /// Tha actual signature bytes.
-    bytes: Vec<u8>,
+    data: Vec<u8>,
 }
 
 impl Signature {
-    /// Create a signature with the given type and raw bytes
-    pub fn new<T: Into<Vec<u8>>>(ty: SignatureType, bytes: T) -> Self {
+    /// Create a signature with the given type and raw data
+    pub fn new<T: Into<Vec<u8>>>(ty: SignatureType, data: T) -> Self {
         Self {
-            ty,
-            bytes: bytes.into(),
+            r#type: ty,
+            data: data.into(),
         }
     }
 
-    /// Create a Secp256k1 signature with the given raw bytes.
-    pub fn new_secp256k1<T: Into<Vec<u8>>>(bytes: T) -> Self {
-        Self::new(SignatureType::Secp256k1, bytes)
+    /// Create a Secp256k1 signature with the given raw data.
+    pub fn new_secp256k1<T: Into<Vec<u8>>>(data: T) -> Self {
+        Self::new(SignatureType::Secp256k1, data)
     }
 
-    /// Create a `BLS` signature with the given raw bytes.
-    pub fn new_bls<T: Into<Vec<u8>>>(bytes: T) -> Self {
-        Self::new(SignatureType::Bls, bytes)
+    /// Create a `BLS` signature with the given raw data.
+    pub fn new_bls<T: Into<Vec<u8>>>(data: T) -> Self {
+        Self::new(SignatureType::Bls, data)
     }
 
     /// Sign the message with the given signature type and private key.
@@ -104,8 +105,8 @@ impl Signature {
         let message = secp256k1::Message::parse(&hashed_msg);
         let (signature, _recovery_id) = secp256k1::sign(&message, &seckey);
         Ok(Self {
-            ty: SignatureType::Secp256k1,
-            bytes: signature.serialize().to_vec(),
+            r#type: SignatureType::Secp256k1,
+            data: signature.serialize().to_vec(),
         })
     }
 
@@ -121,8 +122,8 @@ impl Signature {
         let privkey = bls::PrivateKey::from_bytes(privkey.as_ref())?;
         let signature = privkey.sign(msg);
         Ok(Self {
-            ty: SignatureType::Bls,
-            bytes: signature.as_bytes(),
+            r#type: SignatureType::Bls,
+            data: signature.as_bytes(),
         })
     }
 
@@ -132,7 +133,7 @@ impl Signature {
         K: AsRef<[u8]>,
         M: AsRef<[u8]>,
     {
-        match self.ty {
+        match self.r#type {
             SignatureType::Secp256k1 => self.verify_secp256k1(pubkey, msg),
             SignatureType::Bls => self.verify_bls(pubkey, msg),
         }
@@ -147,7 +148,7 @@ impl Signature {
         let pubkey = secp256k1::PublicKey::parse_slice(pubkey.as_ref(), None)?;
         let hashed_msg = blake2b_256(msg);
         let msg = secp256k1::Message::parse(&hashed_msg); //  secp256k1::util::MESSAGE_SIZE == 32 bytes
-        let signature = secp256k1::Signature::parse_slice(&self.bytes)?;
+        let signature = secp256k1::Signature::parse_slice(&self.data)?;
         Ok(secp256k1::verify(&msg, &signature, &pubkey))
     }
 
@@ -162,32 +163,32 @@ impl Signature {
         // When signing with `BLS` privkey, the message will be hashed in `bls::PrivateKey::sign`,
         // so the message here needs to be hashed before the signature is verified.
         let hashed_msg = bls::hash(msg.as_ref());
-        let signature = bls::Signature::from_bytes(&self.bytes)?;
+        let signature = bls::Signature::from_bytes(&self.data)?;
         Ok(bls::verify(&signature, &[hashed_msg], &[pubkey]))
     }
 
     /// Return the signature type.
     pub fn r#type(&self) -> SignatureType {
-        self.ty
+        self.r#type
     }
 
     /// Return the actual signature bytes.
     pub fn as_bytes(&self) -> &[u8] {
-        self.bytes.as_slice()
+        self.data.as_slice()
     }
 
     /// helper function to check signture type is same with address type
     pub fn check_address_type(&self, addr: &Address) -> Result<(), CryptoError> {
         let protocol = addr.protocol();
-        match self.ty {
+        match self.r#type {
             SignatureType::Secp256k1 => {
                 if protocol != Protocol::Secp256k1 {
-                    return Err(CryptoError::NotSameType(self.ty, protocol));
+                    return Err(CryptoError::NotSameType(self.r#type, protocol));
                 }
             }
             SignatureType::Bls => {
                 if protocol != Protocol::Bls {
-                    return Err(CryptoError::NotSameType(self.ty, protocol));
+                    return Err(CryptoError::NotSameType(self.r#type, protocol));
                 }
             }
         }
