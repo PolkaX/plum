@@ -7,7 +7,7 @@ use cid::Cid;
 /// A TipsetKey is an immutable collection of CIDs forming a unique key for a tipset.
 // The CIDs are assumed to be distinct and in canonical order. Two keys with the same
 // CIDs in a different order are not considered equal.
-#[derive(Eq, PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash, Default)]
 pub struct TipsetKey {
     cids: Vec<Cid>,
 }
@@ -16,6 +16,11 @@ impl TipsetKey {
     /// Create a new TipsetKey with the given collection of CIDs.
     pub fn new(cids: Vec<Cid>) -> Self {
         Self { cids }
+    }
+
+    /// Create an empty TipsetKey.
+    pub fn empty_tsk() -> Self {
+        Self { cids: vec![] }
     }
 
     /// Return the inner CIDs.
