@@ -18,9 +18,9 @@ impl TipsetKey {
         Self { cids }
     }
 
-    /// Create an empty TipsetKey
+    /// Create an empty TipsetKey.
     pub fn empty_tsk() -> Self {
-        Default::default()
+        Self { cids: vec![] }
     }
 
     /// Return the inner CIDs.
