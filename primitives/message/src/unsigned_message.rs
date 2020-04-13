@@ -165,7 +165,8 @@ pub mod json {
         #[serde(with = "bigint_json")]
         gas_limit: &'a BigInt,
         method: &'a u64,
-        params: String,
+        #[serde(with = "plum_types::base64")]
+        params: &'a [u8],
     }
 
     /// JSON serialization.
@@ -181,7 +182,7 @@ pub mod json {
             gas_price: &unsigned_msg.gas_price,
             gas_limit: &unsigned_msg.gas_limit,
             method: &unsigned_msg.method,
-            params: base64::encode(&unsigned_msg.params),
+            params: &unsigned_msg.params,
         }
         .serialize(serializer)
     }
@@ -201,7 +202,8 @@ pub mod json {
         #[serde(with = "bigint_json")]
         gas_limit: BigInt,
         method: u64,
-        params: String,
+        #[serde(with = "plum_types::base64")]
+        params: Vec<u8>,
     }
 
     /// JSON deserialization.
@@ -227,7 +229,7 @@ pub mod json {
             gas_price,
             gas_limit,
             method,
-            params: base64::decode(params).expect("base64 decode shouldn't be fail"),
+            params,
         })
     }
 }

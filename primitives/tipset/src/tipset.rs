@@ -214,13 +214,12 @@ pub mod json {
     #[derive(Serialize)]
     struct JsonBlockHeaderRef<'a>(#[serde(with = "block_header_json")] &'a BlockHeader);
     #[derive(Serialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonTipsetRef<'a> {
         #[serde(rename = "Cids")]
         #[serde(with = "crate::key::json")]
         key: &'a TipsetKey,
-        #[serde(rename = "Blocks")]
         blocks: &'a [JsonBlockHeaderRef<'a>],
-        #[serde(rename = "Height")]
         height: &'a u64,
     }
 
@@ -244,13 +243,12 @@ pub mod json {
     #[derive(Deserialize)]
     struct JsonBlockHeader(#[serde(with = "block_header_json")] BlockHeader);
     #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonTipset {
         #[serde(rename = "Cids")]
         #[serde(with = "crate::key::json")]
         key: TipsetKey,
-        #[serde(rename = "Blocks")]
         blocks: Vec<JsonBlockHeader>,
-        #[serde(rename = "Height")]
         height: u64,
     }
 

@@ -14,6 +14,7 @@ use crate::errors::CryptoError;
 pub const SIGNATURE_MAX_LENGTH: u32 = 200;
 
 /// The signature type.
+#[repr(u8)]
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
 pub enum SignatureType {
     /// The `Secp256k1` signature.

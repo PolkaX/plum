@@ -97,12 +97,13 @@ pub mod json {
         Bls,
     }
 
-    #[derive(Serialize, Deserialize)]
-    struct JsonSignature {
+    #[derive(Serialize)]
+    struct JsonSignatureRef<'a> {
         #[serde(rename = "Type")]
         ty: JsonSignatureType,
         #[serde(rename = "Data")]
-        bytes: String,
+        #[serde(with = "plum_types::base64")]
+        bytes: &'a [u8],
     }
 
     /// JSON serialization.
@@ -110,15 +111,23 @@ pub mod json {
     where
         S: ser::Serializer,
     {
-        JsonSignature {
+        JsonSignatureRef {
             ty: match signature.ty {
                 SignatureType::Secp256k1 => JsonSignatureType::Secp256k1,
                 SignatureType::Bls => JsonSignatureType::Bls,
             },
-            // Fuck golang
-            bytes: base64::encode(&signature.bytes),
+            bytes: &signature.bytes,
         }
         .serialize(serializer)
+    }
+
+    #[derive(Deserialize)]
+    struct JsonSignature {
+        #[serde(rename = "Type")]
+        ty: JsonSignatureType,
+        #[serde(rename = "Data")]
+        #[serde(with = "plum_types::base64")]
+        bytes: Vec<u8>,
     }
 
     /// JSON deserialization.
@@ -126,13 +135,13 @@ pub mod json {
     where
         D: de::Deserializer<'de>,
     {
-        let signature = JsonSignature::deserialize(deserializer)?;
+        let JsonSignature { ty, bytes } = JsonSignature::deserialize(deserializer)?;
         Ok(Signature {
-            ty: match signature.ty {
+            ty: match ty {
                 JsonSignatureType::Secp256k1 => SignatureType::Secp256k1,
                 JsonSignatureType::Bls => SignatureType::Bls,
             },
-            bytes: base64::decode(signature.bytes).expect("base64 decode shouldn't be fail"),
+            bytes,
         })
     }
 

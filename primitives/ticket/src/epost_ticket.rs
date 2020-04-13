@@ -112,13 +112,13 @@ pub mod json {
 
     use super::EPostTicket;
 
-    #[derive(Serialize, Deserialize)]
-    struct JsonEPostTicket {
-        #[serde(rename = "Partial")]
-        partial: String,
+    #[derive(Serialize)]
+    #[serde(rename_all = "PascalCase")]
+    struct JsonEPostTicketRef<'a> {
+        #[serde(with = "plum_types::base64")]
+        partial: &'a [u8],
         #[serde(rename = "SectorID")]
         sector_id: u64,
-        #[serde(rename = "ChallengeIndex")]
         challenge_index: u64,
     }
 
@@ -127,12 +127,22 @@ pub mod json {
     where
         S: ser::Serializer,
     {
-        JsonEPostTicket {
-            partial: base64::encode(&epost_ticket.partial),
+        JsonEPostTicketRef {
+            partial: &epost_ticket.partial,
             sector_id: epost_ticket.sector_id,
             challenge_index: epost_ticket.challenge_index,
         }
         .serialize(serializer)
+    }
+
+    #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
+    struct JsonEPostTicket {
+        #[serde(with = "plum_types::base64")]
+        partial: Vec<u8>,
+        #[serde(rename = "SectorID")]
+        sector_id: u64,
+        challenge_index: u64,
     }
 
     /// JSON deserialization
@@ -140,11 +150,15 @@ pub mod json {
     where
         D: de::Deserializer<'de>,
     {
-        let epost_ticket = JsonEPostTicket::deserialize(deserializer)?;
+        let JsonEPostTicket {
+            partial,
+            sector_id,
+            challenge_index,
+        } = JsonEPostTicket::deserialize(deserializer)?;
         Ok(EPostTicket {
-            partial: base64::decode(epost_ticket.partial).expect("base64 decode shouldn't be fail"),
-            sector_id: epost_ticket.sector_id,
-            challenge_index: epost_ticket.challenge_index,
+            partial,
+            sector_id,
+            challenge_index,
         })
     }
 

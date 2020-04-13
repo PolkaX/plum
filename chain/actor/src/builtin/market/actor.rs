@@ -44,7 +44,7 @@ impl StorageDealProposal {
             return Err(StorageMarketError::AlreadySigned);
         }
         // todo why use an empty bytes?
-        let sign = sign_func(&vec![]);
+        let sign = sign_func(&[]);
         self.proposer_signature = Some(sign);
         Ok(())
     }

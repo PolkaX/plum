@@ -95,10 +95,11 @@ pub mod json {
 
     use super::Ticket;
 
-    #[derive(Serialize, Deserialize)]
-    struct JsonTicket {
+    #[derive(Serialize)]
+    struct JsonTicketRef<'a> {
         #[serde(rename = "VRFProof")]
-        vrf_proof: String,
+        #[serde(with = "plum_types::base64")]
+        vrf_proof: &'a [u8],
     }
 
     /// JSON serialization
@@ -106,10 +107,17 @@ pub mod json {
     where
         S: ser::Serializer,
     {
-        JsonTicket {
-            vrf_proof: base64::encode(&ticket.vrf_proof),
+        JsonTicketRef {
+            vrf_proof: &ticket.vrf_proof,
         }
         .serialize(serializer)
+    }
+
+    #[derive(Deserialize)]
+    struct JsonTicket {
+        #[serde(rename = "VRFProof")]
+        #[serde(with = "plum_types::base64")]
+        vrf_proof: Vec<u8>,
     }
 
     /// JSON deserialization
@@ -117,10 +125,8 @@ pub mod json {
     where
         D: de::Deserializer<'de>,
     {
-        let ticket = JsonTicket::deserialize(deserializer)?;
-        Ok(Ticket {
-            vrf_proof: base64::decode(ticket.vrf_proof).expect("base64 decode shouldn't be fail"),
-        })
+        let JsonTicket { vrf_proof } = JsonTicket::deserialize(deserializer)?;
+        Ok(Ticket { vrf_proof })
     }
 
     #[test]

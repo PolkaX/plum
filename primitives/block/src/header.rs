@@ -315,21 +315,35 @@ pub mod json {
     where
         D: de::Deserializer<'de>,
     {
-        let header = JsonBlockHeader::deserialize(deserializer)?;
+        let JsonBlockHeader {
+            miner,
+            ticket,
+            epost_proof,
+            parents,
+            parent_weight,
+            height,
+            parent_state_root,
+            parent_message_receipts,
+            messages,
+            bls_aggregate,
+            timestamp,
+            block_sig,
+            fork_signaling,
+        } = JsonBlockHeader::deserialize(deserializer)?;
         Ok(BlockHeader {
-            miner: header.miner,
-            ticket: header.ticket,
-            epost_proof: header.epost_proof,
-            parents: header.parents.into_iter().map(|parent| parent.0).collect(),
-            parent_weight: header.parent_weight,
-            height: header.height,
-            parent_state_root: header.parent_state_root.0,
-            parent_message_receipts: header.parent_message_receipts.0,
-            messages: header.messages.0,
-            bls_aggregate: header.bls_aggregate,
-            timestamp: header.timestamp,
-            block_sig: header.block_sig,
-            fork_signaling: header.fork_signaling,
+            miner,
+            ticket,
+            epost_proof,
+            parents: parents.into_iter().map(|parent| parent.0).collect(),
+            parent_weight,
+            height,
+            parent_state_root: parent_state_root.0,
+            parent_message_receipts: parent_message_receipts.0,
+            messages: messages.0,
+            bls_aggregate,
+            timestamp,
+            block_sig,
+            fork_signaling,
         })
     }
 }

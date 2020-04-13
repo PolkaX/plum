@@ -11,9 +11,9 @@ pub struct BlockMsg {
     /// The block header.
     pub header: BlockHeader,
     /// The CIDs of `BLS` messages.
-    pub bls_msgs: Vec<Cid>,
+    pub bls_messages: Vec<Cid>,
     /// The CIDs of `Secp256k1` messages.
-    pub secp_msgs: Vec<Cid>,
+    pub secpk_messages: Vec<Cid>,
 }
 
 impl BlockMsg {
@@ -66,12 +66,12 @@ pub mod cbor {
         CborBlockMsgRef(
             &block.header,
             &block
-                .bls_msgs
+                .bls_messages
                 .iter()
                 .map(|cid| CborCidRef(cid))
                 .collect::<Vec<_>>(),
             &block
-                .secp_msgs
+                .secpk_messages
                 .iter()
                 .map(|cid| CborCidRef(cid))
                 .collect::<Vec<_>>(),
@@ -93,11 +93,11 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let CborBlockMsg(header, bls_msgs, secp_msgs) = CborBlockMsg::deserialize(deserializer)?;
+        let CborBlockMsg(header, bls_msgs, secpk_msgs) = CborBlockMsg::deserialize(deserializer)?;
         Ok(BlockMsg {
             header,
-            bls_msgs: bls_msgs.into_iter().map(|cid| cid.0).collect(),
-            secp_msgs: secp_msgs.into_iter().map(|cid| cid.0).collect(),
+            bls_messages: bls_msgs.into_iter().map(|cid| cid.0).collect(),
+            secpk_messages: secpk_msgs.into_iter().map(|cid| cid.0).collect(),
         })
     }
 }
@@ -113,14 +113,12 @@ pub mod json {
     #[derive(Serialize)]
     struct JsonCidRef<'a>(#[serde(with = "cid::ipld_dag_json")] &'a Cid);
     #[derive(Serialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonBlockMsgRef<'a> {
-        #[serde(rename = "Header")]
         #[serde(with = "crate::header::json")]
         header: &'a BlockHeader,
-        #[serde(rename = "BlsMessages")]
-        bls_msgs: &'a [JsonCidRef<'a>],
-        #[serde(rename = "SecpkMessages")]
-        secp_msgs: &'a [JsonCidRef<'a>],
+        bls_messages: &'a [JsonCidRef<'a>],
+        secpk_messages: &'a [JsonCidRef<'a>],
     }
 
     /// JSON serialization
@@ -130,13 +128,13 @@ pub mod json {
     {
         JsonBlockMsgRef {
             header: &block.header,
-            bls_msgs: &block
-                .bls_msgs
+            bls_messages: &block
+                .bls_messages
                 .iter()
                 .map(|cid| JsonCidRef(cid))
                 .collect::<Vec<_>>(),
-            secp_msgs: &block
-                .secp_msgs
+            secpk_messages: &block
+                .secpk_messages
                 .iter()
                 .map(|cid| JsonCidRef(cid))
                 .collect::<Vec<_>>(),
@@ -147,14 +145,12 @@ pub mod json {
     #[derive(Deserialize)]
     struct JsonCid(#[serde(with = "cid::ipld_dag_json")] Cid);
     #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonBlockMsg {
-        #[serde(rename = "Header")]
         #[serde(with = "crate::header::json")]
         header: BlockHeader,
-        #[serde(rename = "BlsMessages")]
-        bls_msgs: Vec<JsonCid>,
-        #[serde(rename = "SecpkMessages")]
-        secp_msgs: Vec<JsonCid>,
+        bls_messages: Vec<JsonCid>,
+        secpk_messages: Vec<JsonCid>,
     }
 
     /// JSON deserialization
@@ -164,13 +160,13 @@ pub mod json {
     {
         let JsonBlockMsg {
             header,
-            bls_msgs,
-            secp_msgs,
+            bls_messages,
+            secpk_messages,
         } = JsonBlockMsg::deserialize(deserializer)?;
         Ok(BlockMsg {
             header,
-            bls_msgs: bls_msgs.into_iter().map(|cid| cid.0).collect(),
-            secp_msgs: secp_msgs.into_iter().map(|cid| cid.0).collect(),
+            bls_messages: bls_messages.into_iter().map(|cid| cid.0).collect(),
+            secpk_messages: secpk_messages.into_iter().map(|cid| cid.0).collect(),
         })
     }
 }

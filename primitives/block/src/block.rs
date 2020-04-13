@@ -13,9 +13,9 @@ pub struct Block {
     /// The block header.
     pub header: BlockHeader,
     /// The `BLS` messages.
-    pub bls_msgs: Vec<UnsignedMessage>,
+    pub bls_messages: Vec<UnsignedMessage>,
     /// The `Secp256k1` messages.
-    pub secp_msgs: Vec<SignedMessage>,
+    pub secpk_messages: Vec<SignedMessage>,
 }
 
 impl Block {
@@ -73,12 +73,12 @@ pub mod cbor {
         CborBlockRef(
             &block.header,
             &block
-                .bls_msgs
+                .bls_messages
                 .iter()
                 .map(|bls_msg| CborUnsignedMessageRef(bls_msg))
                 .collect::<Vec<_>>(),
             &block
-                .secp_msgs
+                .secpk_messages
                 .iter()
                 .map(|secp_msg| CborSignedMessageRef(secp_msg))
                 .collect::<Vec<_>>(),
@@ -102,11 +102,11 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let CborBlock(header, bls_msgs, secp_msgs) = CborBlock::deserialize(deserializer)?;
+        let CborBlock(header, bls_msgs, secpk_msgs) = CborBlock::deserialize(deserializer)?;
         Ok(Block {
             header,
-            bls_msgs: bls_msgs.into_iter().map(|bls_msg| bls_msg.0).collect(),
-            secp_msgs: secp_msgs.into_iter().map(|secp_msg| secp_msg.0).collect(),
+            bls_messages: bls_msgs.into_iter().map(|bls_msg| bls_msg.0).collect(),
+            secpk_messages: secpk_msgs.into_iter().map(|secp_msg| secp_msg.0).collect(),
         })
     }
 }
@@ -127,14 +127,12 @@ pub mod json {
     #[derive(Serialize)]
     struct JsonSignedMessageRef<'a>(#[serde(with = "signed_message_json")] &'a SignedMessage);
     #[derive(Serialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonBlockRef<'a> {
-        #[serde(rename = "Header")]
         #[serde(with = "crate::header::json")]
         header: &'a BlockHeader,
-        #[serde(rename = "BlsMessages")]
-        bls_msgs: &'a [JsonUnsignedMessageRef<'a>],
-        #[serde(rename = "SecpkMessages")]
-        secp_msgs: &'a [JsonSignedMessageRef<'a>],
+        bls_messages: &'a [JsonUnsignedMessageRef<'a>],
+        secpk_messages: &'a [JsonSignedMessageRef<'a>],
     }
 
     /// JSON serialization
@@ -144,15 +142,15 @@ pub mod json {
     {
         JsonBlockRef {
             header: &block.header,
-            bls_msgs: &block
-                .bls_msgs
+            bls_messages: &block
+                .bls_messages
                 .iter()
                 .map(|bls_msg| JsonUnsignedMessageRef(bls_msg))
                 .collect::<Vec<_>>(),
-            secp_msgs: &block
-                .secp_msgs
+            secpk_messages: &block
+                .secpk_messages
                 .iter()
-                .map(|secp_msg| JsonSignedMessageRef(secp_msg))
+                .map(|secpk_msg| JsonSignedMessageRef(secpk_msg))
                 .collect::<Vec<_>>(),
         }
         .serialize(serializer)
@@ -163,14 +161,12 @@ pub mod json {
     #[derive(Deserialize)]
     struct JsonSignedMessage(#[serde(with = "signed_message_json")] SignedMessage);
     #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonBlock {
-        #[serde(rename = "Header")]
         #[serde(with = "crate::header::json")]
         header: BlockHeader,
-        #[serde(rename = "BlsMessages")]
-        bls_msgs: Vec<JsonUnsignedMessage>,
-        #[serde(rename = "SecpkMessages")]
-        secp_msgs: Vec<JsonSignedMessage>,
+        bls_messages: Vec<JsonUnsignedMessage>,
+        secpk_messages: Vec<JsonSignedMessage>,
     }
 
     /// JSON deserialization
@@ -180,13 +176,13 @@ pub mod json {
     {
         let JsonBlock {
             header,
-            bls_msgs,
-            secp_msgs,
+            bls_messages: bls_msgs,
+            secpk_messages: secp_msgs,
         } = JsonBlock::deserialize(deserializer)?;
         Ok(Block {
             header,
-            bls_msgs: bls_msgs.into_iter().map(|bls_msg| bls_msg.0).collect(),
-            secp_msgs: secp_msgs.into_iter().map(|secp_msg| secp_msg.0).collect(),
+            bls_messages: bls_msgs.into_iter().map(|bls_msg| bls_msg.0).collect(),
+            secpk_messages: secp_msgs.into_iter().map(|secpk_msg| secpk_msg.0).collect(),
         })
     }
 }

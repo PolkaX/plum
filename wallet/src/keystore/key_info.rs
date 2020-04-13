@@ -125,7 +125,8 @@ pub mod key_info_json {
         #[serde(with = "super::key_type_json")]
         ty: &'a KeyType,
         #[serde(rename = "PrivateKey")]
-        privkey: String,
+        #[serde(with = "plum_types::base64")]
+        privkey: &'a [u8],
     }
 
     /// JSON serialization
@@ -135,7 +136,7 @@ pub mod key_info_json {
     {
         JsonKeyInfoRef {
             ty: &key_info.ty,
-            privkey: base64::encode(&key_info.privkey),
+            privkey: &key_info.privkey,
         }
         .serialize(serializer)
     }
@@ -146,7 +147,8 @@ pub mod key_info_json {
         #[serde(with = "super::key_type_json")]
         ty: KeyType,
         #[serde(rename = "PrivateKey")]
-        privkey: String,
+        #[serde(with = "plum_types::base64")]
+        privkey: Vec<u8>,
     }
 
     /// JSON deserialization
@@ -157,7 +159,7 @@ pub mod key_info_json {
         let key_info = JsonKeyInfo::deserialize(deserializer)?;
         Ok(KeyInfo {
             ty: key_info.ty,
-            privkey: base64::decode(key_info.privkey).expect("base64 decode shouldn't be fail"),
+            privkey: key_info.privkey,
         })
     }
 }
