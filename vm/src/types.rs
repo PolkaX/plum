@@ -79,7 +79,10 @@ pub mod json {
     pub mod vec {
         use super::*;
 
-        /// Vec<ExecutionResult> JSON serialization
+        #[derive(Serialize)]
+        struct JsonExecutionResultRef<'a>(#[serde(with = "super")] &'a ExecutionResult);
+
+        /// JSON serialization of Vec<ExecutionResult>.
         pub fn serialize<S>(
             exe_results: &[ExecutionResult],
             serializer: S,
@@ -89,16 +92,15 @@ pub mod json {
         {
             exe_results
                 .iter()
-                .map(|exe_result| JsonExecutionResultRef {
-                    msg: &exe_result.msg,
-                    msg_receipt: &exe_result.msg_receipt,
-                    error: &exe_result.error,
-                })
+                .map(|exe_result| JsonExecutionResultRef(exe_result))
                 .collect::<Vec<_>>()
                 .serialize(serializer)
         }
 
-        /// Vec<ExecutionResult> JSON deserialization
+        #[derive(Deserialize)]
+        struct JsonExecutionResult(#[serde(with = "super")] ExecutionResult);
+
+        /// JSON deserialization of Vec<ExecutionResult>
         pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<ExecutionResult>, D::Error>
         where
             D: de::Deserializer<'de>,
@@ -106,11 +108,7 @@ pub mod json {
             let exe_results = <Vec<JsonExecutionResult>>::deserialize(deserializer)?;
             Ok(exe_results
                 .into_iter()
-                .map(|result| ExecutionResult {
-                    msg: result.msg,
-                    msg_receipt: result.msg_receipt,
-                    error: result.error,
-                })
+                .map(|JsonExecutionResult(exe_result)| exe_result)
                 .collect())
         }
     }

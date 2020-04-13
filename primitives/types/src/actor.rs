@@ -38,7 +38,7 @@ impl<'de> de::Deserialize<'de> for Actor {
 
 /// Actor CBOR serialization/deserialization
 pub mod cbor {
-    use cid::{ipld_dag_cbor, Cid};
+    use cid::{ipld_dag_cbor as cid_cbor, Cid};
     use serde::{de, ser, Deserialize, Serialize};
 
     use plum_bigint::{bigint_cbor, BigInt};
@@ -47,8 +47,8 @@ pub mod cbor {
 
     #[derive(Serialize)]
     struct CborActorRef<'a>(
-        #[serde(with = "ipld_dag_cbor")] &'a Cid,
-        #[serde(with = "ipld_dag_cbor")] &'a Cid,
+        #[serde(with = "cid_cbor")] &'a Cid,
+        #[serde(with = "cid_cbor")] &'a Cid,
         &'a u64,
         #[serde(with = "bigint_cbor")] &'a BigInt,
     );
@@ -63,8 +63,8 @@ pub mod cbor {
 
     #[derive(Deserialize)]
     struct CborActor(
-        #[serde(with = "ipld_dag_cbor")] Cid,
-        #[serde(with = "ipld_dag_cbor")] Cid,
+        #[serde(with = "cid_cbor")] Cid,
+        #[serde(with = "cid_cbor")] Cid,
         u64,
         #[serde(with = "bigint_cbor")] BigInt,
     );
@@ -86,7 +86,7 @@ pub mod cbor {
 
 /// Actor JSON serialization/deserialization
 pub mod json {
-    use cid::{ipld_dag_json, Cid};
+    use cid::{ipld_dag_json as cid_json, Cid};
     use serde::{de, ser, Deserialize, Serialize};
 
     use plum_bigint::{bigint_json, BigInt};
@@ -94,10 +94,11 @@ pub mod json {
     use super::Actor;
 
     #[derive(Serialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonActorRef<'a> {
-        #[serde(with = "ipld_dag_json")]
+        #[serde(with = "cid_json")]
         code: &'a Cid,
-        #[serde(with = "ipld_dag_json")]
+        #[serde(with = "cid_json")]
         head: &'a Cid,
         nonce: &'a u64,
         #[serde(with = "bigint_json")]
@@ -119,10 +120,11 @@ pub mod json {
     }
 
     #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonActor {
-        #[serde(with = "ipld_dag_json")]
+        #[serde(with = "cid_json")]
         code: Cid,
-        #[serde(with = "ipld_dag_json")]
+        #[serde(with = "cid_json")]
         head: Cid,
         nonce: u64,
         #[serde(with = "bigint_json")]

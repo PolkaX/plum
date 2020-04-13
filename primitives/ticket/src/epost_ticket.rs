@@ -81,6 +81,41 @@ pub mod cbor {
         })
     }
 
+    /// Vec<EPostTicket> CBOR serialization/deserialization
+    pub mod vec {
+        use super::*;
+
+        #[derive(Serialize)]
+        struct CborEPostTicketRef<'a>(#[serde(with = "super")] &'a EPostTicket);
+
+        /// CBOR serialization of Vec<EPostTicket>
+        pub fn serialize<S>(epost_tickets: &[EPostTicket], serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            epost_tickets
+                .iter()
+                .map(|epost_ticket| CborEPostTicketRef(epost_ticket))
+                .collect::<Vec<_>>()
+                .serialize(serializer)
+        }
+
+        #[derive(Deserialize)]
+        struct CborEPostTicket(#[serde(with = "super")] EPostTicket);
+
+        /// CBOR deserialization of Vec<EPostTicket>
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<EPostTicket>, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            let epost_tickets = <Vec<CborEPostTicket>>::deserialize(deserializer)?;
+            Ok(epost_tickets
+                .into_iter()
+                .map(|CborEPostTicket(epost_ticket)| epost_ticket)
+                .collect())
+        }
+    }
+
     #[test]
     fn epost_ticket_cbor_serde() {
         #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -118,8 +153,8 @@ pub mod json {
         #[serde(with = "plum_types::base64")]
         partial: &'a [u8],
         #[serde(rename = "SectorID")]
-        sector_id: u64,
-        challenge_index: u64,
+        sector_id: &'a u64,
+        challenge_index: &'a u64,
     }
 
     /// JSON serialization
@@ -129,8 +164,8 @@ pub mod json {
     {
         JsonEPostTicketRef {
             partial: &epost_ticket.partial,
-            sector_id: epost_ticket.sector_id,
-            challenge_index: epost_ticket.challenge_index,
+            sector_id: &epost_ticket.sector_id,
+            challenge_index: &epost_ticket.challenge_index,
         }
         .serialize(serializer)
     }
@@ -160,6 +195,44 @@ pub mod json {
             sector_id,
             challenge_index,
         })
+    }
+
+    /// Vec<EPostTicket> JSON serialization/deserialization
+    pub mod vec {
+        use super::*;
+        use crate::epost_ticket::json::JsonEPostTicket;
+
+        /// JSON serialization of Vec<EPostTicket>
+        pub fn serialize<S>(epost_tickets: &[EPostTicket], serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            epost_tickets
+                .iter()
+                .map(|epost_ticket| JsonEPostTicketRef {
+                    partial: &epost_ticket.partial,
+                    sector_id: &epost_ticket.sector_id,
+                    challenge_index: &epost_ticket.challenge_index,
+                })
+                .collect::<Vec<_>>()
+                .serialize(serializer)
+        }
+
+        /// JSON deserialization of Vec<EPostTicket>
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<EPostTicket>, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            let epost_tickets = <Vec<JsonEPostTicket>>::deserialize(deserializer)?;
+            Ok(epost_tickets
+                .into_iter()
+                .map(|epost_ticket| EPostTicket {
+                    partial: epost_ticket.partial,
+                    sector_id: epost_ticket.sector_id,
+                    challenge_index: epost_ticket.challenge_index,
+                })
+                .collect())
+        }
     }
 
     #[test]

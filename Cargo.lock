@@ -332,7 +332,7 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 [[package]]
 name = "cid"
 version = "0.4.0"
-source = "git+https://github.com/PolkaX/rust-cid?branch=impl-serde#82138c7edf9eb3b3f2c0fd4fe1bfa3bf86dec611"
+source = "git+https://github.com/PolkaX/rust-cid?branch=impl-serde#347e0f910454bf0148a6143ba7f760f62b6d72f3"
 dependencies = [
  "multibase",
  "multihash",

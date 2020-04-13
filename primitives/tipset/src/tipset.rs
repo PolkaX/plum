@@ -154,11 +154,9 @@ pub mod cbor {
     use crate::key::TipsetKey;
 
     #[derive(Serialize)]
-    struct CborBlockHeaderRef<'a>(#[serde(with = "block_header_cbor")] &'a BlockHeader);
-    #[derive(Serialize)]
     struct CborTipsetRef<'a>(
         #[serde(with = "crate::key::cbor")] &'a TipsetKey,
-        &'a [CborBlockHeaderRef<'a>],
+        #[serde(with = "block_header_cbor::vec")] &'a [BlockHeader],
         &'a u64,
     );
 
@@ -167,24 +165,13 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        CborTipsetRef(
-            &tipset.key,
-            &tipset
-                .blocks
-                .iter()
-                .map(|block| CborBlockHeaderRef(block))
-                .collect::<Vec<_>>(),
-            &tipset.height,
-        )
-        .serialize(serializer)
+        CborTipsetRef(&tipset.key, &tipset.blocks, &tipset.height).serialize(serializer)
     }
 
     #[derive(Deserialize)]
-    struct CborBlockHeader(#[serde(with = "block_header_cbor")] BlockHeader);
-    #[derive(Deserialize)]
     struct CborTipset(
         #[serde(with = "crate::key::cbor")] TipsetKey,
-        Vec<CborBlockHeader>,
+        #[serde(with = "block_header_cbor::vec")] Vec<BlockHeader>,
         u64,
     );
 
@@ -196,7 +183,7 @@ pub mod cbor {
         let CborTipset(key, blocks, height) = CborTipset::deserialize(deserializer)?;
         Ok(Tipset {
             key,
-            blocks: blocks.into_iter().map(|block| block.0).collect(),
+            blocks,
             height,
         })
     }
@@ -212,14 +199,13 @@ pub mod json {
     use crate::key::TipsetKey;
 
     #[derive(Serialize)]
-    struct JsonBlockHeaderRef<'a>(#[serde(with = "block_header_json")] &'a BlockHeader);
-    #[derive(Serialize)]
     #[serde(rename_all = "PascalCase")]
     struct JsonTipsetRef<'a> {
         #[serde(rename = "Cids")]
         #[serde(with = "crate::key::json")]
         key: &'a TipsetKey,
-        blocks: &'a [JsonBlockHeaderRef<'a>],
+        #[serde(with = "block_header_json::vec")]
+        blocks: &'a [BlockHeader],
         height: &'a u64,
     }
 
@@ -230,25 +216,20 @@ pub mod json {
     {
         JsonTipsetRef {
             key: &tipset.key,
-            blocks: &tipset
-                .blocks
-                .iter()
-                .map(|block| JsonBlockHeaderRef(block))
-                .collect::<Vec<_>>(),
+            blocks: &tipset.blocks,
             height: &tipset.height,
         }
         .serialize(serializer)
     }
 
     #[derive(Deserialize)]
-    struct JsonBlockHeader(#[serde(with = "block_header_json")] BlockHeader);
-    #[derive(Deserialize)]
     #[serde(rename_all = "PascalCase")]
     struct JsonTipset {
         #[serde(rename = "Cids")]
         #[serde(with = "crate::key::json")]
         key: TipsetKey,
-        blocks: Vec<JsonBlockHeader>,
+        #[serde(with = "block_header_json::vec")]
+        blocks: Vec<BlockHeader>,
         height: u64,
     }
 
@@ -264,7 +245,7 @@ pub mod json {
         } = JsonTipset::deserialize(deserializer)?;
         Ok(Tipset {
             key,
-            blocks: blocks.into_iter().map(|block| block.0).collect(),
+            blocks,
             height,
         })
     }

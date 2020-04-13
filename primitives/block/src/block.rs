@@ -55,14 +55,10 @@ pub mod cbor {
     use crate::header::BlockHeader;
 
     #[derive(Serialize)]
-    struct CborUnsignedMessageRef<'a>(#[serde(with = "unsigned_message_cbor")] &'a UnsignedMessage);
-    #[derive(Serialize)]
-    struct CborSignedMessageRef<'a>(#[serde(with = "signed_message_cbor")] &'a SignedMessage);
-    #[derive(Serialize)]
     struct CborBlockRef<'a>(
         #[serde(with = "crate::header::cbor")] &'a BlockHeader,
-        &'a [CborUnsignedMessageRef<'a>],
-        &'a [CborSignedMessageRef<'a>],
+        #[serde(with = "unsigned_message_cbor::vec")] &'a [UnsignedMessage],
+        #[serde(with = "signed_message_cbor::vec")] &'a [SignedMessage],
     );
 
     /// CBOR serialization
@@ -70,31 +66,15 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        CborBlockRef(
-            &block.header,
-            &block
-                .bls_messages
-                .iter()
-                .map(|bls_msg| CborUnsignedMessageRef(bls_msg))
-                .collect::<Vec<_>>(),
-            &block
-                .secpk_messages
-                .iter()
-                .map(|secp_msg| CborSignedMessageRef(secp_msg))
-                .collect::<Vec<_>>(),
-        )
-        .serialize(serializer)
+        CborBlockRef(&block.header, &block.bls_messages, &block.secpk_messages)
+            .serialize(serializer)
     }
 
     #[derive(Deserialize)]
-    struct CborUnsignedMessage(#[serde(with = "unsigned_message_cbor")] UnsignedMessage);
-    #[derive(Deserialize)]
-    struct CborSignedMessage(#[serde(with = "signed_message_cbor")] SignedMessage);
-    #[derive(Deserialize)]
     struct CborBlock(
         #[serde(with = "crate::header::cbor")] BlockHeader,
-        Vec<CborUnsignedMessage>,
-        Vec<CborSignedMessage>,
+        #[serde(with = "unsigned_message_cbor::vec")] Vec<UnsignedMessage>,
+        #[serde(with = "signed_message_cbor::vec")] Vec<SignedMessage>,
     );
 
     /// CBOR deserialization
@@ -102,11 +82,11 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let CborBlock(header, bls_msgs, secpk_msgs) = CborBlock::deserialize(deserializer)?;
+        let CborBlock(header, bls_messages, secpk_messages) = CborBlock::deserialize(deserializer)?;
         Ok(Block {
             header,
-            bls_messages: bls_msgs.into_iter().map(|bls_msg| bls_msg.0).collect(),
-            secpk_messages: secpk_msgs.into_iter().map(|secp_msg| secp_msg.0).collect(),
+            bls_messages,
+            secpk_messages,
         })
     }
 }
@@ -123,16 +103,14 @@ pub mod json {
     use crate::header::BlockHeader;
 
     #[derive(Serialize)]
-    struct JsonUnsignedMessageRef<'a>(#[serde(with = "unsigned_message_json")] &'a UnsignedMessage);
-    #[derive(Serialize)]
-    struct JsonSignedMessageRef<'a>(#[serde(with = "signed_message_json")] &'a SignedMessage);
-    #[derive(Serialize)]
     #[serde(rename_all = "PascalCase")]
     struct JsonBlockRef<'a> {
         #[serde(with = "crate::header::json")]
         header: &'a BlockHeader,
-        bls_messages: &'a [JsonUnsignedMessageRef<'a>],
-        secpk_messages: &'a [JsonSignedMessageRef<'a>],
+        #[serde(with = "unsigned_message_json::vec")]
+        bls_messages: &'a [UnsignedMessage],
+        #[serde(with = "signed_message_json::vec")]
+        secpk_messages: &'a [SignedMessage],
     }
 
     /// JSON serialization
@@ -142,31 +120,21 @@ pub mod json {
     {
         JsonBlockRef {
             header: &block.header,
-            bls_messages: &block
-                .bls_messages
-                .iter()
-                .map(|bls_msg| JsonUnsignedMessageRef(bls_msg))
-                .collect::<Vec<_>>(),
-            secpk_messages: &block
-                .secpk_messages
-                .iter()
-                .map(|secpk_msg| JsonSignedMessageRef(secpk_msg))
-                .collect::<Vec<_>>(),
+            bls_messages: &block.bls_messages,
+            secpk_messages: &block.secpk_messages,
         }
         .serialize(serializer)
     }
 
     #[derive(Deserialize)]
-    struct JsonUnsignedMessage(#[serde(with = "unsigned_message_json")] UnsignedMessage);
-    #[derive(Deserialize)]
-    struct JsonSignedMessage(#[serde(with = "signed_message_json")] SignedMessage);
-    #[derive(Deserialize)]
     #[serde(rename_all = "PascalCase")]
     struct JsonBlock {
         #[serde(with = "crate::header::json")]
         header: BlockHeader,
-        bls_messages: Vec<JsonUnsignedMessage>,
-        secpk_messages: Vec<JsonSignedMessage>,
+        #[serde(with = "unsigned_message_json::vec")]
+        bls_messages: Vec<UnsignedMessage>,
+        #[serde(with = "signed_message_json::vec")]
+        secpk_messages: Vec<SignedMessage>,
     }
 
     /// JSON deserialization
@@ -176,13 +144,13 @@ pub mod json {
     {
         let JsonBlock {
             header,
-            bls_messages: bls_msgs,
-            secpk_messages: secp_msgs,
+            bls_messages,
+            secpk_messages,
         } = JsonBlock::deserialize(deserializer)?;
         Ok(Block {
             header,
-            bls_messages: bls_msgs.into_iter().map(|bls_msg| bls_msg.0).collect(),
-            secpk_messages: secp_msgs.into_iter().map(|secpk_msg| secpk_msg.0).collect(),
+            bls_messages,
+            secpk_messages,
         })
     }
 }

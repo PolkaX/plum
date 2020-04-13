@@ -139,6 +139,44 @@ pub mod cbor {
             params,
         })
     }
+
+    /// Vec<UnsignedMessage> CBOR serialization/deserialization.
+    pub mod vec {
+        use super::*;
+
+        #[derive(Serialize)]
+        struct CborUnsignedMessageRef<'a>(#[serde(with = "super")] &'a UnsignedMessage);
+
+        /// CBOR serialization of Vec<UnsignedMessage>.
+        pub fn serialize<S>(
+            unsigned_msgs: &[UnsignedMessage],
+            serializer: S,
+        ) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            unsigned_msgs
+                .iter()
+                .map(|unsigned_msg| CborUnsignedMessageRef(unsigned_msg))
+                .collect::<Vec<_>>()
+                .serialize(serializer)
+        }
+
+        #[derive(Deserialize)]
+        struct CborUnsignedMessage(#[serde(with = "super")] UnsignedMessage);
+
+        /// CBOR deserialization of Vec<UnsignedMessage>.
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<UnsignedMessage>, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            let unsigned_msgs = <Vec<CborUnsignedMessage>>::deserialize(deserializer)?;
+            Ok(unsigned_msgs
+                .into_iter()
+                .map(|CborUnsignedMessage(unsigned_msg)| unsigned_msg)
+                .collect())
+        }
+    }
 }
 
 /// UnsignedMessage JSON serialization/deserialization.
@@ -211,26 +249,55 @@ pub mod json {
     where
         D: de::Deserializer<'de>,
     {
-        let JsonUnsignedMessage {
-            to,
-            from,
-            nonce,
-            value,
-            gas_price,
-            gas_limit,
-            method,
-            params,
-        } = JsonUnsignedMessage::deserialize(deserializer)?;
+        let unsigned_msg = JsonUnsignedMessage::deserialize(deserializer)?;
         Ok(UnsignedMessage {
-            to,
-            from,
-            nonce,
-            value,
-            gas_price,
-            gas_limit,
-            method,
-            params,
+            to: unsigned_msg.to,
+            from: unsigned_msg.from,
+            nonce: unsigned_msg.nonce,
+            value: unsigned_msg.value,
+            gas_price: unsigned_msg.gas_price,
+            gas_limit: unsigned_msg.gas_limit,
+            method: unsigned_msg.method,
+            params: unsigned_msg.params,
         })
+    }
+
+    /// Vec<UnsignedMessage> JSON serialization/deserialization.
+    pub mod vec {
+        use super::*;
+
+        #[derive(Serialize)]
+        struct JsonUnsignedMessageRef<'a>(#[serde(with = "super")] &'a UnsignedMessage);
+
+        /// JSON serialization of Vec<UnsignedMessage>.
+        pub fn serialize<S>(
+            unsigned_msgs: &[UnsignedMessage],
+            serializer: S,
+        ) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            unsigned_msgs
+                .iter()
+                .map(|unsigned_msg| JsonUnsignedMessageRef(unsigned_msg))
+                .collect::<Vec<_>>()
+                .serialize(serializer)
+        }
+
+        #[derive(Deserialize)]
+        struct JsonUnsignedMessage(#[serde(with = "super")] UnsignedMessage);
+
+        /// JSON deserialization of Vec<UnsignedMessage>.
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<UnsignedMessage>, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            let unsigned_msgs = <Vec<JsonUnsignedMessage>>::deserialize(deserializer)?;
+            Ok(unsigned_msgs
+                .into_iter()
+                .map(|JsonUnsignedMessage(unsigned_msg)| unsigned_msg)
+                .collect())
+        }
     }
 }
 

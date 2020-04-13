@@ -40,13 +40,10 @@ pub mod cbor {
     use super::{EPostProof, EPostTicket};
 
     #[derive(Serialize)]
-    struct CborEPostTicketRef<'a>(#[serde(with = "crate::epost_ticket::cbor")] &'a EPostTicket);
-
-    #[derive(Serialize)]
     struct CborEPostProofRef<'a>(
         #[serde(with = "serde_bytes")] &'a [u8],
         #[serde(with = "serde_bytes")] &'a [u8],
-        &'a [CborEPostTicketRef<'a>],
+        #[serde(with = "crate::epost_ticket::cbor::vec")] &'a [EPostTicket],
     );
 
     /// CBOR serialization
@@ -57,23 +54,16 @@ pub mod cbor {
         CborEPostProofRef(
             &epost_proof.proof,
             &epost_proof.post_rand,
-            &epost_proof
-                .candidates
-                .iter()
-                .map(|candidates| CborEPostTicketRef(candidates))
-                .collect::<Vec<_>>(),
+            &epost_proof.candidates,
         )
         .serialize(serializer)
     }
 
     #[derive(Deserialize)]
-    struct CborEPostTicket(#[serde(with = "crate::epost_ticket::cbor")] EPostTicket);
-
-    #[derive(Deserialize)]
     struct CborEPostProof(
         #[serde(with = "serde_bytes")] Vec<u8>,
         #[serde(with = "serde_bytes")] Vec<u8>,
-        Vec<CborEPostTicket>,
+        #[serde(with = "crate::epost_ticket::cbor::vec")] Vec<EPostTicket>,
     );
 
     /// CBOR deserialization
@@ -86,10 +76,7 @@ pub mod cbor {
         Ok(EPostProof {
             proof,
             post_rand,
-            candidates: candidates
-                .into_iter()
-                .map(|candidate| candidate.0)
-                .collect(),
+            candidates,
         })
     }
 
@@ -125,16 +112,14 @@ pub mod json {
     use super::{EPostProof, EPostTicket};
 
     #[derive(Serialize)]
-    struct JsonEPostTicketRef<'a>(#[serde(with = "crate::epost_ticket::json")] &'a EPostTicket);
-
-    #[derive(Serialize)]
     #[serde(rename_all = "PascalCase")]
     struct JsonEPostProofRef<'a> {
         #[serde(with = "plum_types::base64")]
         proof: &'a [u8],
         #[serde(with = "plum_types::base64")]
         post_rand: &'a [u8],
-        candidates: &'a [JsonEPostTicketRef<'a>],
+        #[serde(with = "crate::epost_ticket::json::vec")]
+        candidates: &'a [EPostTicket],
     }
 
     /// JSON serialization
@@ -145,17 +130,10 @@ pub mod json {
         JsonEPostProofRef {
             proof: &epost_proof.proof,
             post_rand: &epost_proof.post_rand,
-            candidates: &epost_proof
-                .candidates
-                .iter()
-                .map(|candidate| JsonEPostTicketRef(candidate))
-                .collect::<Vec<_>>(),
+            candidates: &epost_proof.candidates,
         }
         .serialize(serializer)
     }
-
-    #[derive(Deserialize)]
-    struct JsonEPostTicket(#[serde(with = "crate::epost_ticket::json")] EPostTicket);
 
     #[derive(Deserialize)]
     #[serde(rename_all = "PascalCase")]
@@ -164,7 +142,8 @@ pub mod json {
         proof: Vec<u8>,
         #[serde(with = "plum_types::base64")]
         post_rand: Vec<u8>,
-        candidates: Vec<JsonEPostTicket>,
+        #[serde(with = "crate::epost_ticket::json::vec")]
+        candidates: Vec<EPostTicket>,
     }
 
     /// JSON deserialization
@@ -180,10 +159,7 @@ pub mod json {
         Ok(EPostProof {
             proof,
             post_rand,
-            candidates: candidates
-                .into_iter()
-                .map(|candidate| candidate.0)
-                .collect(),
+            candidates,
         })
     }
 
