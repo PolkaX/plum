@@ -249,16 +249,25 @@ pub mod json {
     where
         D: de::Deserializer<'de>,
     {
-        let unsigned_msg = JsonUnsignedMessage::deserialize(deserializer)?;
+        let JsonUnsignedMessage {
+            to,
+            from,
+            nonce,
+            value,
+            gas_price,
+            gas_limit,
+            method,
+            params,
+        } = JsonUnsignedMessage::deserialize(deserializer)?;
         Ok(UnsignedMessage {
-            to: unsigned_msg.to,
-            from: unsigned_msg.from,
-            nonce: unsigned_msg.nonce,
-            value: unsigned_msg.value,
-            gas_price: unsigned_msg.gas_price,
-            gas_limit: unsigned_msg.gas_limit,
-            method: unsigned_msg.method,
-            params: unsigned_msg.params,
+            to,
+            from,
+            nonce,
+            value,
+            gas_price,
+            gas_limit,
+            method,
+            params,
         })
     }
 

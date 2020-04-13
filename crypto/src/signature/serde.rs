@@ -90,10 +90,9 @@ pub mod json {
     use crate::signature::{Signature, SignatureType};
 
     #[derive(Clone, Copy, Serialize, Deserialize)]
+    #[serde(rename_all = "lowercase")]
     enum JsonSignatureType {
-        #[serde(rename = "secp256k1")]
         Secp256k1,
-        #[serde(rename = "bls")]
         Bls,
     }
 
