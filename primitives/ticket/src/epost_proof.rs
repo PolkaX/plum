@@ -40,13 +40,10 @@ pub mod cbor {
     use super::{EPostProof, EPostTicket};
 
     #[derive(Serialize)]
-    struct CborEPostTicketRef<'a>(#[serde(with = "crate::epost_ticket::cbor")] &'a EPostTicket);
-
-    #[derive(Serialize)]
     struct CborEPostProofRef<'a>(
         #[serde(with = "serde_bytes")] &'a [u8],
         #[serde(with = "serde_bytes")] &'a [u8],
-        &'a [CborEPostTicketRef<'a>],
+        #[serde(with = "crate::epost_ticket::cbor::vec")] &'a [EPostTicket],
     );
 
     /// CBOR serialization
@@ -57,23 +54,16 @@ pub mod cbor {
         CborEPostProofRef(
             &epost_proof.proof,
             &epost_proof.post_rand,
-            &epost_proof
-                .candidates
-                .iter()
-                .map(|candidates| CborEPostTicketRef(candidates))
-                .collect::<Vec<_>>(),
+            &epost_proof.candidates,
         )
         .serialize(serializer)
     }
 
     #[derive(Deserialize)]
-    struct CborEPostTicket(#[serde(with = "crate::epost_ticket::cbor")] EPostTicket);
-
-    #[derive(Deserialize)]
     struct CborEPostProof(
         #[serde(with = "serde_bytes")] Vec<u8>,
         #[serde(with = "serde_bytes")] Vec<u8>,
-        Vec<CborEPostTicket>,
+        #[serde(with = "crate::epost_ticket::cbor::vec")] Vec<EPostTicket>,
     );
 
     /// CBOR deserialization
@@ -83,10 +73,6 @@ pub mod cbor {
     {
         let CborEPostProof(proof, post_rand, candidates) =
             CborEPostProof::deserialize(deserializer)?;
-        let candidates = candidates
-            .into_iter()
-            .map(|candidate| candidate.0)
-            .collect();
         Ok(EPostProof {
             proof,
             post_rand,
@@ -126,56 +112,54 @@ pub mod json {
     use super::{EPostProof, EPostTicket};
 
     #[derive(Serialize)]
-    struct JsonEPostTicketRef<'a>(#[serde(with = "crate::epost_ticket::json")] &'a EPostTicket);
-
-    #[derive(Serialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonEPostProofRef<'a> {
-        #[serde(rename = "Proof")]
-        proof: String,
-        #[serde(rename = "PostRand")]
-        post_rand: String,
-        #[serde(rename = "Candidates")]
-        candidates: &'a [JsonEPostTicketRef<'a>],
+        #[serde(with = "plum_types::base64")]
+        proof: &'a [u8],
+        #[serde(with = "plum_types::base64")]
+        post_rand: &'a [u8],
+        #[serde(with = "crate::epost_ticket::json::vec")]
+        candidates: &'a [EPostTicket],
     }
 
-    /// CBOR serialization
+    /// JSON serialization
     pub fn serialize<S>(epost_proof: &EPostProof, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
         JsonEPostProofRef {
-            proof: base64::encode(&epost_proof.proof),
-            post_rand: base64::encode(&epost_proof.post_rand),
-            candidates: &epost_proof
-                .candidates
-                .iter()
-                .map(|candidate| JsonEPostTicketRef(candidate))
-                .collect::<Vec<_>>(),
+            proof: &epost_proof.proof,
+            post_rand: &epost_proof.post_rand,
+            candidates: &epost_proof.candidates,
         }
         .serialize(serializer)
     }
 
     #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonEPostProof {
-        #[serde(rename = "Proof")]
-        proof: String,
-        #[serde(rename = "PostRand")]
-        post_rand: String,
-        #[serde(rename = "Candidates")]
+        #[serde(with = "plum_types::base64")]
+        proof: Vec<u8>,
+        #[serde(with = "plum_types::base64")]
+        post_rand: Vec<u8>,
+        #[serde(with = "crate::epost_ticket::json::vec")]
         candidates: Vec<EPostTicket>,
     }
 
-    /// CBOR deserialization
+    /// JSON deserialization
     pub fn deserialize<'de, D>(deserializer: D) -> Result<EPostProof, D::Error>
     where
         D: de::Deserializer<'de>,
     {
-        let epost_proof = JsonEPostProof::deserialize(deserializer)?;
+        let JsonEPostProof {
+            proof,
+            post_rand,
+            candidates,
+        } = JsonEPostProof::deserialize(deserializer)?;
         Ok(EPostProof {
-            proof: base64::decode(epost_proof.proof).expect("base64 decode shouldn't be fail"),
-            post_rand: base64::decode(epost_proof.post_rand)
-                .expect("base64 decode shouldn't be fail"),
-            candidates: epost_proof.candidates,
+            proof,
+            post_rand,
+            candidates,
         })
     }
 

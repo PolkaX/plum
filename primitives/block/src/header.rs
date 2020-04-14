@@ -82,7 +82,7 @@ impl<'de> de::Deserialize<'de> for BlockHeader {
 
 /// BlockHeader CBOR serialization/deserialization
 pub mod cbor {
-    use cid::Cid;
+    use cid::{ipld_dag_cbor as cid_cbor, Cid};
     use serde::{de, ser, Deserialize, Serialize};
 
     use plum_address::{address_cbor, Address};
@@ -93,18 +93,16 @@ pub mod cbor {
     use super::BlockHeader;
 
     #[derive(Serialize)]
-    struct CborCidRef<'a>(#[serde(with = "cid::ipld_dag_cbor")] &'a Cid);
-    #[derive(Serialize)]
     struct CborBlockHeaderRef<'a>(
         #[serde(with = "address_cbor")] &'a Address,
         #[serde(with = "ticket_cbor")] &'a Ticket,
         #[serde(with = "epost_proof_cbor")] &'a EPostProof,
-        &'a [CborCidRef<'a>],
+        #[serde(with = "cid_cbor::vec")] &'a [Cid],
         #[serde(with = "bigint_cbor")] &'a BigInt,
         &'a u64,
-        #[serde(with = "cid::ipld_dag_cbor")] &'a Cid,
-        #[serde(with = "cid::ipld_dag_cbor")] &'a Cid,
-        #[serde(with = "cid::ipld_dag_cbor")] &'a Cid,
+        #[serde(with = "cid_cbor")] &'a Cid,
+        #[serde(with = "cid_cbor")] &'a Cid,
+        #[serde(with = "cid_cbor")] &'a Cid,
         #[serde(with = "signature_cbor")] &'a Signature,
         &'a u64,
         #[serde(with = "signature_cbor")] &'a Signature,
@@ -120,11 +118,7 @@ pub mod cbor {
             &header.miner,
             &header.ticket,
             &header.epost_proof,
-            &header
-                .parents
-                .iter()
-                .map(|parent| CborCidRef(parent))
-                .collect::<Vec<_>>(),
+            &header.parents,
             &header.parent_weight,
             &header.height,
             &header.parent_state_root,
@@ -139,18 +133,16 @@ pub mod cbor {
     }
 
     #[derive(Deserialize)]
-    struct CborCid(#[serde(with = "cid::ipld_dag_cbor")] Cid);
-    #[derive(Deserialize)]
     struct CborBlockHeader(
         #[serde(with = "address_cbor")] Address,
         #[serde(with = "ticket_cbor")] Ticket,
         #[serde(with = "epost_proof_cbor")] EPostProof,
-        Vec<CborCid>,
+        #[serde(with = "cid_cbor::vec")] Vec<Cid>,
         #[serde(with = "bigint_cbor")] BigInt,
         u64,
-        #[serde(with = "cid::ipld_dag_cbor")] Cid,
-        #[serde(with = "cid::ipld_dag_cbor")] Cid,
-        #[serde(with = "cid::ipld_dag_cbor")] Cid,
+        #[serde(with = "cid_cbor")] Cid,
+        #[serde(with = "cid_cbor")] Cid,
+        #[serde(with = "cid_cbor")] Cid,
         #[serde(with = "signature_cbor")] Signature,
         u64,
         #[serde(with = "signature_cbor")] Signature,
@@ -181,7 +173,7 @@ pub mod cbor {
             miner,
             ticket,
             epost_proof,
-            parents: parents.into_iter().map(|parent| parent.0).collect(),
+            parents,
             parent_weight,
             height,
             parent_state_root,
@@ -193,11 +185,46 @@ pub mod cbor {
             fork_signaling,
         })
     }
+
+    /// Vec<BlockHeader> CBOR serialization/deserialization.
+    pub mod vec {
+        use super::*;
+
+        #[derive(Serialize)]
+        struct CborBlockHeaderRef<'a>(#[serde(with = "super")] &'a BlockHeader);
+
+        /// CBOR serialization of Vec<BlockHeader>.
+        pub fn serialize<S>(headers: &[BlockHeader], serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            headers
+                .iter()
+                .map(|header| CborBlockHeaderRef(header))
+                .collect::<Vec<_>>()
+                .serialize(serializer)
+        }
+
+        #[derive(Deserialize)]
+        struct CborBlockHeader(#[serde(with = "super")] BlockHeader);
+
+        /// CBOR deserialization of Vec<BlockHeader>.
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<BlockHeader>, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            let headers = <Vec<CborBlockHeader>>::deserialize(deserializer)?;
+            Ok(headers
+                .into_iter()
+                .map(|CborBlockHeader(header)| header)
+                .collect())
+        }
+    }
 }
 
 /// BlockHeader JSON serialization/deserialization
 pub mod json {
-    use cid::Cid;
+    use cid::{ipld_dag_json as cid_json, Cid};
     use serde::{de, ser, Deserialize, Serialize};
 
     use plum_address::{address_json, Address};
@@ -208,40 +235,32 @@ pub mod json {
     use super::BlockHeader;
 
     #[derive(Serialize)]
-    struct JsonCidRef<'a>(#[serde(with = "cid::ipld_dag_json")] &'a Cid);
-    #[derive(Serialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonBlockHeaderRef<'a> {
-        #[serde(rename = "Miner")]
         #[serde(with = "address_json")]
         miner: &'a Address,
-        #[serde(rename = "Ticket")]
         #[serde(with = "ticket_json")]
         ticket: &'a Ticket,
         #[serde(rename = "EPostProof")]
         #[serde(with = "epost_proof_json")]
         epost_proof: &'a EPostProof,
-        #[serde(rename = "Parents")]
-        parents: &'a [JsonCidRef<'a>],
-        #[serde(rename = "ParentWeight")]
+        #[serde(with = "cid_json::vec")]
+        parents: &'a [Cid],
         #[serde(with = "bigint_json")]
         parent_weight: &'a BigInt,
-        #[serde(rename = "Height")]
         height: &'a u64,
-        #[serde(rename = "ParentStateRoot")]
-        parent_state_root: &'a JsonCidRef<'a>,
-        #[serde(rename = "ParentMessageReceipts")]
-        parent_message_receipts: &'a JsonCidRef<'a>,
-        #[serde(rename = "Messages")]
-        messages: &'a JsonCidRef<'a>,
+        #[serde(with = "cid_json")]
+        parent_state_root: &'a Cid,
+        #[serde(with = "cid_json")]
+        parent_message_receipts: &'a Cid,
+        #[serde(with = "cid_json")]
+        messages: &'a Cid,
         #[serde(rename = "BLSAggregate")]
         #[serde(with = "signature_json")]
         bls_aggregate: &'a Signature,
-        #[serde(rename = "Timestamp")]
         timestamp: &'a u64,
-        #[serde(rename = "BlockSig")]
         #[serde(with = "signature_json")]
         block_sig: &'a Signature,
-        #[serde(rename = "ForkSignaling")]
         fork_signaling: &'a u64,
     }
 
@@ -254,16 +273,12 @@ pub mod json {
             miner: &header.miner,
             ticket: &header.ticket,
             epost_proof: &header.epost_proof,
-            parents: &header
-                .parents
-                .iter()
-                .map(|parent| JsonCidRef(parent))
-                .collect::<Vec<_>>(),
+            parents: &header.parents,
             parent_weight: &header.parent_weight,
             height: &header.height,
-            parent_state_root: &JsonCidRef(&header.parent_state_root),
-            parent_message_receipts: &JsonCidRef(&header.parent_message_receipts),
-            messages: &JsonCidRef(&header.messages),
+            parent_state_root: &header.parent_state_root,
+            parent_message_receipts: &header.parent_message_receipts,
+            messages: &header.messages,
             bls_aggregate: &header.bls_aggregate,
             timestamp: &header.timestamp,
             block_sig: &header.block_sig,
@@ -273,64 +288,105 @@ pub mod json {
     }
 
     #[derive(Deserialize)]
-    struct JsonCid(#[serde(with = "cid::ipld_dag_json")] Cid);
-    #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonBlockHeader {
-        #[serde(rename = "Miner")]
         #[serde(with = "address_json")]
         miner: Address,
-        #[serde(rename = "Ticket")]
         #[serde(with = "ticket_json")]
         ticket: Ticket,
         #[serde(rename = "EPostProof")]
         #[serde(with = "epost_proof_json")]
         epost_proof: EPostProof,
-        #[serde(rename = "Parents")]
-        parents: Vec<JsonCid>,
-        #[serde(rename = "ParentWeight")]
+        #[serde(with = "cid_json::vec")]
+        parents: Vec<Cid>,
         #[serde(with = "bigint_json")]
         parent_weight: BigInt,
-        #[serde(rename = "Height")]
         height: u64,
-        #[serde(rename = "ParentStateRoot")]
-        parent_state_root: JsonCid,
-        #[serde(rename = "ParentMessageReceipts")]
-        parent_message_receipts: JsonCid,
-        #[serde(rename = "Messages")]
-        messages: JsonCid,
+        #[serde(with = "cid_json")]
+        parent_state_root: Cid,
+        #[serde(with = "cid_json")]
+        parent_message_receipts: Cid,
+        #[serde(with = "cid_json")]
+        messages: Cid,
         #[serde(rename = "BLSAggregate")]
         #[serde(with = "signature_json")]
         bls_aggregate: Signature,
-        #[serde(rename = "Timestamp")]
         timestamp: u64,
-        #[serde(rename = "BlockSig")]
         #[serde(with = "signature_json")]
         block_sig: Signature,
-        #[serde(rename = "ForkSignaling")]
         fork_signaling: u64,
     }
 
-    /// CBOR deserialization
+    /// JSON deserialization
     pub fn deserialize<'de, D>(deserializer: D) -> Result<BlockHeader, D::Error>
     where
         D: de::Deserializer<'de>,
     {
-        let header = JsonBlockHeader::deserialize(deserializer)?;
+        let JsonBlockHeader {
+            miner,
+            ticket,
+            epost_proof,
+            parents,
+            parent_weight,
+            height,
+            parent_state_root,
+            parent_message_receipts,
+            messages,
+            bls_aggregate,
+            timestamp,
+            block_sig,
+            fork_signaling,
+        } = JsonBlockHeader::deserialize(deserializer)?;
         Ok(BlockHeader {
-            miner: header.miner,
-            ticket: header.ticket,
-            epost_proof: header.epost_proof,
-            parents: header.parents.into_iter().map(|parent| parent.0).collect(),
-            parent_weight: header.parent_weight,
-            height: header.height,
-            parent_state_root: header.parent_state_root.0,
-            parent_message_receipts: header.parent_message_receipts.0,
-            messages: header.messages.0,
-            bls_aggregate: header.bls_aggregate,
-            timestamp: header.timestamp,
-            block_sig: header.block_sig,
-            fork_signaling: header.fork_signaling,
+            miner,
+            ticket,
+            epost_proof,
+            parents,
+            parent_weight,
+            height,
+            parent_state_root,
+            parent_message_receipts,
+            messages,
+            bls_aggregate,
+            timestamp,
+            block_sig,
+            fork_signaling,
         })
+    }
+
+    /// Vec<BlockHeader> JSON serialization/deserialization.
+    pub mod vec {
+        use super::*;
+
+        #[derive(Serialize)]
+        struct JsonBlockHeaderRef<'a>(#[serde(with = "super")] &'a BlockHeader);
+
+        /// JSON serialization of Vec<BlockHeader>.
+        pub fn serialize<S>(headers: &[BlockHeader], serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            headers
+                .iter()
+                .map(|header| JsonBlockHeaderRef(header))
+                .collect::<Vec<_>>()
+                .serialize(serializer)
+        }
+
+        #[derive(Deserialize)]
+        struct JsonBlockHeader(#[serde(with = "super")] BlockHeader);
+
+        /// JSON deserialization of Vec<BlockHeader>.
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<BlockHeader>, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            let headers = <Vec<JsonBlockHeader>>::deserialize(deserializer)?;
+            Ok(headers
+                .into_iter()
+                .map(|JsonBlockHeader(header)| header)
+                .collect())
+        }
     }
 }
 

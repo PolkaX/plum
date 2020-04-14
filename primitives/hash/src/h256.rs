@@ -7,8 +7,8 @@ construct_fixed_hash! {
     pub struct H256(32);
 }
 
-/// Serialization/deserialization of H256.
-pub mod raw {
+/// H256 CBOR serialization/deserialization.
+pub mod cbor {
     use serde::{de, ser};
     use serde_bytes::{ByteBuf, Bytes, Deserialize, Serialize};
 
@@ -34,40 +34,37 @@ pub mod raw {
             Err(de::Error::custom("H256 length must be 32 Bytes"))
         }
     }
-}
 
-/// Serialization/deserialization of Option<H256>.
-pub mod option {
-    use serde::{de, ser};
-    use serde_bytes::{ByteBuf, Bytes, Deserialize, Serialize};
+    /// Option<H256> CBOR serialization/deserialization.
+    pub mod option {
+        use super::*;
 
-    use super::H256;
+        /// CBOR Serialization of Option<H256>.
+        pub fn serialize<S>(h256: &Option<H256>, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            Bytes::new(
+                h256.as_ref()
+                    .map(|hash| hash.as_bytes())
+                    .unwrap_or_default(),
+            )
+            .serialize(serializer)
+        }
 
-    /// Serialization of Option<H256>.
-    pub fn serialize<S>(h256: &Option<H256>, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        Bytes::new(
-            h256.as_ref()
-                .map(|hash| hash.as_bytes())
-                .unwrap_or_default(),
-        )
-        .serialize(serializer)
-    }
-
-    /// Deserialization of Option<H256>.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<H256>, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let bytes = ByteBuf::deserialize(deserializer)?;
-        if bytes.is_empty() {
-            Ok(None)
-        } else if bytes.len() == H256::len_bytes() {
-            Ok(Some(H256::from_slice(bytes.as_slice())))
-        } else {
-            Err(de::Error::custom("H256 length must be 32 Bytes"))
+        /// CBOR Deserialization of Option<H256>.
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<H256>, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            let bytes = ByteBuf::deserialize(deserializer)?;
+            if bytes.is_empty() {
+                Ok(None)
+            } else if bytes.len() == H256::len_bytes() {
+                Ok(Some(H256::from_slice(bytes.as_slice())))
+            } else {
+                Err(de::Error::custom("H256 length must be 32 Bytes"))
+            }
         }
     }
 }

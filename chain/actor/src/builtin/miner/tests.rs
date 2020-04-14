@@ -6,10 +6,7 @@ use cid::Cid;
 use hex_literal::hex;
 use plum_address::Address;
 
-use super::actor::*;
 use super::state::*;
-use super::*;
-
 use crate::abi::bitfield::BitField;
 use crate::abi::sector::RegisteredProof;
 
@@ -45,7 +42,6 @@ fn miner_info2() -> MinerInfo {
 
 #[test]
 fn test_cbor_mineractorstate() {
-    let c = Cid::try_from(hex!("015501020001").as_ref()).unwrap();
     let mut bitfield = BitField::new();
     bitfield.insert(2);
     bitfield.insert(7);

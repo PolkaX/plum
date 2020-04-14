@@ -6,7 +6,7 @@ use cid::Cid;
 
 use plum_bigint::BigInt;
 use plum_hash::H256;
-use plum_types::{chain_epoch::ChainEpoch, ActorID, SectorNumber, SectorSize};
+use plum_types::{ActorId, ChainEpoch, SectorNumber, SectorSize};
 
 use super::serde_helper;
 
@@ -21,8 +21,8 @@ pub type ChallengeTicketsCommitment = H256;
 pub type PartialTicket = H256;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
-pub struct SectorID {
-    pub miner: ActorID,
+pub struct SectorId {
+    pub miner: ActorId,
     pub number: SectorNumber,
 }
 
@@ -124,11 +124,11 @@ pub struct OnChainSealVerifyInfo {
 // needs to verify a Seal.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
 pub struct SealVerifyInfo {
-    pub sector: SectorID,
+    pub sector: SectorId,
     pub on_chain: OnChainSealVerifyInfo,
-    #[serde(with = "plum_hash::h256_raw")]
+    #[serde(with = "plum_hash::h256_cbor")]
     pub seal_randomness: Randomness,
-    #[serde(with = "plum_hash::h256_raw")]
+    #[serde(with = "plum_hash::h256_cbor")]
     pub interactive_randomness: Randomness,
     pub unsealed_cid: Cid, // CommD
 }
@@ -137,17 +137,17 @@ pub struct SealVerifyInfo {
 pub struct PoStCandidate {
     pub proof: RegisteredProof,
     /// Optional —  will eventually be omitted for SurprisePoSt verification, needed for now.
-    #[serde(with = "plum_hash::h256_option")]
+    #[serde(with = "plum_hash::h256_cbor::option")]
     pub partial_ticket: Option<PartialTicket>,
     /// Optional — should be ommitted for verification.
     #[serde(with = "serde_helper::option_prev_post_candidate_proof")]
     pub private_proof: Option<PrivatePoStCandidateProof>,
-    pub sector_id: SectorID,
+    pub sector_id: SectorId,
     pub challenge_index: u64,
 }
 
 impl PoStCandidate {
-    pub fn new(proof: RegisteredProof, sector_id: SectorID, challenge_index: u64) -> Self {
+    pub fn new(proof: RegisteredProof, sector_id: SectorId, challenge_index: u64) -> Self {
         PoStCandidate {
             proof,
             partial_ticket: None,
@@ -174,7 +174,7 @@ pub struct PoStVerifyInfo {
     pub proofs: Vec<PoStProof>,
     pub eligible_sectors: Vec<SectorInfo>,
     /// used to derive 32-byte prover ID
-    pub prover: ActorID,
+    pub prover: ActorId,
     pub challenge_count: u64,
 }
 
@@ -193,7 +193,7 @@ pub struct OnChainElectionPoStVerifyInfo {
     pub candidates: Vec<PoStCandidate>,
     /// each PoStProof has its own RegisteredProof
     pub proofs: Vec<PoStProof>,
-    #[serde(with = "plum_hash::h256_raw")]
+    #[serde(with = "plum_hash::h256_cbor")]
     pub randomness: Randomness,
 }
 
@@ -217,12 +217,12 @@ fn test_cbor() {
         .unwrap();
 
     // sector id
-    let id = SectorID {
+    let id = SectorId {
         miner: 100,
         number: 100,
     };
     asset_cbor(id, vec![130, 24, 100, 24, 100]);
-    let id2 = SectorID {
+    let id2 = SectorId {
         miner: 0,
         number: 0,
     };
@@ -231,12 +231,12 @@ fn test_cbor() {
     // OnChainSealVerifyInfo
     let verify_info = OnChainSealVerifyInfo {
         sealed_cid: cid.clone(),
-        interactive_epoch: 12345678.into(),
+        interactive_epoch: 12345678,
         registered_proof: RegisteredProof::StackedDRG2KiBPoSt,
         proof: vec![1, 2, 3, 4, 5, 6, 7, 8],
         deal_id: vec![8, 7, 6],
         sector: 1111,
-        seal_rand_epoch: 87654321.into(),
+        seal_rand_epoch: 87654321,
     };
     asset_cbor(
         verify_info.clone(),
@@ -250,12 +250,12 @@ fn test_cbor() {
 
     let verify_info2 = OnChainSealVerifyInfo {
         sealed_cid: cid.clone(),
-        interactive_epoch: 12345678.into(),
+        interactive_epoch: 12345678,
         registered_proof: RegisteredProof::StackedDRG2KiBPoSt,
         proof: vec![1, 2, 3, 4, 5, 6, 7, 8],
         deal_id: vec![],
         sector: 1111,
-        seal_rand_epoch: 87654321.into(),
+        seal_rand_epoch: 87654321,
     };
     asset_cbor(
         verify_info2,
@@ -273,10 +273,10 @@ fn test_cbor() {
         on_chain: verify_info,
         seal_randomness: [1; 32].into(),
         interactive_randomness: [2; 32].into(),
-        unsealed_cid: cid.clone(),
+        unsealed_cid: cid,
     };
     asset_cbor(
-        info.clone(),
+        info,
         vec![
             133, 130, 24, 100, 24, 100, 135, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115,
             187, 29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142,
@@ -330,11 +330,11 @@ fn test_cbor() {
     asset_cbor(post_proof.clone(), vec![130, 1, 67, 1, 2, 3]);
 
     let verify_info = OnChainPoStVerifyInfo {
-        candidates: vec![post_can.clone(), post_can2.clone()],
-        proofs: vec![post_proof.clone()],
+        candidates: vec![post_can, post_can2],
+        proofs: vec![post_proof],
     };
     asset_cbor(
-        verify_info.clone(),
+        verify_info,
         vec![
             130, 130, 133, 1, 88, 32, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 130, 1, 67, 1, 2, 3, 130, 24, 100, 24, 100, 25, 3,

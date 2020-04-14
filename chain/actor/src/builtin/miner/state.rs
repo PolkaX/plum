@@ -2,9 +2,7 @@ use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 
 use cid::Cid;
 use plum_address::Address;
-use plum_types::{
-    chain_epoch::ChainEpoch, DealId, DealWeight, PeerId, SectorNumber, SectorSize, TokenAmount,
-};
+use plum_types::{ChainEpoch, DealId, DealWeight, PeerId, SectorNumber, SectorSize, TokenAmount};
 
 use crate::abi::bitfield::BitField;
 

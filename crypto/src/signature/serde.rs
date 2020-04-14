@@ -36,9 +36,9 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        let mut buf = Vec::with_capacity(1 + signature.bytes.len());
-        buf.push(u8::from(signature.ty));
-        buf.extend_from_slice(&signature.bytes);
+        let mut buf = Vec::with_capacity(1 + signature.data.len());
+        buf.push(u8::from(signature.r#type));
+        buf.extend_from_slice(&signature.data);
         let value = Bytes::new(&buf);
         value.serialize(serializer)
     }
@@ -49,10 +49,10 @@ pub mod cbor {
         D: de::Deserializer<'de>,
     {
         let buf = ByteBuf::deserialize(deserializer)?;
-        let ty = SignatureType::try_from(buf[0]).map_err(de::Error::custom)?;
+        let r#type = SignatureType::try_from(buf[0]).map_err(de::Error::custom)?;
         Ok(Signature {
-            ty,
-            bytes: (&buf[1..]).to_vec(),
+            r#type,
+            data: (&buf[1..]).to_vec(),
         })
     }
 
@@ -65,8 +65,8 @@ pub mod cbor {
 
         let cases = vec![(
             CborSignature(Signature {
-                ty: SignatureType::Bls,
-                bytes: b"boo! im a signature".to_vec(),
+                r#type: SignatureType::Bls,
+                data: b"boo! im a signature".to_vec(),
             }),
             vec![
                 84, 2, 98, 111, 111, 33, 32, 105, 109, 32, 97, 32, 115, 105, 103, 110, 97, 116,
@@ -90,19 +90,18 @@ pub mod json {
     use crate::signature::{Signature, SignatureType};
 
     #[derive(Clone, Copy, Serialize, Deserialize)]
+    #[serde(rename_all = "lowercase")]
     enum JsonSignatureType {
-        #[serde(rename = "secp256k1")]
         Secp256k1,
-        #[serde(rename = "bls")]
         Bls,
     }
 
-    #[derive(Serialize, Deserialize)]
-    struct JsonSignature {
-        #[serde(rename = "Type")]
-        ty: JsonSignatureType,
-        #[serde(rename = "Data")]
-        bytes: String,
+    #[derive(Serialize)]
+    #[serde(rename_all = "PascalCase")]
+    struct JsonSignatureRef<'a> {
+        r#type: JsonSignatureType,
+        #[serde(with = "plum_types::base64")]
+        data: &'a [u8],
     }
 
     /// JSON serialization.
@@ -110,15 +109,22 @@ pub mod json {
     where
         S: ser::Serializer,
     {
-        JsonSignature {
-            ty: match signature.ty {
+        JsonSignatureRef {
+            r#type: match signature.r#type {
                 SignatureType::Secp256k1 => JsonSignatureType::Secp256k1,
                 SignatureType::Bls => JsonSignatureType::Bls,
             },
-            // Fuck golang
-            bytes: base64::encode(&signature.bytes),
+            data: &signature.data,
         }
         .serialize(serializer)
+    }
+
+    #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
+    struct JsonSignature {
+        r#type: JsonSignatureType,
+        #[serde(with = "plum_types::base64")]
+        data: Vec<u8>,
     }
 
     /// JSON deserialization.
@@ -126,13 +132,13 @@ pub mod json {
     where
         D: de::Deserializer<'de>,
     {
-        let signature = JsonSignature::deserialize(deserializer)?;
+        let JsonSignature { r#type, data } = JsonSignature::deserialize(deserializer)?;
         Ok(Signature {
-            ty: match signature.ty {
+            r#type: match r#type {
                 JsonSignatureType::Secp256k1 => SignatureType::Secp256k1,
                 JsonSignatureType::Bls => SignatureType::Bls,
             },
-            bytes: base64::decode(signature.bytes).expect("base64 decode shouldn't be fail"),
+            data,
         })
     }
 
@@ -145,8 +151,8 @@ pub mod json {
 
         let cases = vec![(
             JsonSignature(Signature {
-                ty: SignatureType::Bls,
-                bytes: b"boo! im a signature".to_vec(),
+                r#type: SignatureType::Bls,
+                data: b"boo! im a signature".to_vec(),
             }),
             r#"{"Type":"bls","Data":"Ym9vISBpbSBhIHNpZ25hdHVyZQ=="}"#,
         )];

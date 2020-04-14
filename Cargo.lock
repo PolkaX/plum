@@ -332,7 +332,7 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 [[package]]
 name = "cid"
 version = "0.4.0"
-source = "git+https://github.com/PolkaX/rust-cid?branch=impl-serde#82138c7edf9eb3b3f2c0fd4fe1bfa3bf86dec611"
+source = "git+https://github.com/PolkaX/rust-cid?branch=impl-serde#347e0f910454bf0148a6143ba7f760f62b6d72f3"
 dependencies = [
  "multibase",
  "multihash",
@@ -2190,11 +2190,11 @@ dependencies = [
 name = "plum_crypto"
 version = "0.1.0"
 dependencies = [
- "base64 0.12.0",
  "bls-signatures",
  "libsecp256k1",
  "plum_address",
  "plum_hashing",
+ "plum_types",
  "rand 0.7.3",
  "serde",
  "serde_bytes",
@@ -2247,12 +2247,12 @@ dependencies = [
 name = "plum_message"
 version = "0.1.0"
 dependencies = [
- "base64 0.12.0",
  "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multihash",
  "plum_address",
  "plum_bigint",
  "plum_crypto",
+ "plum_types",
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2282,7 +2282,7 @@ dependencies = [
 name = "plum_ticket"
 version = "0.1.0"
 dependencies = [
- "base64 0.12.0",
+ "plum_types",
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2311,6 +2311,7 @@ dependencies = [
 name = "plum_types"
 version = "0.1.0"
 dependencies = [
+ "base64 0.12.0",
  "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "plum_bigint",
  "serde",
@@ -2328,12 +2329,12 @@ dependencies = [
 name = "plum_wallet"
 version = "0.1.0"
 dependencies = [
- "base64 0.12.0",
  "bls-signatures",
  "libsecp256k1",
  "parking_lot 0.10.2",
  "plum_address",
  "plum_crypto",
+ "plum_types",
  "rand 0.7.3",
  "serde",
  "serde_json",

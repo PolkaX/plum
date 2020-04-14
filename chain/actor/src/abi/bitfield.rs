@@ -5,7 +5,7 @@ use codec_rle::{rle_decode, rle_encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use std::borrow::{Borrow, BorrowMut};
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub struct BitField(BTreeSet<u64>);
 
 impl BitField {
