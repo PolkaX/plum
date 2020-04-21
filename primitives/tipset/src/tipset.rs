@@ -78,6 +78,14 @@ impl Tipset {
         })
     }
 
+    pub fn empty() -> Tipset {
+        Tipset {
+            key: Default::default(),
+            blocks: vec![],
+            height: 0
+        }
+    }
+
     /// Determine whether the tipset contains a block header with a Cid value of `cid`.
     pub fn contains(&self, cid: &Cid) -> bool {
         self.key.cids().contains(cid)
