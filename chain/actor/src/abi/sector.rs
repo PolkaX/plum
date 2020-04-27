@@ -6,7 +6,8 @@ use cid::Cid;
 
 use plum_bigint::BigInt;
 use plum_hash::H256;
-use plum_types::{ActorId, ChainEpoch, SectorNumber, SectorSize};
+pub use plum_types::ActorId;
+use plum_types::{ChainEpoch, SectorNumber, SectorSize};
 
 use super::serde_helper;
 
