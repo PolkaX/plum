@@ -3099,6 +3099,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "specs-storage"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cid 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "plum_actor",
+]
+
+[[package]]
 name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
