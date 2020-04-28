@@ -12,7 +12,6 @@ thiserror = "1.0"
 
 plum_bigint = { path = "../bigint" }
 plum_block = { path = "../block" }
-plum_ticket = { path = "../ticket" }
 
 [dev-dependencies]
 hex = "0.4"
