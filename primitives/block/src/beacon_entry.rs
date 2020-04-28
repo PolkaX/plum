@@ -129,7 +129,7 @@ pub mod json {
 
     #[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize)]
     #[serde(rename_all = "PascalCase")]
-    pub struct JsonBeaconEntryRef<'a> {
+    struct JsonBeaconEntryRef<'a> {
         round: &'a u64,
         #[serde(with = "plum_types::base64")]
         data: &'a [u8],
@@ -151,7 +151,7 @@ pub mod json {
 
     #[derive(Eq, PartialEq, Debug, Clone, Hash, Deserialize)]
     #[serde(rename_all = "PascalCase")]
-    pub struct JsonBeaconEntry {
+    struct JsonBeaconEntry {
         round: u64,
         #[serde(with = "plum_types::base64")]
         data: Vec<u8>,
