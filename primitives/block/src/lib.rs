@@ -15,6 +15,7 @@ mod msg_meta;
 mod post_proof;
 mod ticket;
 
+pub use self::beacon_entry::{cbor as beacon_entry_cbor, json as beacon_entry_json, BeaconEntry};
 pub use self::block::{cbor as block_cbor, json as block_json, Block};
 pub use self::block_msg::{cbor as block_msg_cbor, json as block_msg_json, BlockMsg};
 pub use self::election_proof::{
