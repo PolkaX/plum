@@ -36,7 +36,6 @@ members = [
   "primitives/block",
   "primitives/hash",
   "primitives/message",
-  "primitives/ticket",
   "primitives/tipset",
   "primitives/types",
   "vm",

@@ -3,8 +3,7 @@
 use cid::Cid;
 
 use plum_bigint::BigInt;
-use plum_block::BlockHeader;
-use plum_ticket::Ticket;
+use plum_block::{BlockHeader, Ticket};
 
 use crate::errors::TipsetError;
 use crate::key::TipsetKey;
@@ -257,9 +256,8 @@ mod tests {
     use serde::{Deserialize, Serialize};
 
     use plum_address::{set_network, Address, Network};
-    use plum_block::BlockHeader;
+    use plum_block::{BlockHeader, ElectionProof, Ticket};
     use plum_crypto::Signature;
-    use plum_ticket::{EPostProof, Ticket};
 
     use super::Tipset;
     use crate::key::TipsetKey;
@@ -274,11 +272,11 @@ mod tests {
             ticket: Ticket {
                 vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
             },
-            epost_proof: EPostProof {
-                proof: b"pruuf".to_vec(),
-                post_rand: b"random".to_vec(),
-                candidates: vec![],
+            election_proof: ElectionProof {
+                vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
             },
+            beacon_entries: vec![],
+            win_post_proof: vec![],
             parents: vec![cid.clone(), cid.clone()],
             parent_message_receipts: cid.clone(),
             bls_aggregate: Signature::new_bls("boo! im a signature"),
@@ -307,7 +305,30 @@ mod tests {
         struct JsonTipset(#[serde(with = "super::json")] Tipset);
 
         let tipset = JsonTipset(new_tipset());
-        let expected = r#"{"Cids":[{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"}],"Blocks":[{"Miner":"t012512063","Ticket":{"VRFProof":"dnJmIHByb29mMDAwMDAwMHZyZiBwcm9vZjAwMDAwMDA="},"EPostProof":{"Proof":"cHJ1dWY=","PostRand":"cmFuZG9t","Candidates":[]},"Parents":[{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"}],"ParentWeight":"123125126212","Height":85919298723,"ParentStateRoot":{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},"ParentMessageReceipts":{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},"Messages":{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},"BLSAggregate":{"Type":"bls","Data":"Ym9vISBpbSBhIHNpZ25hdHVyZQ=="},"Timestamp":0,"BlockSig":{"Type":"bls","Data":"Ym9vISBpbSBhIHNpZ25hdHVyZQ=="},"ForkSignaling":0}],"Height":1}"#;
+        let expected = "{\
+            \"Cids\":[{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"}],\
+            \"Blocks\":[{\
+                \"Miner\":\"t012512063\",\
+                \"Ticket\":{\"VRFProof\":\"dnJmIHByb29mMDAwMDAwMHZyZiBwcm9vZjAwMDAwMDA=\"},\
+                \"ElectionProof\":{\"VRFProof\":\"dnJmIHByb29mMDAwMDAwMHZyZiBwcm9vZjAwMDAwMDA=\"},\
+                \"BeaconEntries\":[],\
+                \"WinPoStProof\":[],\
+                \"Parents\":[\
+                    {\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"},\
+                    {\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"}\
+                ],\
+                \"ParentWeight\":\"123125126212\",\
+                \"Height\":85919298723,\
+                \"ParentStateRoot\":{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"},\
+                \"ParentMessageReceipts\":{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"},\
+                \"Messages\":{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"},\
+                \"BLSAggregate\":{\"Type\":\"bls\",\"Data\":\"Ym9vISBpbSBhIHNpZ25hdHVyZQ==\"},\
+                \"Timestamp\":0,\
+                \"BlockSig\":{\"Type\":\"bls\",\"Data\":\"Ym9vISBpbSBhIHNpZ25hdHVyZQ==\"},\
+                \"ForkSignaling\":0\
+            }],\
+            \"Height\":1\
+        }";
 
         let ser = serde_json::to_string(&tipset).unwrap();
         assert_eq!(ser, expected);

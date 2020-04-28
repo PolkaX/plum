@@ -2169,11 +2169,12 @@ dependencies = [
  "plum_bigint",
  "plum_crypto",
  "plum_message",
- "plum_ticket",
+ "plum_types",
  "serde",
  "serde_bytes",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json",
+ "serde_repr",
 ]
 
 [[package]]
@@ -2279,17 +2280,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "plum_ticket"
-version = "0.1.0"
-dependencies = [
- "plum_types",
- "serde",
- "serde_bytes",
- "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json",
-]
-
-[[package]]
 name = "plum_tipset"
 version = "0.1.0"
 dependencies = [
@@ -2300,7 +2290,6 @@ dependencies = [
  "plum_bigint",
  "plum_block",
  "plum_crypto",
- "plum_ticket",
  "serde",
  "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json",

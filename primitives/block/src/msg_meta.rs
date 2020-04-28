@@ -7,9 +7,9 @@ use serde::{de, ser};
 #[derive(Eq, PartialEq, Debug, Clone, Hash)]
 pub struct MsgMeta {
     ///
-    pub bls_msg: Cid,
+    pub bls_messages: Cid,
     ///
-    pub secp_msg: Cid,
+    pub secpk_messages: Cid,
 }
 
 impl MsgMeta {
@@ -66,7 +66,7 @@ pub mod cbor {
     where
         S: ser::Serializer,
     {
-        CborMsgMetaRef(&msg_meta.bls_msg, &msg_meta.secp_msg).serialize(serializer)
+        CborMsgMetaRef(&msg_meta.bls_messages, &msg_meta.secpk_messages).serialize(serializer)
     }
 
     #[derive(Deserialize)]
@@ -80,8 +80,11 @@ pub mod cbor {
     where
         D: de::Deserializer<'de>,
     {
-        let CborMsgMeta(bls_msg, secp_msg) = CborMsgMeta::deserialize(deserializer)?;
-        Ok(MsgMeta { bls_msg, secp_msg })
+        let CborMsgMeta(bls_messages, secpk_messages) = CborMsgMeta::deserialize(deserializer)?;
+        Ok(MsgMeta {
+            bls_messages,
+            secpk_messages,
+        })
     }
 }
 
@@ -93,13 +96,12 @@ pub mod json {
     use super::MsgMeta;
 
     #[derive(Serialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonMsgMetaRef<'a> {
-        #[serde(rename = "BlsMessages")]
         #[serde(with = "cid_json")]
-        bls_msg: &'a Cid,
-        #[serde(rename = "SecpkMessages")]
+        bls_messages: &'a Cid,
         #[serde(with = "cid_json")]
-        secp_msg: &'a Cid,
+        secpk_messages: &'a Cid,
     }
 
     /// JSON serialization
@@ -108,20 +110,19 @@ pub mod json {
         S: ser::Serializer,
     {
         JsonMsgMetaRef {
-            bls_msg: &msg_meta.bls_msg,
-            secp_msg: &msg_meta.secp_msg,
+            bls_messages: &msg_meta.bls_messages,
+            secpk_messages: &msg_meta.secpk_messages,
         }
         .serialize(serializer)
     }
 
     #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
     struct JsonMsgMeta {
-        #[serde(rename = "BlsMessages")]
         #[serde(with = "cid_json")]
-        bls_msg: Cid,
-        #[serde(rename = "SecpkMessages")]
+        bls_messages: Cid,
         #[serde(with = "cid_json")]
-        secp_msg: Cid,
+        secpk_messages: Cid,
     }
 
     /// JSON deserialization
@@ -129,7 +130,13 @@ pub mod json {
     where
         D: de::Deserializer<'de>,
     {
-        let JsonMsgMeta { bls_msg, secp_msg } = JsonMsgMeta::deserialize(deserializer)?;
-        Ok(MsgMeta { bls_msg, secp_msg })
+        let JsonMsgMeta {
+            bls_messages,
+            secpk_messages,
+        } = JsonMsgMeta::deserialize(deserializer)?;
+        Ok(MsgMeta {
+            bls_messages,
+            secpk_messages,
+        })
     }
 }
