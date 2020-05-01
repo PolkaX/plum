@@ -124,6 +124,6 @@ fn test_cbor_miner_info() {
 
 #[test]
 fn test_cbor_proof() {
-    let proof = RegisteredProof::StackedDRG512MiBPoSt;
-    test_cbor(proof, hex!("08").to_vec());
+    let proof = RegisteredProof::StackedDRG2KiBWinningPoSt;
+    test_cbor(proof, hex!("09").to_vec());
 }

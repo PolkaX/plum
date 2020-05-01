@@ -5,11 +5,8 @@ use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 use cid::Cid;
 
 use plum_bigint::BigInt;
-use plum_hash::H256;
 pub use plum_types::ActorId;
-use plum_types::{ChainEpoch, SectorNumber, SectorSize};
-
-use super::serde_helper;
+use plum_types::{ChainEpoch, Randomness, SectorNumber, SectorSize};
 
 // The unit of sector weight (power-epochs)
 pub type SectorWeight = BigInt;
@@ -17,9 +14,14 @@ pub type SectorWeight = BigInt;
 // The unit of storage power (measured in bytes)
 pub type StoragePower = BigInt;
 
-pub type Randomness = H256;
-pub type ChallengeTicketsCommitment = H256;
-pub type PartialTicket = H256;
+pub type SectorQuality = BigInt;
+
+// The unit of spacetime committed to the network
+pub type SpaceTime = BigInt;
+
+pub fn new_storage_power(num: u64) -> StoragePower {
+    StoragePower::from(num)
+}
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
 pub struct SectorId {
@@ -27,83 +29,129 @@ pub struct SectorId {
     pub number: SectorNumber,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
-pub struct PoStProof {
-    pub proof: RegisteredProof,
-    #[serde(with = "serde_bytes")]
-    pub proof_bytes: Vec<u8>,
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
-pub struct PrivatePoStCandidateProof {
-    pub proof: RegisteredProof,
-    #[serde(with = "serde_bytes")]
-    pub externalized: Vec<u8>,
-}
-
 #[repr(usize)]
 #[derive(TryFrom, Debug, Clone, Copy, Eq, PartialEq, Serialize_repr, Deserialize_repr)]
 pub enum RegisteredProof {
     StackedDRG32GiBSeal = 1,
-    StackedDRG32GiBPoSt = 2,
+    // StackedDRG32GiBPoSt = 2, // No longer used
     StackedDRG2KiBSeal = 3,
-    StackedDRG2KiBPoSt = 4,
+    // StackedDRG2KiBPoSt = 4, // No longer used
     StackedDRG8MiBSeal = 5,
-    StackedDRG8MiBPoSt = 6,
+    // StackedDRG8MiBPoSt = 6, // No longer used
     StackedDRG512MiBSeal = 7,
-    StackedDRG512MiBPoSt = 8,
+    // StackedDRG512MiBPoSt = 8, // No longer used
+    StackedDRG2KiBWinningPoSt = 9,
+    StackedDRG2KiBWindowPoSt = 10,
+    StackedDRG8MiBWinningPoSt = 11,
+    StackedDRG8MiBWindowPoSt = 12,
+    StackedDRG512MiBWinningPoSt = 13,
+    StackedDRG512MiBWindowPoSt = 14,
+    StackedDRG32GiBWinningPoSt = 15,
+    StackedDRG32GiBWindowPoSt = 16,
 }
 
 impl RegisteredProof {
-    /// `registered_post_proof` produces the PoSt-specific RegisteredProof corresponding
+    /// `registered_winning_post_proof` produces the PoSt-specific RegisteredProof corresponding
     /// to the receiving RegisteredProof.
-    pub fn registered_post_proof(self) -> RegisteredProof {
+    pub fn registered_winning_post_proof(self) -> RegisteredProof {
         match self {
-            RegisteredProof::StackedDRG32GiBSeal | RegisteredProof::StackedDRG32GiBPoSt => {
-                RegisteredProof::StackedDRG32GiBPoSt
+            RegisteredProof::StackedDRG32GiBSeal
+            | RegisteredProof::StackedDRG32GiBWindowPoSt
+            | RegisteredProof::StackedDRG32GiBWinningPoSt => {
+                RegisteredProof::StackedDRG32GiBWinningPoSt
             }
-            RegisteredProof::StackedDRG2KiBSeal | RegisteredProof::StackedDRG2KiBPoSt => {
-                RegisteredProof::StackedDRG2KiBPoSt
+            RegisteredProof::StackedDRG2KiBSeal
+            | RegisteredProof::StackedDRG2KiBWindowPoSt
+            | RegisteredProof::StackedDRG2KiBWinningPoSt => {
+                RegisteredProof::StackedDRG2KiBWinningPoSt
             }
-            RegisteredProof::StackedDRG8MiBSeal | RegisteredProof::StackedDRG8MiBPoSt => {
-                RegisteredProof::StackedDRG8MiBPoSt
+            RegisteredProof::StackedDRG8MiBSeal
+            | RegisteredProof::StackedDRG8MiBWindowPoSt
+            | RegisteredProof::StackedDRG8MiBWinningPoSt => {
+                RegisteredProof::StackedDRG8MiBWinningPoSt
             }
-            RegisteredProof::StackedDRG512MiBSeal | RegisteredProof::StackedDRG512MiBPoSt => {
-                RegisteredProof::StackedDRG512MiBPoSt
+            RegisteredProof::StackedDRG512MiBSeal
+            | RegisteredProof::StackedDRG512MiBWindowPoSt
+            | RegisteredProof::StackedDRG512MiBWinningPoSt => {
+                RegisteredProof::StackedDRG512MiBWinningPoSt
             }
         }
     }
 
-    /// `registered_seal_proof` produces the PoSt-specific RegisteredProof corresponding
+    /// `registered_window_post_proof` produces the PoSt-specific RegisteredProof corresponding
     /// to the receiving RegisteredProof.
+    pub fn registered_window_post_proof(self) -> RegisteredProof {
+        match self {
+            RegisteredProof::StackedDRG32GiBSeal
+            | RegisteredProof::StackedDRG32GiBWinningPoSt
+            | RegisteredProof::StackedDRG32GiBWindowPoSt => {
+                RegisteredProof::StackedDRG32GiBWindowPoSt
+            }
+            RegisteredProof::StackedDRG2KiBSeal
+            | RegisteredProof::StackedDRG2KiBWinningPoSt
+            | RegisteredProof::StackedDRG2KiBWindowPoSt => {
+                RegisteredProof::StackedDRG2KiBWindowPoSt
+            }
+            RegisteredProof::StackedDRG8MiBSeal
+            | RegisteredProof::StackedDRG8MiBWinningPoSt
+            | RegisteredProof::StackedDRG8MiBWindowPoSt => {
+                RegisteredProof::StackedDRG8MiBWindowPoSt
+            }
+            RegisteredProof::StackedDRG512MiBSeal
+            | RegisteredProof::StackedDRG512MiBWinningPoSt
+            | RegisteredProof::StackedDRG512MiBWindowPoSt => {
+                RegisteredProof::StackedDRG512MiBWindowPoSt
+            }
+        }
+    }
+
     pub fn registered_seal_proof(self) -> RegisteredProof {
         match self {
-            RegisteredProof::StackedDRG32GiBSeal | RegisteredProof::StackedDRG32GiBPoSt => {
-                RegisteredProof::StackedDRG32GiBSeal
-            }
-            RegisteredProof::StackedDRG2KiBSeal | RegisteredProof::StackedDRG2KiBPoSt => {
-                RegisteredProof::StackedDRG2KiBSeal
-            }
-            RegisteredProof::StackedDRG8MiBSeal | RegisteredProof::StackedDRG8MiBPoSt => {
-                RegisteredProof::StackedDRG8MiBSeal
-            }
-            RegisteredProof::StackedDRG512MiBSeal | RegisteredProof::StackedDRG512MiBPoSt => {
-                RegisteredProof::StackedDRG512MiBSeal
-            }
+            RegisteredProof::StackedDRG32GiBSeal
+            // | RegisteredProof::StackedDRG32GiBPoSt
+            | RegisteredProof::StackedDRG32GiBWindowPoSt
+            | RegisteredProof::StackedDRG32GiBWinningPoSt => RegisteredProof::StackedDRG32GiBSeal,
+            RegisteredProof::StackedDRG2KiBSeal
+            // | RegisteredProof::StackedDRG2KiBPoSt
+            | RegisteredProof::StackedDRG2KiBWindowPoSt
+            | RegisteredProof::StackedDRG2KiBWinningPoSt => RegisteredProof::StackedDRG2KiBSeal,
+            RegisteredProof::StackedDRG8MiBSeal
+            // | RegisteredProof::StackedDRG8MiBPoSt
+            | RegisteredProof::StackedDRG8MiBWindowPoSt
+            | RegisteredProof::StackedDRG8MiBWinningPoSt => RegisteredProof::StackedDRG8MiBSeal,
+            RegisteredProof::StackedDRG512MiBSeal
+            // | RegisteredProof::StackedDRG512MiBPoSt
+            | RegisteredProof::StackedDRG512MiBWindowPoSt
+            | RegisteredProof::StackedDRG512MiBWinningPoSt => RegisteredProof::StackedDRG512MiBSeal,
         }
     }
 
-    pub fn sector_size(self) -> SectorSize {
-        match self {
-            RegisteredProof::StackedDRG32GiBSeal | RegisteredProof::StackedDRG32GiBPoSt => 32 << 30,
-            RegisteredProof::StackedDRG2KiBSeal | RegisteredProof::StackedDRG2KiBPoSt => 2 << 10,
-            RegisteredProof::StackedDRG8MiBSeal | RegisteredProof::StackedDRG8MiBPoSt => 8 << 20,
-            RegisteredProof::StackedDRG512MiBSeal | RegisteredProof::StackedDRG512MiBPoSt => {
-                512 << 20
-            }
+    pub fn sector_size(&self) -> SectorSize {
+        let sp = self.registered_seal_proof();
+        match sp {
+            RegisteredProof::StackedDRG32GiBSeal => 32 << 30,
+            RegisteredProof::StackedDRG2KiBSeal => 2 << 10,
+            RegisteredProof::StackedDRG8MiBSeal => 8 << 20,
+            RegisteredProof::StackedDRG512MiBSeal => 512 << 20,
+            _ => unreachable!("registered_seal_proof must in above 4 type"),
+        }
+    }
+
+    pub fn window_post_partition_sectors(&self) -> u64 {
+        let sp = self.registered_seal_proof();
+        match sp {
+            RegisteredProof::StackedDRG32GiBSeal => 2349,
+            RegisteredProof::StackedDRG2KiBSeal
+            | RegisteredProof::StackedDRG8MiBSeal
+            | RegisteredProof::StackedDRG512MiBSeal => 2,
+            _ => unreachable!("registered_seal_proof must in above 4 type"),
         }
     }
 }
+
+///
+/// Sealing
+///
 
 // OnChainSealVerifyInfo is the structure of information that must be sent with
 // a message to commit a sector. Most of this information is not needed in the
@@ -134,50 +182,9 @@ pub struct SealVerifyInfo {
     pub unsealed_cid: Cid, // CommD
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
-pub struct PoStCandidate {
-    pub proof: RegisteredProof,
-    /// Optional —  will eventually be omitted for SurprisePoSt verification, needed for now.
-    #[serde(with = "plum_hash::h256_cbor::option")]
-    pub partial_ticket: Option<PartialTicket>,
-    /// Optional — should be ommitted for verification.
-    #[serde(with = "serde_helper::option_prev_post_candidate_proof")]
-    pub private_proof: Option<PrivatePoStCandidateProof>,
-    pub sector_id: SectorId,
-    pub challenge_index: u64,
-}
-
-impl PoStCandidate {
-    pub fn new(proof: RegisteredProof, sector_id: SectorId, challenge_index: u64) -> Self {
-        PoStCandidate {
-            proof,
-            partial_ticket: None,
-            private_proof: None,
-            sector_id,
-            challenge_index,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
-pub struct OnChainPoStVerifyInfo {
-    /// each PoStCandidate has its own RegisteredProof
-    pub candidates: Vec<PoStCandidate>,
-    /// each PoStProof has its own RegisteredProof
-    pub proofs: Vec<PoStProof>,
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct PoStVerifyInfo {
-    pub post_randomness: Randomness,
-    /// From OnChain*PoStVerifyInfo
-    pub candidates: Vec<PoStCandidate>,
-    pub proofs: Vec<PoStProof>,
-    pub eligible_sectors: Vec<SectorInfo>,
-    /// used to derive 32-byte prover ID
-    pub prover: ActorId,
-    pub challenge_count: u64,
-}
+///
+/// PoSting
+///
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
 pub struct SectorInfo {
@@ -189,18 +196,25 @@ pub struct SectorInfo {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
-pub struct OnChainElectionPoStVerifyInfo {
-    /// each PoStCandidate has its own RegisteredProof
-    pub candidates: Vec<PoStCandidate>,
-    /// each PoStProof has its own RegisteredProof
-    pub proofs: Vec<PoStProof>,
-    #[serde(with = "plum_hash::h256_cbor")]
-    pub randomness: Randomness,
+pub struct PoStProof {
+    pub proof: RegisteredProof,
+    #[serde(with = "serde_bytes")]
+    pub proof_bytes: Vec<u8>,
 }
 
-pub fn new_storage_power(num: u64) -> StoragePower {
-    StoragePower::from(num)
+// Information needed to verify a Winning PoSt attached to a block header.
+// Note: this is not used within the state machine, but by the consensus/election mechanisms.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
+pub struct WinningPoStVerifyInfo {
+    #[serde(with = "plum_hash::h256_cbor")]
+    pub randomness: Randomness,
+    pub proofs: Vec<PoStProof>,
+    pub challenged_sectors: Vec<SectorInfo>,
+    pub prover: ActorId, // used to derive 32-byte prover ID
 }
+
+// Information needed to verify a Window PoSt submitted directly to a miner actor.
+pub type WindowPoStVerifyInfo = WinningPoStVerifyInfo;
 
 #[test]
 fn test_cbor() {
@@ -233,7 +247,7 @@ fn test_cbor() {
     let verify_info = OnChainSealVerifyInfo {
         sealed_cid: cid.clone(),
         interactive_epoch: 12345678,
-        registered_proof: RegisteredProof::StackedDRG2KiBPoSt,
+        registered_proof: RegisteredProof::StackedDRG512MiBSeal,
         proof: vec![1, 2, 3, 4, 5, 6, 7, 8],
         deal_id: vec![8, 7, 6],
         sector: 1111,
@@ -244,7 +258,7 @@ fn test_cbor() {
         vec![
             135, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161, 80, 48,
             167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55, 160, 199,
-            184, 78, 250, 26, 0, 188, 97, 78, 4, 72, 1, 2, 3, 4, 5, 6, 7, 8, 131, 8, 7, 6, 25, 4,
+            184, 78, 250, 26, 0, 188, 97, 78, 7, 72, 1, 2, 3, 4, 5, 6, 7, 8, 131, 8, 7, 6, 25, 4,
             87, 26, 5, 57, 127, 177,
         ],
     );
@@ -252,7 +266,7 @@ fn test_cbor() {
     let verify_info2 = OnChainSealVerifyInfo {
         sealed_cid: cid.clone(),
         interactive_epoch: 12345678,
-        registered_proof: RegisteredProof::StackedDRG2KiBPoSt,
+        registered_proof: RegisteredProof::StackedDRG512MiBSeal,
         proof: vec![1, 2, 3, 4, 5, 6, 7, 8],
         deal_id: vec![],
         sector: 1111,
@@ -263,7 +277,7 @@ fn test_cbor() {
         vec![
             135, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161, 80, 48,
             167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55, 160, 199,
-            184, 78, 250, 26, 0, 188, 97, 78, 4, 72, 1, 2, 3, 4, 5, 6, 7, 8, 128, 25, 4, 87, 26, 5,
+            184, 78, 250, 26, 0, 188, 97, 78, 7, 72, 1, 2, 3, 4, 5, 6, 7, 8, 128, 25, 4, 87, 26, 5,
             57, 127, 177,
         ],
     );
@@ -281,7 +295,7 @@ fn test_cbor() {
         vec![
             133, 130, 24, 100, 24, 100, 135, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115,
             187, 29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142,
-            225, 217, 73, 55, 160, 199, 184, 78, 250, 26, 0, 188, 97, 78, 4, 72, 1, 2, 3, 4, 5, 6,
+            225, 217, 73, 55, 160, 199, 184, 78, 250, 26, 0, 188, 97, 78, 7, 72, 1, 2, 3, 4, 5, 6,
             7, 8, 131, 8, 7, 6, 25, 4, 87, 26, 5, 57, 127, 177, 88, 32, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 88, 32, 2, 2, 2,
             2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -291,56 +305,9 @@ fn test_cbor() {
         ],
     );
 
-    let priv_proof = PrivatePoStCandidateProof {
-        proof: RegisteredProof::StackedDRG32GiBSeal,
-        externalized: vec![1, 2, 3],
-    };
-    asset_cbor(priv_proof.clone(), vec![130, 1, 67, 1, 2, 3]);
-
-    let post_can = PoStCandidate {
-        proof: RegisteredProof::StackedDRG32GiBSeal,
-        partial_ticket: Some([1; 32].into()),
-        private_proof: Some(priv_proof),
-        sector_id: id,
-        challenge_index: 1000,
-    };
-    asset_cbor(
-        post_can.clone(),
-        vec![
-            133, 1, 88, 32, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 130, 1, 67, 1, 2, 3, 130, 24, 100, 24, 100, 25, 3, 232,
-        ],
-    );
-
-    let post_can2 = PoStCandidate {
-        proof: RegisteredProof::StackedDRG32GiBSeal,
-        partial_ticket: None,
-        private_proof: None,
-        sector_id: id,
-        challenge_index: 1000,
-    };
-    asset_cbor(
-        post_can2.clone(),
-        vec![133, 1, 64, 130, 0, 64, 130, 24, 100, 24, 100, 25, 3, 232],
-    );
-
     let post_proof = PoStProof {
         proof: RegisteredProof::StackedDRG32GiBSeal,
         proof_bytes: vec![1, 2, 3],
     };
     asset_cbor(post_proof.clone(), vec![130, 1, 67, 1, 2, 3]);
-
-    let verify_info = OnChainPoStVerifyInfo {
-        candidates: vec![post_can, post_can2],
-        proofs: vec![post_proof],
-    };
-    asset_cbor(
-        verify_info,
-        vec![
-            130, 130, 133, 1, 88, 32, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 130, 1, 67, 1, 2, 3, 130, 24, 100, 24, 100, 25, 3,
-            232, 133, 1, 64, 130, 0, 64, 130, 24, 100, 24, 100, 25, 3, 232, 129, 130, 1, 67, 1, 2,
-            3,
-        ],
-    );
 }
