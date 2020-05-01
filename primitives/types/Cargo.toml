@@ -11,3 +11,4 @@ cid = { version = "0.4", features = ["impl-serde"] }
 serde = { version = "1.0", features = ["derive"] }
 
 plum_bigint = { path = "../bigint" }
+plum_hash = { path = "../hash" }
