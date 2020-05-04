@@ -23,7 +23,7 @@ pub fn new_storage_power(num: u64) -> StoragePower {
     StoragePower::from(num)
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
+#[derive(Debug, Hash, Clone, Copy, Eq, PartialEq, Serialize_tuple, Deserialize_tuple)]
 pub struct SectorId {
     pub miner: ActorId,
     pub number: SectorNumber,
