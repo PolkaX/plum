@@ -3,7 +3,7 @@
 mod key_info;
 mod memory;
 
-pub use self::key_info::{key_info_json, key_type_json, KeyInfo, KeyType};
+pub use self::key_info::{KeyInfo, KeyType};
 pub use self::memory::MemKeyStore;
 
 /// The default keystore path.

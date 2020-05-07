@@ -14,6 +14,5 @@ mod vrf;
 
 pub use self::errors::CryptoError;
 pub use self::key::{PrivateKey, PublicKey};
-pub use self::signature::serde::{cbor as signature_cbor, json as signature_json};
 pub use self::signature::{Signature, SignatureType, SIGNATURE_MAX_LENGTH};
 pub use self::vrf::{compute_vrf, verify_vrf, VrfPrivateKey, VrfProof, VrfPublicKey};

@@ -1,5 +1,5 @@
 [package]
-name = "plum_message"
+name = "plum_piece"
 version = "0.1.0"
 authors = ["The PolkaX Authors"]
 edition = "2018"
@@ -8,14 +8,8 @@ license = "GPL-3.0"
 [dependencies]
 cid = { version = "0.4", features = ["impl-serde"] }
 minicbor = { version = "0.3", features = ["std"] }
-multihash = "0.10"
 serde = { version = "1.0", features = ["derive"] }
-serde_bytes = "0.11"
-
-plum_address = { path = "../address" }
-plum_bigint = { path = "../bigint" }
-plum_bytes = { path = "../bytes" }
-plum_crypto = { path = "../../crypto" }
+thiserror = "1.0"
 
 [dev-dependencies]
 serde_json = "1.0"

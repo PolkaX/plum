@@ -16,7 +16,7 @@ path = "src/bin/main.rs"
 cli = { path = "./cli" }
 
 [replace]
-"cid:0.4.0" = { git = "https://github.com/PolkaX/rust-cid", branch = "impl-serde" }
+"cid:0.4.0" = { path = "../../../ipfs/rust-cid" }
 "serde_cbor:0.11.1" = {  git = "https://github.com/PolkaX/cbor", branch = "f64ser-hack" }
 
 [workspace]
@@ -33,9 +33,13 @@ members = [
   "params",
   "primitives/address",
   "primitives/bigint",
+#  "primitives/bitfield",
+#  "primitives/bitfield/rle",
   "primitives/block",
+  "primitives/bytes",
   "primitives/hash",
   "primitives/message",
+  "primitives/piece",
   "primitives/tipset",
   "primitives/types",
   "vm",

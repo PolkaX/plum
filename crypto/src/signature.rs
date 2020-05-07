@@ -1,9 +1,9 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-/// Signature serialization/deserialization.
-pub mod serde;
-
 use std::convert::TryFrom;
+
+use minicbor::{decode, encode, Decoder, Encoder};
+use serde::{Deserialize, Serialize};
 
 use plum_address::{Address, Protocol};
 use plum_hashing::blake2b_256;
@@ -14,8 +14,8 @@ use crate::errors::CryptoError;
 pub const SIGNATURE_MAX_LENGTH: u32 = 200;
 
 /// The signature type.
-#[repr(u8)]
-#[derive(Eq, PartialEq, Debug, Clone, Copy, Hash)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum SignatureType {
     /// The `Secp256k1` signature.
     Secp256k1 = 1,
@@ -51,11 +51,13 @@ impl From<SignatureType> for u8 {
 }
 
 /// The general signature structure.
-#[derive(Eq, PartialEq, Debug, Clone, Hash)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Signature {
     /// The signature type.
     r#type: SignatureType,
     /// Tha actual signature bytes.
+    #[serde(with = "plum_bytes")]
     data: Vec<u8>,
 }
 
@@ -196,9 +198,30 @@ impl Signature {
     }
 }
 
+impl encode::Encode for Signature {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        let mut bytes = Vec::with_capacity(self.data.len() + 1);
+        bytes.push(u8::from(self.r#type));
+        bytes.extend_from_slice(&self.data);
+        e.bytes(&bytes)?.ok()
+    }
+}
+
+impl<'b> decode::Decode<'b> for Signature {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let bytes = d.bytes()?;
+        let r#type = SignatureType::try_from(bytes[0])
+            .map_err(|_| decode::Error::Message("expected signature type"))?;
+        Ok(Signature {
+            r#type,
+            data: (&bytes[1..]).to_vec(),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::Signature;
+    use super::{Signature, SignatureType};
     use crate::key::{PrivateKey, PublicKey};
 
     #[test]
@@ -221,5 +244,44 @@ mod tests {
         let signature = Signature::sign_bls(privkey, msg).unwrap();
         let res = signature.verify_bls(pubkey, msg);
         assert_eq!(res, Ok(true))
+    }
+
+    #[test]
+    fn signature_cbor_serde() {
+        let cases = vec![(
+            Signature {
+                r#type: SignatureType::Bls,
+                data: b"boo! im a signature".to_vec(),
+            },
+            vec![
+                84, 2, 98, 111, 111, 33, 32, 105, 109, 32, 97, 32, 115, 105, 103, 110, 97, 116,
+                117, 114, 101,
+            ],
+        )];
+
+        for (signature, expected) in cases {
+            let ser = minicbor::to_vec(&signature).unwrap();
+            assert_eq!(ser, expected);
+            let de = minicbor::decode::<Signature>(&ser).unwrap();
+            assert_eq!(signature, de);
+        }
+    }
+
+    #[test]
+    fn signature_json_serde() {
+        let cases = vec![(
+            Signature {
+                r#type: SignatureType::Bls,
+                data: b"boo! im a signature".to_vec(),
+            },
+            r#"{"Type":"bls","Data":"Ym9vISBpbSBhIHNpZ25hdHVyZQ=="}"#,
+        )];
+
+        for (signature, expected) in cases {
+            let ser = serde_json::to_string(&signature).unwrap();
+            assert_eq!(ser, expected);
+            let de = serde_json::from_str::<Signature>(&ser).unwrap();
+            assert_eq!(signature, de);
+        }
     }
 }

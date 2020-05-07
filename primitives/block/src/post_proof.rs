@@ -1,9 +1,13 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use std::convert::TryFrom;
+
+use minicbor::{decode, encode, Decoder, Encoder};
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 ///
-#[repr(u8)]
+#[repr(i64)]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Serialize_repr, Deserialize_repr)]
 pub enum RegisteredProof {
     StackedDRG32GiBSeal = 1,
@@ -25,167 +29,85 @@ pub enum RegisteredProof {
     StackedDRG32GiBWindowPoSt = 16,
 }
 
+impl From<RegisteredProof> for i64 {
+    fn from(proof: RegisteredProof) -> Self {
+        match proof {
+            RegisteredProof::StackedDRG32GiBSeal => 1,
+            RegisteredProof::StackedDRG32GiBPoSt => 2,
+            RegisteredProof::StackedDRG2KiBSeal => 3,
+            RegisteredProof::StackedDRG2KiBPoSt => 4,
+            RegisteredProof::StackedDRG8MiBSeal => 5,
+            RegisteredProof::StackedDRG8MiBPoSt => 6,
+            RegisteredProof::StackedDRG512MiBSeal => 7,
+            RegisteredProof::StackedDRG512MiBPoSt => 8,
+            RegisteredProof::StackedDRG2KiBWinningPoSt => 9,
+            RegisteredProof::StackedDRG2KiBWindowPoSt => 10,
+            RegisteredProof::StackedDRG8MiBWinningPoSt => 11,
+            RegisteredProof::StackedDRG8MiBWindowPoSt => 12,
+            RegisteredProof::StackedDRG512MiBWinningPoSt => 13,
+            RegisteredProof::StackedDRG512MiBWindowPoSt => 14,
+            RegisteredProof::StackedDRG32GiBWinningPoSt => 15,
+            RegisteredProof::StackedDRG32GiBWindowPoSt => 16,
+        }
+    }
+}
+
+impl TryFrom<i64> for RegisteredProof {
+    type Error = &'static str;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(match value {
+            1 => RegisteredProof::StackedDRG32GiBSeal,
+            2 => RegisteredProof::StackedDRG32GiBPoSt,
+            3 => RegisteredProof::StackedDRG2KiBSeal,
+            4 => RegisteredProof::StackedDRG2KiBPoSt,
+            5 => RegisteredProof::StackedDRG8MiBSeal,
+            6 => RegisteredProof::StackedDRG8MiBPoSt,
+            7 => RegisteredProof::StackedDRG512MiBSeal,
+            8 => RegisteredProof::StackedDRG512MiBPoSt,
+            9 => RegisteredProof::StackedDRG2KiBWinningPoSt,
+            10 => RegisteredProof::StackedDRG2KiBWindowPoSt,
+            11 => RegisteredProof::StackedDRG8MiBWinningPoSt,
+            12 => RegisteredProof::StackedDRG8MiBWindowPoSt,
+            13 => RegisteredProof::StackedDRG512MiBWinningPoSt,
+            14 => RegisteredProof::StackedDRG512MiBWindowPoSt,
+            15 => RegisteredProof::StackedDRG32GiBWinningPoSt,
+            16 => RegisteredProof::StackedDRG32GiBWindowPoSt,
+            _ => return Err("unexpected value for RegisteredProof"),
+        })
+    }
+}
+
 ///
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct PoStProof {
     pub registered_proof: RegisteredProof,
+    #[serde(with = "plum_bytes")]
     pub proof_bytes: Vec<u8>,
 }
 
-/// PoStProof CBOR serialization/deserialization
-pub mod cbor {
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use super::{PoStProof, RegisteredProof};
-
-    #[derive(Serialize)]
-    struct CborPoStProofRef<'a>(
-        &'a RegisteredProof,
-        #[serde(with = "serde_bytes")] &'a Vec<u8>,
-    );
-
-    /// CBOR serialization
-    pub fn serialize<S>(post_proof: &PoStProof, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        CborPoStProofRef(&post_proof.registered_proof, &post_proof.proof_bytes)
-            .serialize(serializer)
-    }
-
-    #[derive(Deserialize)]
-    struct CborPoStProof(RegisteredProof, #[serde(with = "serde_bytes")] Vec<u8>);
-
-    /// CBOR deserialization
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<PoStProof, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let CborPoStProof(registered_proof, proof_bytes) =
-            CborPoStProof::deserialize(deserializer)?;
-        Ok(PoStProof {
-            registered_proof,
-            proof_bytes,
-        })
-    }
-
-    /// Vec<PoStProof> CBOR serialization/deserialization.
-    pub mod vec {
-        use super::*;
-
-        #[derive(Serialize)]
-        struct CborPoStProofRef<'a>(#[serde(with = "super")] &'a PoStProof);
-
-        /// CBOR serialization of Vec<PoStProof>.
-        pub fn serialize<S>(post_proofs: &[PoStProof], serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: ser::Serializer,
-        {
-            post_proofs
-                .iter()
-                .map(|post_proof| CborPoStProofRef(post_proof))
-                .collect::<Vec<_>>()
-                .serialize(serializer)
-        }
-
-        #[derive(Deserialize)]
-        struct CborPoStProof(#[serde(with = "super")] PoStProof);
-
-        /// CBOR deserialization of Vec<PoStProof>.
-        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<PoStProof>, D::Error>
-        where
-            D: de::Deserializer<'de>,
-        {
-            let post_proofs = <Vec<CborPoStProof>>::deserialize(deserializer)?;
-            Ok(post_proofs
-                .into_iter()
-                .map(|CborPoStProof(post_proof)| post_proof)
-                .collect())
-        }
+// Implement CBOR serialization for PoStProof.
+impl encode::Encode for PoStProof {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        e.array(2)?
+            .i64(i64::from(self.registered_proof))?
+            .bytes(&self.proof_bytes)?
+            .ok()
     }
 }
 
-/// PoStProof JSON serialization/deserialization
-pub mod json {
-    use serde::{de, ser, Deserialize, Serialize};
+// Implement CBOR deserialization for PoStProof.
+impl<'b> decode::Decode<'b> for PoStProof {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let array_len = d.array()?;
+        assert_eq!(array_len, Some(2));
 
-    use super::{PoStProof, RegisteredProof};
-
-    #[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize)]
-    #[serde(rename_all = "PascalCase")]
-    pub struct JsonPoStProofRef<'a> {
-        registered_proof: &'a RegisteredProof,
-        #[serde(with = "plum_types::base64")]
-        proof_bytes: &'a [u8],
-    }
-
-    /// JSON serialization
-    pub fn serialize<S>(post_proof: &PoStProof, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        JsonPoStProofRef {
-            registered_proof: &post_proof.registered_proof,
-            proof_bytes: &post_proof.proof_bytes,
-        }
-        .serialize(serializer)
-    }
-
-    #[derive(Eq, PartialEq, Debug, Clone, Hash, Deserialize)]
-    #[serde(rename_all = "PascalCase")]
-    pub struct JsonPoStProof {
-        registered_proof: RegisteredProof,
-        #[serde(with = "plum_types::base64")]
-        proof_bytes: Vec<u8>,
-    }
-
-    /// JSON deserialization
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<PoStProof, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let JsonPoStProof {
-            registered_proof,
-            proof_bytes,
-        } = JsonPoStProof::deserialize(deserializer)?;
+        let registered_proof = d.i64()?;
         Ok(PoStProof {
-            registered_proof,
-            proof_bytes,
+            registered_proof: RegisteredProof::try_from(registered_proof)
+                .map_err(|e| decode::Error::TypeMismatch(registered_proof as u8, e))?,
+            proof_bytes: d.bytes()?.to_vec(),
         })
-    }
-
-    /// Vec<BeaconEntry> JSON serialization/deserialization.
-    pub mod vec {
-        use super::*;
-
-        #[derive(Serialize)]
-        struct JsonPoStProofRef<'a>(#[serde(with = "super")] &'a PoStProof);
-
-        /// JSON serialization of Vec<BeaconEntry>.
-        pub fn serialize<S>(post_proofs: &[PoStProof], serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: ser::Serializer,
-        {
-            post_proofs
-                .iter()
-                .map(|post_proof| JsonPoStProofRef(post_proof))
-                .collect::<Vec<_>>()
-                .serialize(serializer)
-        }
-
-        #[derive(Deserialize)]
-        struct JsonPoStProof(#[serde(with = "super")] PoStProof);
-
-        /// JSON deserialization of Vec<BeaconEntry>.
-        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<PoStProof>, D::Error>
-        where
-            D: de::Deserializer<'de>,
-        {
-            let post_proofs = <Vec<JsonPoStProof>>::deserialize(deserializer)?;
-            Ok(post_proofs
-                .into_iter()
-                .map(|JsonPoStProof(post_proof)| post_proof)
-                .collect())
-        }
     }
 }

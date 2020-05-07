@@ -1,7 +1,8 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use cid::{Cid, Codec};
-use serde::{de, ser};
+use minicbor::{decode, encode, Decoder, Encoder};
+use serde::{Deserialize, Serialize};
 
 use crate::beacon_entry::BeaconEntry;
 use crate::election_proof::ElectionProof;
@@ -9,11 +10,12 @@ use crate::post_proof::PoStProof;
 use crate::ticket::Ticket;
 
 use plum_address::Address;
-use plum_bigint::BigInt;
+use plum_bigint::{bigint_json, BigInt, BigIntWrapper};
 use plum_crypto::Signature;
 
 /// The header part of the block.
-#[derive(Eq, PartialEq, Debug, Clone, Hash)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct BlockHeader {
     ///
     pub miner: Address,
@@ -24,10 +26,12 @@ pub struct BlockHeader {
     ///
     pub beacon_entries: Vec<BeaconEntry>,
     ///
+    #[serde(rename = "WinPoStProof")]
     pub win_post_proof: Vec<PoStProof>,
     ///
     pub parents: Vec<Cid>,
     ///
+    #[serde(with = "bigint_json")]
     pub parent_weight: BigInt,
     ///
     pub height: u64,
@@ -38,6 +42,7 @@ pub struct BlockHeader {
     ///
     pub messages: Cid,
     ///
+    #[serde(rename = "BLSAggregate")]
     pub bls_aggregate: Signature,
     ///
     pub timestamp: u64,
@@ -50,8 +55,8 @@ pub struct BlockHeader {
 impl BlockHeader {
     /// Convert to the CID.
     pub fn cid(&self) -> Cid {
-        let data = serde_cbor::to_vec(self)
-            .expect("CBOR serialization of BlockHeader shouldn't be failed");
+        let data =
+            minicbor::to_vec(self).expect("CBOR serialization of BlockHeader shouldn't be failed");
         self.cid_with_data(data)
     }
 
@@ -70,368 +75,57 @@ impl BlockHeader {
     }
 }
 
-impl ser::Serialize for BlockHeader {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        self::cbor::serialize(self, serializer)
+// Implement CBOR serialization for BlockHeader.
+impl encode::Encode for BlockHeader {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        e.array(15)?
+            .encode(&self.miner)?
+            .encode(&self.ticket)?
+            .encode(&self.election_proof)?
+            .encode(&self.beacon_entries)?
+            .encode(&self.win_post_proof)?
+            .encode(&self.parents)?
+            .encode(BigIntWrapper::from(self.parent_weight.clone()))?
+            .u64(self.height)?
+            .encode(&self.parent_state_root)?
+            .encode(&self.parent_message_receipts)?
+            .encode(&self.messages)?
+            .encode(&self.bls_aggregate)?
+            .u64(self.timestamp)?
+            .encode(&self.block_sig)?
+            .u64(self.fork_signaling)?
+            .ok()
     }
 }
 
-impl<'de> de::Deserialize<'de> for BlockHeader {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        self::cbor::deserialize(deserializer)
-    }
-}
-
-/// BlockHeader CBOR serialization/deserialization
-pub mod cbor {
-    use cid::{ipld_dag_cbor as cid_cbor, Cid};
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use plum_address::{address_cbor, Address};
-    use plum_bigint::{bigint_cbor, BigInt};
-    use plum_crypto::{signature_cbor, Signature};
-
-    use super::BlockHeader;
-    use crate::beacon_entry::{cbor as beacon_entry_cbor, BeaconEntry};
-    use crate::election_proof::{cbor as election_proof_cbor, ElectionProof};
-    use crate::post_proof::{cbor as post_proof_cbor, PoStProof};
-    use crate::ticket::{cbor as ticket_cbor, Ticket};
-
-    #[derive(Serialize)]
-    struct CborBlockHeaderRef<'a>(
-        #[serde(with = "address_cbor")] &'a Address,
-        #[serde(with = "ticket_cbor")] &'a Ticket,
-        #[serde(with = "election_proof_cbor")] &'a ElectionProof,
-        #[serde(with = "beacon_entry_cbor::vec")] &'a [BeaconEntry],
-        #[serde(with = "post_proof_cbor::vec")] &'a [PoStProof],
-        #[serde(with = "cid_cbor::vec")] &'a [Cid],
-        #[serde(with = "bigint_cbor")] &'a BigInt,
-        &'a u64,
-        #[serde(with = "cid_cbor")] &'a Cid,
-        #[serde(with = "cid_cbor")] &'a Cid,
-        #[serde(with = "cid_cbor")] &'a Cid,
-        #[serde(with = "signature_cbor")] &'a Signature,
-        &'a u64,
-        #[serde(with = "signature_cbor")] &'a Signature,
-        &'a u64,
-    );
-
-    /// CBOR serialization
-    pub fn serialize<S>(header: &BlockHeader, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        CborBlockHeaderRef(
-            &header.miner,
-            &header.ticket,
-            &header.election_proof,
-            &header.beacon_entries,
-            &header.win_post_proof,
-            &header.parents,
-            &header.parent_weight,
-            &header.height,
-            &header.parent_state_root,
-            &header.parent_message_receipts,
-            &header.messages,
-            &header.bls_aggregate,
-            &header.timestamp,
-            &header.block_sig,
-            &header.fork_signaling,
-        )
-        .serialize(serializer)
-    }
-
-    #[derive(Deserialize)]
-    struct CborBlockHeader(
-        #[serde(with = "address_cbor")] Address,
-        #[serde(with = "ticket_cbor")] Ticket,
-        #[serde(with = "election_proof_cbor")] ElectionProof,
-        #[serde(with = "beacon_entry_cbor::vec")] Vec<BeaconEntry>,
-        #[serde(with = "post_proof_cbor::vec")] Vec<PoStProof>,
-        #[serde(with = "cid_cbor::vec")] Vec<Cid>,
-        #[serde(with = "bigint_cbor")] BigInt,
-        u64,
-        #[serde(with = "cid_cbor")] Cid,
-        #[serde(with = "cid_cbor")] Cid,
-        #[serde(with = "cid_cbor")] Cid,
-        #[serde(with = "signature_cbor")] Signature,
-        u64,
-        #[serde(with = "signature_cbor")] Signature,
-        u64,
-    );
-
-    /// CBOR deserialization
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<BlockHeader, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let CborBlockHeader(
-            miner,
-            ticket,
-            election_proof,
-            beacon_entries,
-            win_post_proof,
-            parents,
-            parent_weight,
-            height,
-            parent_state_root,
-            parent_message_receipts,
-            messages,
-            bls_aggregate,
-            timestamp,
-            block_sig,
-            fork_signaling,
-        ) = CborBlockHeader::deserialize(deserializer)?;
+// Implement CBOR deserialization for BlockHeader.
+impl<'b> decode::Decode<'b> for BlockHeader {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let array_len = d.array()?;
+        assert_eq!(array_len, Some(15));
         Ok(BlockHeader {
-            miner,
-            ticket,
-            election_proof,
-            beacon_entries,
-            win_post_proof,
-            parents,
-            parent_weight,
-            height,
-            parent_state_root,
-            parent_message_receipts,
-            messages,
-            bls_aggregate,
-            timestamp,
-            block_sig,
-            fork_signaling,
+            miner: d.decode::<Address>()?,
+            ticket: d.decode::<Ticket>()?,
+            election_proof: d.decode::<ElectionProof>()?,
+            beacon_entries: d.decode::<Vec<BeaconEntry>>()?,
+            win_post_proof: d.decode::<Vec<PoStProof>>()?,
+            parents: d.decode::<Vec<Cid>>()?,
+            parent_weight: d.decode::<BigIntWrapper>()?.into_inner(),
+            height: d.u64()?,
+            parent_state_root: d.decode::<Cid>()?,
+            parent_message_receipts: d.decode::<Cid>()?,
+            messages: d.decode::<Cid>()?,
+            bls_aggregate: d.decode::<Signature>()?,
+            timestamp: d.u64()?,
+            block_sig: d.decode::<Signature>()?,
+            fork_signaling: d.u64()?,
         })
-    }
-
-    /// Vec<BlockHeader> CBOR serialization/deserialization.
-    pub mod vec {
-        use super::*;
-
-        #[derive(Serialize)]
-        struct CborBlockHeaderRef<'a>(#[serde(with = "super")] &'a BlockHeader);
-
-        /// CBOR serialization of Vec<BlockHeader>.
-        pub fn serialize<S>(headers: &[BlockHeader], serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: ser::Serializer,
-        {
-            headers
-                .iter()
-                .map(|header| CborBlockHeaderRef(header))
-                .collect::<Vec<_>>()
-                .serialize(serializer)
-        }
-
-        #[derive(Deserialize)]
-        struct CborBlockHeader(#[serde(with = "super")] BlockHeader);
-
-        /// CBOR deserialization of Vec<BlockHeader>.
-        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<BlockHeader>, D::Error>
-        where
-            D: de::Deserializer<'de>,
-        {
-            let headers = <Vec<CborBlockHeader>>::deserialize(deserializer)?;
-            Ok(headers
-                .into_iter()
-                .map(|CborBlockHeader(header)| header)
-                .collect())
-        }
-    }
-}
-
-/// BlockHeader JSON serialization/deserialization
-pub mod json {
-    use cid::{ipld_dag_json as cid_json, Cid};
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use plum_address::{address_json, Address};
-    use plum_bigint::{bigint_json, BigInt};
-    use plum_crypto::{signature_json, Signature};
-
-    use super::BlockHeader;
-    use crate::beacon_entry::{json as beacon_entry_json, BeaconEntry};
-    use crate::election_proof::{json as election_proof_json, ElectionProof};
-    use crate::post_proof::{json as post_proof_json, PoStProof};
-    use crate::ticket::{json as ticket_json, Ticket};
-
-    #[derive(Serialize)]
-    #[serde(rename_all = "PascalCase")]
-    struct JsonBlockHeaderRef<'a> {
-        #[serde(with = "address_json")]
-        miner: &'a Address,
-        #[serde(with = "ticket_json")]
-        ticket: &'a Ticket,
-        #[serde(with = "election_proof_json")]
-        election_proof: &'a ElectionProof,
-        #[serde(with = "beacon_entry_json::vec")]
-        beacon_entries: &'a [BeaconEntry],
-        #[serde(rename = "WinPoStProof")]
-        #[serde(with = "post_proof_json::vec")]
-        win_post_proof: &'a [PoStProof],
-        #[serde(with = "cid_json::vec")]
-        parents: &'a [Cid],
-        #[serde(with = "bigint_json")]
-        parent_weight: &'a BigInt,
-        height: &'a u64,
-        #[serde(with = "cid_json")]
-        parent_state_root: &'a Cid,
-        #[serde(with = "cid_json")]
-        parent_message_receipts: &'a Cid,
-        #[serde(with = "cid_json")]
-        messages: &'a Cid,
-        #[serde(rename = "BLSAggregate")]
-        #[serde(with = "signature_json")]
-        bls_aggregate: &'a Signature,
-        timestamp: &'a u64,
-        #[serde(with = "signature_json")]
-        block_sig: &'a Signature,
-        fork_signaling: &'a u64,
-    }
-
-    /// JSON serialization
-    pub fn serialize<S>(header: &BlockHeader, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        JsonBlockHeaderRef {
-            miner: &header.miner,
-            ticket: &header.ticket,
-            election_proof: &header.election_proof,
-            beacon_entries: &header.beacon_entries,
-            win_post_proof: &header.win_post_proof,
-            parents: &header.parents,
-            parent_weight: &header.parent_weight,
-            height: &header.height,
-            parent_state_root: &header.parent_state_root,
-            parent_message_receipts: &header.parent_message_receipts,
-            messages: &header.messages,
-            bls_aggregate: &header.bls_aggregate,
-            timestamp: &header.timestamp,
-            block_sig: &header.block_sig,
-            fork_signaling: &header.fork_signaling,
-        }
-        .serialize(serializer)
-    }
-
-    #[derive(Deserialize)]
-    #[serde(rename_all = "PascalCase")]
-    struct JsonBlockHeader {
-        #[serde(with = "address_json")]
-        miner: Address,
-        #[serde(with = "ticket_json")]
-        ticket: Ticket,
-        #[serde(with = "election_proof_json")]
-        election_proof: ElectionProof,
-        #[serde(with = "beacon_entry_json::vec")]
-        beacon_entries: Vec<BeaconEntry>,
-        #[serde(rename = "WinPoStProof")]
-        #[serde(with = "post_proof_json::vec")]
-        win_post_proof: Vec<PoStProof>,
-        #[serde(with = "cid_json::vec")]
-        parents: Vec<Cid>,
-        #[serde(with = "bigint_json")]
-        parent_weight: BigInt,
-        height: u64,
-        #[serde(with = "cid_json")]
-        parent_state_root: Cid,
-        #[serde(with = "cid_json")]
-        parent_message_receipts: Cid,
-        #[serde(with = "cid_json")]
-        messages: Cid,
-        #[serde(rename = "BLSAggregate")]
-        #[serde(with = "signature_json")]
-        bls_aggregate: Signature,
-        timestamp: u64,
-        #[serde(with = "signature_json")]
-        block_sig: Signature,
-        fork_signaling: u64,
-    }
-
-    /// JSON deserialization
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<BlockHeader, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let JsonBlockHeader {
-            miner,
-            ticket,
-            election_proof,
-            beacon_entries,
-            win_post_proof,
-            parents,
-            parent_weight,
-            height,
-            parent_state_root,
-            parent_message_receipts,
-            messages,
-            bls_aggregate,
-            timestamp,
-            block_sig,
-            fork_signaling,
-        } = JsonBlockHeader::deserialize(deserializer)?;
-        Ok(BlockHeader {
-            miner,
-            ticket,
-            election_proof,
-            beacon_entries,
-            win_post_proof,
-            parents,
-            parent_weight,
-            height,
-            parent_state_root,
-            parent_message_receipts,
-            messages,
-            bls_aggregate,
-            timestamp,
-            block_sig,
-            fork_signaling,
-        })
-    }
-
-    /// Vec<BlockHeader> JSON serialization/deserialization.
-    pub mod vec {
-        use super::*;
-
-        #[derive(Serialize)]
-        struct JsonBlockHeaderRef<'a>(#[serde(with = "super")] &'a BlockHeader);
-
-        /// JSON serialization of Vec<BlockHeader>.
-        pub fn serialize<S>(headers: &[BlockHeader], serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: ser::Serializer,
-        {
-            headers
-                .iter()
-                .map(|header| JsonBlockHeaderRef(header))
-                .collect::<Vec<_>>()
-                .serialize(serializer)
-        }
-
-        #[derive(Deserialize)]
-        struct JsonBlockHeader(#[serde(with = "super")] BlockHeader);
-
-        /// JSON deserialization of Vec<BlockHeader>.
-        pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<BlockHeader>, D::Error>
-        where
-            D: de::Deserializer<'de>,
-        {
-            let headers = <Vec<JsonBlockHeader>>::deserialize(deserializer)?;
-            Ok(headers
-                .into_iter()
-                .map(|JsonBlockHeader(header)| header)
-                .collect())
-        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use cid::Cid;
-    use serde::{Deserialize, Serialize};
 
     use plum_address::{set_network, Address, Network};
     use plum_crypto::Signature;
@@ -470,10 +164,7 @@ mod tests {
 
     #[test]
     fn block_header_cbor_serde() {
-        #[derive(Debug, PartialEq, Serialize, Deserialize)]
-        struct CborBlockHeader(#[serde(with = "super::cbor")] BlockHeader);
-
-        let header = CborBlockHeader(new_block_header());
+        let header = new_block_header();
         let expected = vec![
             143, 69, 0, 191, 214, 251, 5, 129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111, 102,
             48, 48, 48, 48, 48, 48, 48, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48,
@@ -495,9 +186,9 @@ mod tests {
             32, 97, 32, 115, 105, 103, 110, 97, 116, 117, 114, 101, 0,
         ];
 
-        let ser = serde_cbor::to_vec(&header).unwrap();
+        let ser = minicbor::to_vec(&header).unwrap();
         assert_eq!(ser, expected);
-        let de = serde_cbor::from_slice::<CborBlockHeader>(&ser).unwrap();
+        let de = minicbor::decode::<BlockHeader>(&ser).unwrap();
         assert_eq!(de, header);
     }
 
@@ -506,10 +197,7 @@ mod tests {
         unsafe {
             set_network(Network::Test);
         }
-        #[derive(Debug, PartialEq, Serialize, Deserialize)]
-        struct JsonBlockHeader(#[serde(with = "super::json")] BlockHeader);
-
-        let header = JsonBlockHeader(new_block_header());
+        let header = new_block_header();
         let expected = "{\
             \"Miner\":\"t012512063\",\
                 \"Ticket\":{\"VRFProof\":\"dnJmIHByb29mMDAwMDAwMHZyZiBwcm9vZjAwMDAwMDA=\"},\
@@ -532,7 +220,7 @@ mod tests {
             }";
         let ser = serde_json::to_string(&header).unwrap();
         assert_eq!(ser, expected);
-        let de = serde_json::from_str::<JsonBlockHeader>(&ser).unwrap();
+        let de = serde_json::from_str::<BlockHeader>(&ser).unwrap();
         assert_eq!(de, header);
     }
 }

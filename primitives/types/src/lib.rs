@@ -4,13 +4,10 @@
 
 #![deny(missing_docs)]
 
-mod actor;
-/// JSON serialization/deserialization of Vec<u8> using base64,
-/// in order to be compatible with golang standard library.
-pub mod base64;
+// mod actor;
 mod chain_epoch;
 
-pub use self::actor::{json as actor_json, Actor};
+// pub use self::actor::{json as actor_json, Actor};
 pub use self::chain_epoch::{ChainEpoch, EpochDuration, CHAIN_EPOCH_UNDEFINED};
 
 use plum_bigint::BigInt;
@@ -32,7 +29,7 @@ pub type SectorNumber = u64;
 pub type SectorSize = u64;
 ///
 pub fn readable_sector_size(s: SectorSize) -> String {
-    const LIST: [&'static str; 7] = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"];
+    const LIST: [&str; 7] = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"];
     let mut unit = 0;
     let mut s = s;
     while s >= 1024 && unit < LIST.len() - 1 {

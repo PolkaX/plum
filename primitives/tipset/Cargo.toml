@@ -7,6 +7,7 @@ license = "GPL-3.0"
 
 [dependencies]
 cid = { version = "0.4", features = ["impl-serde"] }
+minicbor = { version = "0.3", features = ["std"] }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0"
 
@@ -16,7 +17,6 @@ plum_block = { path = "../block" }
 [dev-dependencies]
 hex = "0.4"
 multihash = "0.10"
-serde_cbor = { version = "0.11", features = ["tags"] }
 serde_json = "1.0"
 
 plum_address = { path = "../address" }

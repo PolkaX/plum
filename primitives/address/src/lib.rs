@@ -38,4 +38,4 @@ pub use self::constant::*;
 pub use self::errors::AddressError;
 pub use self::network::{set_network, Network, NETWORK_DEFAULT};
 pub use self::protocol::Protocol;
-pub use self::serde::{cbor as address_cbor, json as address_json};
+// pub use self::serde::{cbor as address_cbor, json as address_json};

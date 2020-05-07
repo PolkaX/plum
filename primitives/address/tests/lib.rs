@@ -2,8 +2,6 @@
 
 extern crate bls_signatures as bls;
 
-use std::str::FromStr;
-
 use plum_address::*;
 
 #[test]
@@ -12,7 +10,7 @@ fn test_random_id_address() {
     let addr = Address::new_id_addr(id).unwrap();
     assert_eq!(addr.protocol(), Protocol::Id);
 
-    let decoded = Address::from_str(&addr.to_string()).unwrap();
+    let decoded = addr.to_string().parse::<Address>().unwrap();
     assert_eq!(decoded, addr);
 }
 
@@ -45,7 +43,7 @@ fn test_random_secp256k1_address() {
     let addr = Address::new_secp256k1_addr(&pubkey.serialize()).unwrap();
     assert_eq!(addr.protocol(), Protocol::Secp256k1);
 
-    let decoded = Address::from_str(&addr.to_string()).unwrap();
+    let decoded = addr.to_string().parse::<Address>().unwrap();
     assert_eq!(decoded, addr);
 }
 
@@ -124,7 +122,7 @@ fn test_random_actor_address() {
     let addr = Address::new_actor_addr(&data).unwrap();
     assert_eq!(addr.protocol(), Protocol::Actor);
 
-    let decoded = Address::from_str(&addr.to_string()).unwrap();
+    let decoded = addr.to_string().parse::<Address>().unwrap();
     assert_eq!(decoded, addr);
 }
 
@@ -186,7 +184,7 @@ fn test_random_bls_address() {
     let addr = Address::new_bls_addr(&pubkey.as_bytes()).unwrap();
     assert_eq!(addr.protocol(), Protocol::Bls);
 
-    let decoded = Address::from_str(&addr.to_string()).unwrap();
+    let decoded = addr.to_string().parse::<Address>().unwrap();
     assert_eq!(decoded, addr);
 }
 
@@ -288,7 +286,7 @@ fn test_invalid_string_address() {
     ];
 
     for (addr, expect) in test_cases {
-        let error = Address::from_str(addr).unwrap_err();
+        let error = addr.to_string().parse::<Address>().unwrap_err();
         assert_eq!(error, expect);
     }
 }
