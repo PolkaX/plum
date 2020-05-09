@@ -45,5 +45,5 @@ members = [
   "primitives/types",
   "vm",
   "wallet",
-#  "specs-storage",
+  "specs-storage",
 ]

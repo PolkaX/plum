@@ -2990,6 +2990,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "specs-storage"
+version = "0.1.0"
+dependencies = [
+ "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "plum_piece",
+ "plum_sector",
+ "plum_types",
+]
+
+[[package]]
 name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

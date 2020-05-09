@@ -5,7 +5,8 @@ authors = ["PolkaX <github.com/polkax>"]
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0"
 cid = { version = "0.5", features = ["impl-serde"] }
 
-plum_actor = { path = "../chain/actor" }
+plum_piece = { path = "../primitives/piece" }
+plum_sector = { path = "../primitives/sector" }
+plum_types = { path = "../primitives/types" }
