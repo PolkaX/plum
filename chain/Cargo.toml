@@ -6,7 +6,7 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-cid = { version = "0.4", features = ["impl-serde"] }
+cid = { version = "0.5", features = ["impl-serde"] }
 data-encoding = "2.1"
 lazy_static = "1.4"
 

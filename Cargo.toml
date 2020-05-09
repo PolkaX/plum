@@ -16,12 +16,12 @@ path = "src/bin/main.rs"
 cli = { path = "./cli" }
 
 [replace]
-"cid:0.4.0" = { path = "../../../ipfs/rust-cid" }
+"cid:0.5.0" = { path = "../../../ipfs/rust-cid" }
 "serde_cbor:0.11.1" = {  git = "https://github.com/PolkaX/cbor", branch = "f64ser-hack" }
 
 [workspace]
 members = [
-  "chain/actor",
+#  "chain/actor",
   "chain",
   "cli",
   "codec/rle",
@@ -40,9 +40,10 @@ members = [
   "primitives/hash",
   "primitives/message",
   "primitives/piece",
+  "primitives/sector",
   "primitives/tipset",
   "primitives/types",
   "vm",
   "wallet",
-  "specs-storage",
+#  "specs-storage",
 ]
