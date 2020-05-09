@@ -1,12 +1,10 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use thiserror::Error;
-
 ///
 pub type Result<T> = std::result::Result<T, RleDecodeError>;
 
 ///
-#[derive(Clone, Copy, Debug, Error)]
+#[derive(Clone, Copy, Debug, thiserror::Error)]
 pub enum RleDecodeError {
     ///
     #[error("RLE+ data header has invalid version")]

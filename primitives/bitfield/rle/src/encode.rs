@@ -8,9 +8,12 @@ use crate::config;
 use crate::traits::{Cast, Number};
 
 ///
-pub fn rle_encode<Item: Number, T: Deref<Target = Item>, I: Iterator<Item = T>>(
-    input: I,
-) -> Vec<u8> {
+pub fn encode<Item, T, I>(input: I) -> Vec<u8>
+where
+    T: Deref<Target = Item>,
+    Item: Number,
+    I: Iterator<Item = T>,
+{
     let mut content = DynamicBitSet::new();
     let (first, periods) = get_periods(input);
     init_content(&mut content);
@@ -30,9 +33,12 @@ pub fn rle_encode<Item: Number, T: Deref<Target = Item>, I: Iterator<Item = T>>(
     content.into()
 }
 
-fn get_periods<Item: Number, T: Deref<Target = Item>, I: Iterator<Item = T>>(
-    mut input: I,
-) -> (Option<Item>, Vec<Item>) {
+fn get_periods<Item, T, I>(mut input: I) -> (Option<Item>, Vec<Item>)
+where
+    T: Deref<Target = Item>,
+    Item: Number,
+    I: Iterator<Item = T>,
+{
     let (first, mut prev) = input
         .next()
         .map(|i| (Some(*i), *i))

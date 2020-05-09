@@ -38,8 +38,8 @@ impl DerefMut for BitSetHelper {
 }
 
 ///
-pub fn rle_decode<Item: Number>(data: Vec<u8>) -> Result<Vec<Item>> {
-    let content: DynamicBitSet = data.into();
+pub fn decode<Item: Number, T: Into<Vec<u8>>>(data: T) -> Result<Vec<Item>> {
+    let content = DynamicBitSet::from(data.into());
     let helper = &mut BitSetHelper::new(content);
 
     let two: Item = get_span(helper, 2)?;

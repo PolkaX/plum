@@ -21,7 +21,7 @@ cli = { path = "./cli" }
 
 [workspace]
 members = [
-#  "chain/actor",
+  "actor",
   "chain",
   "cli",
   "codec/rle",
@@ -33,8 +33,8 @@ members = [
   "params",
   "primitives/address",
   "primitives/bigint",
-#  "primitives/bitfield",
-#  "primitives/bitfield/rle",
+  "primitives/bitfield",
+  "primitives/bitfield/rle",
   "primitives/block",
   "primitives/bytes",
   "primitives/hash",

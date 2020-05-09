@@ -1,10 +1,12 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 use serde_tuple::{Deserialize_tuple, Serialize_tuple};
 
 use cid::Cid;
 use plum_address::Address;
-use plum_types::{ChainEpoch, DealId, DealWeight, PeerId, SectorNumber, SectorSize, TokenAmount};
-
-use crate::abi::bitfield::BitField;
+use plum_bitfield::BitField;
+use plum_types::{ChainEpoch, DealId, DealWeight, PeerId, TokenAmount};
+use plum_sector::{SectorNumber, SectorSize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize_tuple, Deserialize_tuple)]
 pub struct State {

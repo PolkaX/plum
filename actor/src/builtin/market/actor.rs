@@ -1,18 +1,19 @@
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_tuple::{Deserialize_tuple, Serialize_tuple};
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
+use serde::{Deserialize, Serialize};
 
 use cid::Cid;
 use plum_address::Address;
-use plum_bigint::BigInt;
+use plum_bigint::{bigint_json, BigInt};
 use plum_crypto::Signature;
+use plum_sector::RegisteredProof;
 use plum_types::DealId;
 
-use ipld_cbor::IpldNode;
+// use ipld_cbor::IpldNode;
 
 use super::error::StorageMarketError;
-use crate::abi::sector::RegisteredProof;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize_tuple, Deserialize_tuple)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StorageDealProposal {
     // cid bytes
     pub piece_ref: Cid,
@@ -23,9 +24,9 @@ pub struct StorageDealProposal {
 
     pub proposal_expiration: u64,
     pub duration: u64, // TODO: spec
-    #[serde(with = "plum_bigint::bigint_cbor")]
+    #[serde(with = "bigint_json")]
     pub storage_price_per_epoch: BigInt,
-    #[serde(with = "plum_bigint::bigint_cbor")]
+    #[serde(with = "bigint_json")]
     pub storage_collateral: BigInt,
     // to not share, maybe do not need option
     pub proposer_signature: Option<Signature>,
@@ -49,10 +50,10 @@ impl StorageDealProposal {
         Ok(())
     }
 
-    pub fn cid(&self) -> Result<Cid, StorageMarketError> {
-        let node = IpldNode::from_object(self.clone(), multihash::Code::Sha2_256)?;
-        Ok(node.as_ref().clone())
-    }
+    // pub fn cid(&self) -> Result<Cid, StorageMarketError> {
+    //     let node = IpldNode::from_object(self.clone(), multihash::Code::Sha2_256)?;
+    //     Ok(node.as_ref().clone())
+    // }
 
     /// if worker is same as self.client, then do nothing for verify.
     pub fn verify(&self, worker: Option<Address>) -> Result<(), StorageMarketError> {

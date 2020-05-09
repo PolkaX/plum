@@ -947,6 +947,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
 
 [[package]]
+name = "hex-literal"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "961de220ec9a91af2e1e5bd80d02109155695e516771762381ef8581317066e0"
+dependencies = [
+ "hex-literal-impl",
+ "proc-macro-hack",
+]
+
+[[package]]
+name = "hex-literal-impl"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d4c5c844e2fee0bf673d54c2c177f1713b3d2af2ff6e666b49cb7572e6cf42d"
+dependencies = [
+ "proc-macro-hack",
+]
+
+[[package]]
 name = "hkdf"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2078,6 +2097,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "plum_actor"
+version = "0.1.0"
+dependencies = [
+ "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hex-literal",
+ "minicbor",
+ "multihash",
+ "plum_address",
+ "plum_bigint",
+ "plum_bitfield",
+ "plum_crypto",
+ "plum_hash",
+ "plum_piece",
+ "plum_sector",
+ "plum_types",
+ "serde",
+ "serde_bytes",
+ "serde_repr",
+ "thiserror",
+]
+
+[[package]]
 name = "plum_address"
 version = "0.1.0"
 dependencies = [
@@ -2103,6 +2144,18 @@ dependencies = [
  "num-traits",
  "serde",
  "serde_derive",
+ "serde_json",
+]
+
+[[package]]
+name = "plum_bitfield"
+version = "0.1.0"
+dependencies = [
+ "minicbor",
+ "plum_bytes",
+ "rle",
+ "serde",
+ "serde_bytes",
  "serde_json",
 ]
 
@@ -2705,6 +2758,14 @@ dependencies = [
  "untrusted",
  "web-sys",
  "winapi 0.3.8",
+]
+
+[[package]]
+name = "rle"
+version = "0.1.0"
+dependencies = [
+ "num",
+ "thiserror",
 ]
 
 [[package]]

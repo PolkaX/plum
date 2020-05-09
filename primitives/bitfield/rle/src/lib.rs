@@ -11,8 +11,8 @@ mod encode;
 mod error;
 mod traits;
 
-pub use self::decode::rle_decode;
-pub use self::encode::rle_encode;
+pub use self::decode::decode;
+pub use self::encode::encode;
 pub use self::error::RleDecodeError;
 
 #[cfg(test)]
@@ -69,10 +69,10 @@ mod tests {
     #[test]
     fn test_generic() {
         use std::collections::BTreeSet;
-        let _ = rle_encode(BTreeSet::<u64>::new().iter());
-        let _ = rle_encode(BTreeSet::<u32>::new().iter());
-        let _ = rle_encode(BTreeSet::<usize>::new().iter());
-        let _ = rle_encode(BTreeSet::<u16>::new().iter());
+        let _ = encode(BTreeSet::<u64>::new().iter());
+        let _ = encode(BTreeSet::<u32>::new().iter());
+        let _ = encode(BTreeSet::<usize>::new().iter());
+        let _ = encode(BTreeSet::<u16>::new().iter());
     }
 
     macro_rules! set (
@@ -91,7 +91,7 @@ mod tests {
     fn test() {
         let test_case = vec![
             (set!(0, 100, 1000), vec![204_u8, 88, 6, 15, 2]),
-            (::std::collections::BTreeSet::<u64>::new(), vec![0]),
+            (std::collections::BTreeSet::<u64>::new(), vec![0]),
             (set!(0), vec![12]),
             (set!(1), vec![24]),
             (
@@ -113,9 +113,9 @@ mod tests {
     }
 
     fn test_roundtrip(set: std::collections::BTreeSet<u64>, expect: Vec<u8>) {
-        let r = rle_encode(set.iter());
+        let r = encode(set.iter());
         assert_eq!(r, expect);
-        let new: Vec<u64> = rle_decode::<u64>(r).unwrap();
+        let new: Vec<u64> = decode(r).unwrap();
         let s = new.into_iter().collect::<std::collections::BTreeSet<_>>();
         assert_eq!(set, s);
     }

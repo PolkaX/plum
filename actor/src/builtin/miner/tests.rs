@@ -1,14 +1,17 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 use serde::{de::DeserializeOwned, Serialize};
 use std::convert::TryFrom;
 use std::fmt::Debug;
 
 use cid::Cid;
 use hex_literal::hex;
+
 use plum_address::Address;
+use plum_bitfield::BitField;
+use plum_sector::RegisteredProof;
 
 use super::state::*;
-use crate::abi::bitfield::BitField;
-use crate::abi::sector::RegisteredProof;
 
 fn test_cbor<T: Serialize + DeserializeOwned + Debug + Eq>(obj: T, expect: Vec<u8>) {
     let v = serde_cbor::to_vec(&obj).unwrap();
