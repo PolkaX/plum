@@ -198,6 +198,7 @@ impl Signature {
     }
 }
 
+// Implement CBOR serialization for Signature.
 impl encode::Encode for Signature {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
         let mut bytes = Vec::with_capacity(self.data.len() + 1);
@@ -207,6 +208,7 @@ impl encode::Encode for Signature {
     }
 }
 
+// Implement CBOR deserialization for Signature.
 impl<'b> decode::Decode<'b> for Signature {
     fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
         let bytes = d.bytes()?;

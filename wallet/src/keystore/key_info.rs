@@ -38,6 +38,7 @@ impl fmt::Display for KeyType {
     }
 }
 
+// Implement JSON serialization for KeyType.
 impl ser::Serialize for KeyType {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -47,6 +48,7 @@ impl ser::Serialize for KeyType {
     }
 }
 
+// Implement JSON deserialization for KeyType.
 impl<'de> de::Deserialize<'de> for KeyType {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
