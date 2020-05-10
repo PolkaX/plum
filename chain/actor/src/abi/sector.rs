@@ -48,6 +48,9 @@ pub enum RegisteredProof {
     StackedDRG512MiBWindowPoSt = 14,
     StackedDRG32GiBWinningPoSt = 15,
     StackedDRG32GiBWindowPoSt = 16,
+    StackedDRG64GiBSeal = 17,
+    StackedDRG64GiBWinningPoSt = 18,
+    StackedDRG64GiBWindowPoSt = 19,
 }
 
 impl RegisteredProof {
@@ -55,6 +58,11 @@ impl RegisteredProof {
     /// to the receiving RegisteredProof.
     pub fn registered_winning_post_proof(self) -> RegisteredProof {
         match self {
+            RegisteredProof::StackedDRG64GiBSeal
+            | RegisteredProof::StackedDRG64GiBWindowPoSt
+            | RegisteredProof::StackedDRG64GiBWinningPoSt => {
+                RegisteredProof::StackedDRG64GiBWinningPoSt
+            }
             RegisteredProof::StackedDRG32GiBSeal
             | RegisteredProof::StackedDRG32GiBWindowPoSt
             | RegisteredProof::StackedDRG32GiBWinningPoSt => {
@@ -82,6 +90,11 @@ impl RegisteredProof {
     /// to the receiving RegisteredProof.
     pub fn registered_window_post_proof(self) -> RegisteredProof {
         match self {
+            RegisteredProof::StackedDRG64GiBSeal
+            | RegisteredProof::StackedDRG64GiBWinningPoSt
+            | RegisteredProof::StackedDRG64GiBWindowPoSt => {
+                RegisteredProof::StackedDRG64GiBWindowPoSt
+            }
             RegisteredProof::StackedDRG32GiBSeal
             | RegisteredProof::StackedDRG32GiBWinningPoSt
             | RegisteredProof::StackedDRG32GiBWindowPoSt => {
@@ -105,22 +118,23 @@ impl RegisteredProof {
         }
     }
 
+    /// `registered_seal_proof` produces the seal-specific RegisteredProof corresponding
+    /// to the receiving RegisteredProof.
     pub fn registered_seal_proof(self) -> RegisteredProof {
         match self {
+            RegisteredProof::StackedDRG64GiBSeal
+            | RegisteredProof::StackedDRG64GiBWindowPoSt
+            | RegisteredProof::StackedDRG64GiBWinningPoSt => RegisteredProof::StackedDRG64GiBSeal,
             RegisteredProof::StackedDRG32GiBSeal
-            // | RegisteredProof::StackedDRG32GiBPoSt
             | RegisteredProof::StackedDRG32GiBWindowPoSt
             | RegisteredProof::StackedDRG32GiBWinningPoSt => RegisteredProof::StackedDRG32GiBSeal,
             RegisteredProof::StackedDRG2KiBSeal
-            // | RegisteredProof::StackedDRG2KiBPoSt
             | RegisteredProof::StackedDRG2KiBWindowPoSt
             | RegisteredProof::StackedDRG2KiBWinningPoSt => RegisteredProof::StackedDRG2KiBSeal,
             RegisteredProof::StackedDRG8MiBSeal
-            // | RegisteredProof::StackedDRG8MiBPoSt
             | RegisteredProof::StackedDRG8MiBWindowPoSt
             | RegisteredProof::StackedDRG8MiBWinningPoSt => RegisteredProof::StackedDRG8MiBSeal,
             RegisteredProof::StackedDRG512MiBSeal
-            // | RegisteredProof::StackedDRG512MiBPoSt
             | RegisteredProof::StackedDRG512MiBWindowPoSt
             | RegisteredProof::StackedDRG512MiBWinningPoSt => RegisteredProof::StackedDRG512MiBSeal,
         }
@@ -129,6 +143,7 @@ impl RegisteredProof {
     pub fn sector_size(&self) -> SectorSize {
         let sp = self.registered_seal_proof();
         match sp {
+            RegisteredProof::StackedDRG64GiBSeal => 2 * (32 << 30),
             RegisteredProof::StackedDRG32GiBSeal => 32 << 30,
             RegisteredProof::StackedDRG2KiBSeal => 2 << 10,
             RegisteredProof::StackedDRG8MiBSeal => 8 << 20,
@@ -140,6 +155,7 @@ impl RegisteredProof {
     pub fn window_post_partition_sectors(&self) -> u64 {
         let sp = self.registered_seal_proof();
         match sp {
+            RegisteredProof::StackedDRG64GiBSeal => 2300,
             RegisteredProof::StackedDRG32GiBSeal => 2349,
             RegisteredProof::StackedDRG2KiBSeal
             | RegisteredProof::StackedDRG8MiBSeal
