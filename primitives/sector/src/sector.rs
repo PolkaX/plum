@@ -103,6 +103,9 @@ pub enum RegisteredProof {
     StackedDRG512MiBWindowPoSt = 14,
     StackedDRG32GiBWinningPoSt = 15,
     StackedDRG32GiBWindowPoSt = 16,
+    StackedDRG64GiBSeal = 17,
+    StackedDRG64GiBWinningPoSt = 18,
+    StackedDRG64GiBWindowPoSt = 19,
 }
 
 impl From<RegisteredProof> for u64 {
@@ -124,6 +127,9 @@ impl From<RegisteredProof> for u64 {
             RegisteredProof::StackedDRG512MiBWindowPoSt => 14,
             RegisteredProof::StackedDRG32GiBWinningPoSt => 15,
             RegisteredProof::StackedDRG32GiBWindowPoSt => 16,
+            RegisteredProof::StackedDRG64GiBSeal => 17,
+            RegisteredProof::StackedDRG64GiBWinningPoSt => 18,
+            RegisteredProof::StackedDRG64GiBWindowPoSt => 19,
         }
     }
 }
@@ -149,6 +155,9 @@ impl TryFrom<u64> for RegisteredProof {
             14 => RegisteredProof::StackedDRG512MiBWindowPoSt,
             15 => RegisteredProof::StackedDRG32GiBWinningPoSt,
             16 => RegisteredProof::StackedDRG32GiBWindowPoSt,
+            17 => RegisteredProof::StackedDRG64GiBSeal,
+            18 => RegisteredProof::StackedDRG64GiBWinningPoSt,
+            19 => RegisteredProof::StackedDRG64GiBWindowPoSt,
             _ => return Err("unexpected registered proof"),
         })
     }
@@ -160,6 +169,7 @@ impl RegisteredProof {
         // Resolve to seal proof and then compute size from that.
         let seal_proof = self.registered_seal_proof();
         match seal_proof {
+            RegisteredProof::StackedDRG64GiBSeal => 2 * (32 << 30),
             RegisteredProof::StackedDRG32GiBSeal => 32 << 30,
             RegisteredProof::StackedDRG2KiBSeal => 2 << 10,
             RegisteredProof::StackedDRG8MiBSeal => 8 << 20,
@@ -176,6 +186,7 @@ impl RegisteredProof {
         match seal_proof {
             // These numbers must match those used by the proofs library.
             // See https://github.com/filecoin-project/rust-fil-proofs/blob/master/filecoin-proofs/src/constants.rs#L85
+            RegisteredProof::StackedDRG64GiBSeal => 2300,
             RegisteredProof::StackedDRG32GiBSeal => 2349,
             RegisteredProof::StackedDRG2KiBSeal
             | RegisteredProof::StackedDRG8MiBSeal
@@ -188,6 +199,11 @@ impl RegisteredProof {
     /// corresponding to the receiving RegisteredProof.
     pub fn registered_winning_post_proof(self) -> Self {
         match self {
+            RegisteredProof::StackedDRG64GiBSeal
+            | RegisteredProof::StackedDRG64GiBWindowPoSt
+            | RegisteredProof::StackedDRG64GiBWinningPoSt => {
+                RegisteredProof::StackedDRG64GiBWinningPoSt
+            }
             RegisteredProof::StackedDRG32GiBSeal
             | RegisteredProof::StackedDRG32GiBWindowPoSt
             | RegisteredProof::StackedDRG32GiBWinningPoSt => {
@@ -215,6 +231,11 @@ impl RegisteredProof {
     /// corresponding to the receiving RegisteredProof.
     pub fn registered_window_post_proof(self) -> Self {
         match self {
+            RegisteredProof::StackedDRG64GiBSeal
+            | RegisteredProof::StackedDRG64GiBWinningPoSt
+            | RegisteredProof::StackedDRG64GiBWindowPoSt => {
+                RegisteredProof::StackedDRG64GiBWindowPoSt
+            }
             RegisteredProof::StackedDRG32GiBSeal
             | RegisteredProof::StackedDRG32GiBWinningPoSt
             | RegisteredProof::StackedDRG32GiBWindowPoSt => {
@@ -242,6 +263,9 @@ impl RegisteredProof {
     /// corresponding to the receiving RegisteredProof.
     pub fn registered_seal_proof(self) -> Self {
         match self {
+            RegisteredProof::StackedDRG64GiBSeal
+            | RegisteredProof::StackedDRG64GiBWindowPoSt
+            | RegisteredProof::StackedDRG64GiBWinningPoSt => RegisteredProof::StackedDRG64GiBSeal,
             RegisteredProof::StackedDRG32GiBSeal
             | RegisteredProof::StackedDRG32GiBWindowPoSt
             | RegisteredProof::StackedDRG32GiBWinningPoSt => RegisteredProof::StackedDRG32GiBSeal,

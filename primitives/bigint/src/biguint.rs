@@ -91,7 +91,8 @@ pub mod json {
         D: de::Deserializer<'de>,
     {
         let v = String::deserialize(deserializer)?;
-        Ok(v.parse::<BigUint>().map_err(|e| de::Error::custom(e.to_string()))?)
+        Ok(v.parse::<BigUint>()
+            .map_err(|e| de::Error::custom(e.to_string()))?)
     }
 }
 

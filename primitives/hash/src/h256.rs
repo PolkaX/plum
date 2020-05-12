@@ -12,8 +12,8 @@ construct_fixed_hash! {
 // Implement JSON serialization for H256.
 impl ser::Serialize for H256 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: ser::Serializer,
+    where
+        S: ser::Serializer,
     {
         plum_bytes::serialize(self.as_bytes(), serializer)
     }
@@ -22,8 +22,8 @@ impl ser::Serialize for H256 {
 // Implement JSON deserialization for H256.
 impl<'de> de::Deserialize<'de> for H256 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: de::Deserializer<'de>,
+    where
+        D: de::Deserializer<'de>,
     {
         let bytes = plum_bytes::deserialize(deserializer)?;
         if bytes.len() == H256::len_bytes() {
