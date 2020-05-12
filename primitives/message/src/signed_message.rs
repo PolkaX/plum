@@ -1,14 +1,16 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use cid::{Cid, Codec};
-use serde::{de, ser};
+use minicbor::{decode, encode, Decoder, Encoder};
+use serde::{Deserialize, Serialize};
 
 use plum_crypto::{Signature, SignatureType};
 
 use crate::unsigned_message::UnsignedMessage;
 
 /// The signed message (a message with signature).
-#[derive(Eq, PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct SignedMessage {
     /// The unsigned message.
     pub message: UnsignedMessage,
@@ -22,7 +24,7 @@ impl SignedMessage {
         if self.signature.r#type() == SignatureType::Bls {
             return self.message.cid();
         }
-        let data = serde_cbor::to_vec(self)
+        let data = minicbor::to_vec(self)
             .expect("CBOR serialization of SignedMessage shouldn't be failed");
         let hash = multihash::Blake2b256::digest(&data);
         Cid::new_v1(Codec::DagCBOR, hash)
@@ -41,109 +43,24 @@ impl SignedMessage {
     }
 }
 
-impl ser::Serialize for SignedMessage {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        self::cbor::serialize(self, serializer)
+// Implement CBOR serialization for SignedMessage.
+impl encode::Encode for SignedMessage {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        e.array(2)?
+            .encode(&self.message)?
+            .encode(&self.signature)?
+            .ok()
     }
 }
 
-impl<'de> de::Deserialize<'de> for SignedMessage {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        self::cbor::deserialize(deserializer)
-    }
-}
-
-/// SignedMessage CBOR serialization/deserialization.
-pub mod cbor {
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use plum_crypto::{signature_cbor, Signature};
-
-    use super::SignedMessage;
-    use crate::unsigned_message::{cbor as unsigned_message_cbor, UnsignedMessage};
-
-    #[derive(Serialize)]
-    struct CborSignedMessageRef<'a>(
-        #[serde(with = "unsigned_message_cbor")] &'a UnsignedMessage,
-        #[serde(with = "signature_cbor")] &'a Signature,
-    );
-
-    /// CBOR serialization.
-    pub fn serialize<S>(signed_msg: &SignedMessage, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        CborSignedMessageRef(&signed_msg.message, &signed_msg.signature).serialize(serializer)
-    }
-
-    #[derive(Deserialize)]
-    struct CborSignedMessage(
-        #[serde(with = "unsigned_message_cbor")] UnsignedMessage,
-        #[serde(with = "signature_cbor")] Signature,
-    );
-
-    /// CBOR deserialization.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<SignedMessage, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let CborSignedMessage(message, signature) = CborSignedMessage::deserialize(deserializer)?;
-        Ok(SignedMessage { message, signature })
-    }
-}
-
-/// SignedMessage JSON serialization/deserialization.
-pub mod json {
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use plum_crypto::{signature_json, Signature};
-
-    use super::SignedMessage;
-    use crate::unsigned_message::{json as unsigned_message_json, UnsignedMessage};
-
-    #[derive(Serialize)]
-    #[serde(rename_all = "PascalCase")]
-    struct JsonSignedMessageRef<'a> {
-        #[serde(with = "unsigned_message_json")]
-        message: &'a UnsignedMessage,
-        #[serde(with = "signature_json")]
-        signature: &'a Signature,
-    }
-
-    /// JSON serialization.
-    pub fn serialize<S>(signed_msg: &SignedMessage, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        JsonSignedMessageRef {
-            message: &signed_msg.message,
-            signature: &signed_msg.signature,
-        }
-        .serialize(serializer)
-    }
-
-    #[derive(Deserialize)]
-    #[serde(rename_all = "PascalCase")]
-    struct JsonSignedMessage {
-        #[serde(with = "unsigned_message_json")]
-        message: UnsignedMessage,
-        #[serde(with = "signature_json")]
-        signature: Signature,
-    }
-
-    /// JSON deserialization.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<SignedMessage, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let JsonSignedMessage { message, signature } =
-            JsonSignedMessage::deserialize(deserializer)?;
-        Ok(SignedMessage { message, signature })
+// Implement CBOR deserialization for SignedMessage.
+impl<'b> decode::Decode<'b> for SignedMessage {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let array_len = d.array()?;
+        assert_eq!(array_len, Some(2));
+        Ok(SignedMessage {
+            message: d.decode::<UnsignedMessage>()?,
+            signature: d.decode::<Signature>()?,
+        })
     }
 }

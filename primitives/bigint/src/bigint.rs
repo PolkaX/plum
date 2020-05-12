@@ -1,20 +1,36 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use minicbor::{decode, encode, Decoder, Encoder};
 use num_bigint::{BigInt, Sign};
 use num_traits::{Signed, ToPrimitive, Zero};
+use serde::{de, ser};
 
-/// CBOR serialization/deserialization
-pub mod cbor {
-    use num_bigint::{BigInt, Sign};
-    use serde::{de, ser};
-    use serde_bytes::{ByteBuf, Bytes, Deserialize, Serialize};
+/// A BigInt wrapper that implement CBOR and JSON serialization/deserialization.
+#[derive(Clone, Default, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct BigIntWrapper(BigInt);
 
-    /// CBOR serialization
-    pub fn serialize<S>(int: &BigInt, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        let (sign, mut v) = int.to_bytes_be();
+impl BigIntWrapper {
+    /// Consumes the wrapper, returning the underlying BigInt.
+    pub fn into_inner(self) -> BigInt {
+        self.0
+    }
+
+    /// Don't consume the wrapper, borrowing the underlying BigInt.
+    pub fn as_inner(&self) -> &BigInt {
+        &self.0
+    }
+}
+
+impl From<BigInt> for BigIntWrapper {
+    fn from(int: BigInt) -> Self {
+        Self(int)
+    }
+}
+
+// Implement CBOR serialization for BigIntWrapper.
+impl encode::Encode for BigIntWrapper {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        let (sign, mut v) = self.0.to_bytes_be();
         let v = match sign {
             Sign::Plus => {
                 let mut buf = Vec::with_capacity(1 + v.len());
@@ -33,37 +49,56 @@ pub mod cbor {
                 v
             }
         };
-        Bytes::new(&v).serialize(serializer)
+        e.bytes(&v)?.ok()
     }
+}
 
-    /// CBOR deserialization
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<BigInt, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let v = ByteBuf::deserialize(deserializer)?;
-        let v = v.into_vec();
+// Implement CBOR deserialization for BigIntWrapper.
+impl<'b> decode::Decode<'b> for BigIntWrapper {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let v = d.bytes()?.to_vec();
         if v.is_empty() {
-            return Ok(BigInt::default());
+            return Ok(BigIntWrapper::default());
         }
         let sign = match &v[0] {
             0 => Sign::Plus,
             1 => Sign::Minus,
             _ => {
-                return Err(de::Error::custom(format!(
-                    "big int prefix should be either 0 or 1, got {}",
-                    v[0]
-                )))
+                return Err(decode::Error::Message(
+                    "big int prefix should be either 0 or 1",
+                ));
             }
         };
-        Ok(BigInt::from_bytes_be(sign, &v[1..]))
+        Ok(BigIntWrapper(BigInt::from_bytes_be(sign, &v[1..])))
+    }
+}
+
+// Implement JSON serialization for BigIntWrapper.
+impl ser::Serialize for BigIntWrapper {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        self.0.to_string().serialize(serializer)
+    }
+}
+
+// Implement JSON deserialization for BigIntWrapper.
+impl<'de> de::Deserialize<'de> for BigIntWrapper {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let v = String::deserialize(deserializer)?;
+        let int = v
+            .parse::<BigInt>()
+            .map_err(|e| de::Error::custom(e.to_string()))?;
+        Ok(BigIntWrapper(int))
     }
 }
 
 /// JSON serialization/deserialization
 pub mod json {
-    use std::str::FromStr;
-
     use num_bigint::BigInt;
     use serde::{de, ser, Deserialize, Serialize};
 
@@ -81,7 +116,8 @@ pub mod json {
         D: de::Deserializer<'de>,
     {
         let v = String::deserialize(deserializer)?;
-        Ok(BigInt::from_str(v.as_str()).map_err(|e| de::Error::custom(e.to_string()))?)
+        Ok(v.parse::<BigInt>()
+            .map_err(|e| de::Error::custom(e.to_string()))?)
     }
 }
 

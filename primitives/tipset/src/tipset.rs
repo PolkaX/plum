@@ -1,17 +1,20 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use cid::Cid;
+use minicbor::{decode, encode, Decoder, Encoder};
+use serde::{Deserialize, Serialize};
 
 use plum_bigint::BigInt;
-use plum_block::BlockHeader;
-use plum_ticket::Ticket;
+use plum_block::{BlockHeader, Ticket};
 
 use crate::errors::TipsetError;
 use crate::key::TipsetKey;
 
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Tipset {
+    #[serde(rename = "Cids")]
     key: TipsetKey,
     blocks: Vec<BlockHeader>,
     height: u64,
@@ -144,130 +147,26 @@ impl Tipset {
     }
 }
 
-/// TipsetKey CBOR serialization/deserialization, need to use `serde_cbor::Serializer` and `serde_cbor::Deserializer`
-pub mod cbor {
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use plum_block::{block_header_cbor, BlockHeader};
-
-    use super::Tipset;
-    use crate::key::TipsetKey;
-
-    #[derive(Serialize)]
-    struct CborBlockHeaderRef<'a>(#[serde(with = "block_header_cbor")] &'a BlockHeader);
-    #[derive(Serialize)]
-    struct CborTipsetRef<'a>(
-        #[serde(with = "crate::key::cbor")] &'a TipsetKey,
-        &'a [CborBlockHeaderRef<'a>],
-        &'a u64,
-    );
-
-    /// CBOR serialization.
-    pub fn serialize<S>(tipset: &Tipset, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        CborTipsetRef(
-            &tipset.key,
-            &tipset
-                .blocks
-                .iter()
-                .map(|block| CborBlockHeaderRef(block))
-                .collect::<Vec<_>>(),
-            &tipset.height,
-        )
-        .serialize(serializer)
-    }
-
-    #[derive(Deserialize)]
-    struct CborBlockHeader(#[serde(with = "block_header_cbor")] BlockHeader);
-    #[derive(Deserialize)]
-    struct CborTipset(
-        #[serde(with = "crate::key::cbor")] TipsetKey,
-        Vec<CborBlockHeader>,
-        u64,
-    );
-
-    /// CBOR deserialization.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Tipset, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let CborTipset(key, blocks, height) = CborTipset::deserialize(deserializer)?;
-        Ok(Tipset {
-            key,
-            blocks: blocks.into_iter().map(|block| block.0).collect(),
-            height,
-        })
+// Implement CBOR serialization for Tipset.
+impl encode::Encode for Tipset {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        e.array(3)?
+            .encode(&self.key)?
+            .encode(&self.blocks)?
+            .u64(self.height)?
+            .ok()
     }
 }
 
-/// TipsetKey JSON serialization/deserialization
-pub mod json {
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use plum_block::{block_header_json, BlockHeader};
-
-    use super::Tipset;
-    use crate::key::TipsetKey;
-
-    #[derive(Serialize)]
-    struct JsonBlockHeaderRef<'a>(#[serde(with = "block_header_json")] &'a BlockHeader);
-    #[derive(Serialize)]
-    struct JsonTipsetRef<'a> {
-        #[serde(rename = "Cids")]
-        #[serde(with = "crate::key::json")]
-        key: &'a TipsetKey,
-        #[serde(rename = "Blocks")]
-        blocks: &'a [JsonBlockHeaderRef<'a>],
-        #[serde(rename = "Height")]
-        height: &'a u64,
-    }
-
-    /// JSON serialization.
-    pub fn serialize<S>(tipset: &Tipset, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        JsonTipsetRef {
-            key: &tipset.key,
-            blocks: &tipset
-                .blocks
-                .iter()
-                .map(|block| JsonBlockHeaderRef(block))
-                .collect::<Vec<_>>(),
-            height: &tipset.height,
-        }
-        .serialize(serializer)
-    }
-
-    #[derive(Deserialize)]
-    struct JsonBlockHeader(#[serde(with = "block_header_json")] BlockHeader);
-    #[derive(Deserialize)]
-    struct JsonTipset {
-        #[serde(rename = "Cids")]
-        #[serde(with = "crate::key::json")]
-        key: TipsetKey,
-        #[serde(rename = "Blocks")]
-        blocks: Vec<JsonBlockHeader>,
-        #[serde(rename = "Height")]
-        height: u64,
-    }
-
-    /// JSON deserialization.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Tipset, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let JsonTipset {
-            key,
-            blocks,
-            height,
-        } = JsonTipset::deserialize(deserializer)?;
+// Implement CBOR deserialization for Tipset.
+impl<'b> decode::Decode<'b> for Tipset {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let array_len = d.array()?;
+        assert_eq!(array_len, Some(3));
         Ok(Tipset {
-            key,
-            blocks: blocks.into_iter().map(|block| block.0).collect(),
-            height,
+            key: d.decode::<TipsetKey>()?,
+            blocks: d.decode::<Vec<BlockHeader>>()?,
+            height: d.u64()?,
         })
     }
 }
@@ -275,12 +174,10 @@ pub mod json {
 #[cfg(test)]
 mod tests {
     use cid::Cid;
-    use serde::{Deserialize, Serialize};
 
     use plum_address::{set_network, Address, Network};
-    use plum_block::BlockHeader;
+    use plum_block::{BlockHeader, ElectionProof, Ticket};
     use plum_crypto::Signature;
-    use plum_ticket::{EPostProof, Ticket};
 
     use super::Tipset;
     use crate::key::TipsetKey;
@@ -295,11 +192,11 @@ mod tests {
             ticket: Ticket {
                 vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
             },
-            epost_proof: EPostProof {
-                proof: b"pruuf".to_vec(),
-                post_rand: b"random".to_vec(),
-                candidates: vec![],
+            election_proof: ElectionProof {
+                vrf_proof: b"vrf proof0000000vrf proof0000000".to_vec(),
             },
+            beacon_entries: vec![],
+            win_post_proof: vec![],
             parents: vec![cid.clone(), cid.clone()],
             parent_message_receipts: cid.clone(),
             bls_aggregate: Signature::new_bls("boo! im a signature"),
@@ -320,19 +217,72 @@ mod tests {
     }
 
     #[test]
+    fn tipset_cbor_serde() {
+        let tipset = new_tipset();
+        let expected = vec![
+            131, 129, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161, 80,
+            48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55, 160,
+            199, 184, 78, 250, 129, 143, 69, 0, 191, 214, 251, 5, 129, 88, 32, 118, 114, 102, 32,
+            112, 114, 111, 111, 102, 48, 48, 48, 48, 48, 48, 48, 118, 114, 102, 32, 112, 114, 111,
+            111, 102, 48, 48, 48, 48, 48, 48, 48, 129, 88, 32, 118, 114, 102, 32, 112, 114, 111,
+            111, 102, 48, 48, 48, 48, 48, 48, 48, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48,
+            48, 48, 48, 48, 48, 48, 128, 128, 130, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122,
+            115, 187, 29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201,
+            142, 225, 217, 73, 55, 160, 199, 184, 78, 250, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76,
+            2, 122, 115, 187, 29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232,
+            201, 142, 225, 217, 73, 55, 160, 199, 184, 78, 250, 70, 0, 28, 170, 212, 84, 68, 27, 0,
+            0, 0, 20, 1, 48, 116, 163, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187,
+            29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225,
+            217, 73, 55, 160, 199, 184, 78, 250, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122,
+            115, 187, 29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201,
+            142, 225, 217, 73, 55, 160, 199, 184, 78, 250, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76,
+            2, 122, 115, 187, 29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232,
+            201, 142, 225, 217, 73, 55, 160, 199, 184, 78, 250, 84, 2, 98, 111, 111, 33, 32, 105,
+            109, 32, 97, 32, 115, 105, 103, 110, 97, 116, 117, 114, 101, 0, 84, 2, 98, 111, 111,
+            33, 32, 105, 109, 32, 97, 32, 115, 105, 103, 110, 97, 116, 117, 114, 101, 0, 1,
+        ];
+        let ser = minicbor::to_vec(&tipset).unwrap();
+        assert_eq!(ser, expected);
+
+        let de = minicbor::decode::<Tipset>(&ser).unwrap();
+        assert_eq!(de, tipset);
+    }
+
+    #[test]
     fn tipset_json_serde() {
         unsafe {
             set_network(Network::Test);
         }
-        #[derive(Debug, PartialEq, Serialize, Deserialize)]
-        struct JsonTipset(#[serde(with = "super::json")] Tipset);
 
-        let tipset = JsonTipset(new_tipset());
-        let expected = r#"{"Cids":[{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"}],"Blocks":[{"Miner":"t012512063","Ticket":{"VRFProof":"dnJmIHByb29mMDAwMDAwMHZyZiBwcm9vZjAwMDAwMDA="},"EPostProof":{"Proof":"cHJ1dWY=","PostRand":"cmFuZG9t","Candidates":[]},"Parents":[{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"}],"ParentWeight":"123125126212","Height":85919298723,"ParentStateRoot":{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},"ParentMessageReceipts":{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},"Messages":{"/":"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"},"BLSAggregate":{"Type":"bls","Data":"Ym9vISBpbSBhIHNpZ25hdHVyZQ=="},"Timestamp":0,"BlockSig":{"Type":"bls","Data":"Ym9vISBpbSBhIHNpZ25hdHVyZQ=="},"ForkSignaling":0}],"Height":1}"#;
+        let tipset = new_tipset();
+        let expected = "{\
+            \"Cids\":[{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"}],\
+            \"Blocks\":[{\
+                \"Miner\":\"t012512063\",\
+                \"Ticket\":{\"VRFProof\":\"dnJmIHByb29mMDAwMDAwMHZyZiBwcm9vZjAwMDAwMDA=\"},\
+                \"ElectionProof\":{\"VRFProof\":\"dnJmIHByb29mMDAwMDAwMHZyZiBwcm9vZjAwMDAwMDA=\"},\
+                \"BeaconEntries\":[],\
+                \"WinPoStProof\":[],\
+                \"Parents\":[\
+                    {\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"},\
+                    {\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"}\
+                ],\
+                \"ParentWeight\":\"123125126212\",\
+                \"Height\":85919298723,\
+                \"ParentStateRoot\":{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"},\
+                \"ParentMessageReceipts\":{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"},\
+                \"Messages\":{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"},\
+                \"BLSAggregate\":{\"Type\":\"bls\",\"Data\":\"Ym9vISBpbSBhIHNpZ25hdHVyZQ==\"},\
+                \"Timestamp\":0,\
+                \"BlockSig\":{\"Type\":\"bls\",\"Data\":\"Ym9vISBpbSBhIHNpZ25hdHVyZQ==\"},\
+                \"ForkSignaling\":0\
+            }],\
+            \"Height\":1\
+        }";
 
         let ser = serde_json::to_string(&tipset).unwrap();
         assert_eq!(ser, expected);
-        let de = serde_json::from_str::<JsonTipset>(&ser).unwrap();
+        let de = serde_json::from_str::<Tipset>(&ser).unwrap();
         assert_eq!(de, tipset);
     }
 }

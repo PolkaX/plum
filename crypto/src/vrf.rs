@@ -55,6 +55,11 @@ impl VrfPrivateKey {
         use bls::Serialize;
         self.0.as_bytes()
     }
+
+    /// Returns the signature against the message `msg` signed by this private key.
+    pub fn sign<M: AsRef<[u8]>>(&self, msg: M) -> bls::Signature {
+        self.0.sign(msg)
+    }
 }
 
 impl From<bls::PrivateKey> for VrfPrivateKey {
@@ -92,20 +97,29 @@ impl From<bls::Signature> for VrfProof {
     }
 }
 
-/// Computing VRF with the given `BLS` private key and VRF params(miner address must be ID address).
+/// Returns the `BLS` signature signed by with the given `BLS` worker private key and VRF params.
 ///
-/// Return the `BLS` signature.
+/// # Arguments
+///
+/// * `worker_priv_key` - Private key to the miner worker address.
+/// * `personalization` - A constant u64 defined in `gen` crate, either `gen.DSepTicket` or `gen.DSepElectionPost`.
+/// * `msg` - Randomness source, could be the previous vrf output.
+/// * `owner` - Miner owner address.
+///
+/// # Note
+///
+/// The `owner` address must be an ID address, otherwise panic happens.
 pub fn compute_vrf<M>(
-    privkey: &VrfPrivateKey,
+    worker_priv_key: &VrfPrivateKey,
     personalization: u64,
     msg: M,
-    miner: &Address,
+    owner: &Address,
 ) -> VrfProof
 where
     M: AsRef<[u8]>,
 {
-    let msg = hash_vrf_base(personalization, msg, miner);
-    let signature = privkey.0.sign(msg);
+    let msg = hash_vrf_base(personalization, msg, owner);
+    let signature = worker_priv_key.sign(msg);
     VrfProof(signature)
 }
 
@@ -137,7 +151,7 @@ where
     assert_eq!(
         miner.protocol(),
         Protocol::Id,
-        "Miner address must be a ID address"
+        "Miner address must be an ID address"
     );
     let miner_bytes = miner.as_bytes();
     let mut bytes = Vec::<u8>::with_capacity(8 + 1 + msg.as_ref().len() + 1 + miner_bytes.len());

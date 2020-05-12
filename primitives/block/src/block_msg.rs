@@ -1,19 +1,21 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use cid::Cid;
-use serde::{de, ser};
+use minicbor::{decode, encode, Decoder, Encoder};
+use serde::{Deserialize, Serialize};
 
 use crate::header::BlockHeader;
 
 /// The block message.
-#[derive(Eq, PartialEq, Debug, Clone, Hash)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct BlockMsg {
     /// The block header.
     pub header: BlockHeader,
     /// The CIDs of `BLS` messages.
-    pub bls_msgs: Vec<Cid>,
+    pub bls_messages: Vec<Cid>,
     /// The CIDs of `Secp256k1` messages.
-    pub secp_msgs: Vec<Cid>,
+    pub secpk_messages: Vec<Cid>,
 }
 
 impl BlockMsg {
@@ -23,154 +25,26 @@ impl BlockMsg {
     }
 }
 
-impl ser::Serialize for BlockMsg {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        self::cbor::serialize(self, serializer)
+// Implement CBOR serialization for BlockMsg.
+impl encode::Encode for BlockMsg {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        e.array(3)?
+            .encode(&self.header)?
+            .encode(&self.bls_messages)?
+            .encode(&self.secpk_messages)?
+            .ok()
     }
 }
 
-impl<'de> de::Deserialize<'de> for BlockMsg {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        self::cbor::deserialize(deserializer)
-    }
-}
-
-/// BlockMsg CBOR serialization/deserialization
-pub mod cbor {
-    use cid::Cid;
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use super::BlockMsg;
-    use crate::header::BlockHeader;
-
-    #[derive(Serialize)]
-    struct CborCidRef<'a>(#[serde(with = "cid::ipld_dag_cbor")] &'a Cid);
-    #[derive(Serialize)]
-    struct CborBlockMsgRef<'a>(
-        #[serde(with = "crate::header::cbor")] &'a BlockHeader,
-        &'a [CborCidRef<'a>],
-        &'a [CborCidRef<'a>],
-    );
-
-    /// CBOR serialization
-    pub fn serialize<S>(block: &BlockMsg, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        CborBlockMsgRef(
-            &block.header,
-            &block
-                .bls_msgs
-                .iter()
-                .map(|cid| CborCidRef(cid))
-                .collect::<Vec<_>>(),
-            &block
-                .secp_msgs
-                .iter()
-                .map(|cid| CborCidRef(cid))
-                .collect::<Vec<_>>(),
-        )
-        .serialize(serializer)
-    }
-
-    #[derive(Deserialize)]
-    struct CborCid(#[serde(with = "cid::ipld_dag_cbor")] Cid);
-    #[derive(Deserialize)]
-    struct CborBlockMsg(
-        #[serde(with = "crate::header::cbor")] BlockHeader,
-        Vec<CborCid>,
-        Vec<CborCid>,
-    );
-
-    /// CBOR deserialization
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<BlockMsg, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let CborBlockMsg(header, bls_msgs, secp_msgs) = CborBlockMsg::deserialize(deserializer)?;
+// Implement CBOR deserialization for BlockMsg.
+impl<'b> decode::Decode<'b> for BlockMsg {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let array_len = d.array()?;
+        assert_eq!(array_len, Some(3));
         Ok(BlockMsg {
-            header,
-            bls_msgs: bls_msgs.into_iter().map(|cid| cid.0).collect(),
-            secp_msgs: secp_msgs.into_iter().map(|cid| cid.0).collect(),
-        })
-    }
-}
-
-/// BlockMsg JSON serialization/deserialization
-pub mod json {
-    use cid::Cid;
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use super::BlockMsg;
-    use crate::header::BlockHeader;
-
-    #[derive(Serialize)]
-    struct JsonCidRef<'a>(#[serde(with = "cid::ipld_dag_json")] &'a Cid);
-    #[derive(Serialize)]
-    struct JsonBlockMsgRef<'a> {
-        #[serde(rename = "Header")]
-        #[serde(with = "crate::header::json")]
-        header: &'a BlockHeader,
-        #[serde(rename = "BlsMessages")]
-        bls_msgs: &'a [JsonCidRef<'a>],
-        #[serde(rename = "SecpkMessages")]
-        secp_msgs: &'a [JsonCidRef<'a>],
-    }
-
-    /// JSON serialization
-    pub fn serialize<S>(block: &BlockMsg, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        JsonBlockMsgRef {
-            header: &block.header,
-            bls_msgs: &block
-                .bls_msgs
-                .iter()
-                .map(|cid| JsonCidRef(cid))
-                .collect::<Vec<_>>(),
-            secp_msgs: &block
-                .secp_msgs
-                .iter()
-                .map(|cid| JsonCidRef(cid))
-                .collect::<Vec<_>>(),
-        }
-        .serialize(serializer)
-    }
-
-    #[derive(Deserialize)]
-    struct JsonCid(#[serde(with = "cid::ipld_dag_json")] Cid);
-    #[derive(Deserialize)]
-    struct JsonBlockMsg {
-        #[serde(rename = "Header")]
-        #[serde(with = "crate::header::json")]
-        header: BlockHeader,
-        #[serde(rename = "BlsMessages")]
-        bls_msgs: Vec<JsonCid>,
-        #[serde(rename = "SecpkMessages")]
-        secp_msgs: Vec<JsonCid>,
-    }
-
-    /// JSON deserialization
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<BlockMsg, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let JsonBlockMsg {
-            header,
-            bls_msgs,
-            secp_msgs,
-        } = JsonBlockMsg::deserialize(deserializer)?;
-        Ok(BlockMsg {
-            header,
-            bls_msgs: bls_msgs.into_iter().map(|cid| cid.0).collect(),
-            secp_msgs: secp_msgs.into_iter().map(|cid| cid.0).collect(),
+            header: d.decode::<BlockHeader>()?,
+            bls_messages: d.decode::<Vec<Cid>>()?,
+            secpk_messages: d.decode::<Vec<Cid>>()?,
         })
     }
 }

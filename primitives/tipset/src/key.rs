@@ -1,13 +1,15 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use std::fmt::{self, Display};
+use std::fmt;
 
 use cid::Cid;
+use minicbor::{decode, encode, Decoder, Encoder};
+use serde::{de, ser};
 
 /// A TipsetKey is an immutable collection of CIDs forming a unique key for a tipset.
 // The CIDs are assumed to be distinct and in canonical order. Two keys with the same
 // CIDs in a different order are not considered equal.
-#[derive(Eq, PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash, Default)]
 pub struct TipsetKey {
     cids: Vec<Cid>,
 }
@@ -16,6 +18,11 @@ impl TipsetKey {
     /// Create a new TipsetKey with the given collection of CIDs.
     pub fn new(cids: Vec<Cid>) -> Self {
         Self { cids }
+    }
+
+    /// Create an empty TipsetKey.
+    pub fn empty_tsk() -> Self {
+        Self { cids: vec![] }
     }
 
     /// Return the inner CIDs.
@@ -29,7 +36,7 @@ impl TipsetKey {
     }
 }
 
-impl Display for TipsetKey {
+impl fmt::Display for TipsetKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let cids = self
             .cids
@@ -40,78 +47,39 @@ impl Display for TipsetKey {
     }
 }
 
-/// TipsetKey CBOR serialization/deserialization, need to use `serde_cbor::Serializer` and `serde_cbor::Deserializer`
-pub mod cbor {
-    use cid::Cid;
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use super::TipsetKey;
-
-    #[derive(Serialize)]
-    struct CborCidRef<'a>(#[serde(with = "cid::ipld_dag_cbor")] &'a Cid);
-
-    /// CBOR serialization.
-    pub fn serialize<S>(key: &TipsetKey, serializer: S) -> Result<S::Ok, S::Error>
+// Implement JSON serialization for TipsetKey.
+impl ser::Serialize for TipsetKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
-        let cids = key
-            .cids
-            .iter()
-            .map(|cid| CborCidRef(cid))
-            .collect::<Vec<_>>();
-        cids.serialize(serializer)
-    }
-
-    #[derive(Deserialize)]
-    struct CborCid(#[serde(with = "cid::ipld_dag_cbor")] Cid);
-
-    /// CBOR deserialization.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<TipsetKey, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let cids = Vec::<CborCid>::deserialize(deserializer)?;
-        Ok(TipsetKey {
-            cids: cids.into_iter().map(|cid| cid.0).collect(),
-        })
+        self.cids.serialize(serializer)
     }
 }
 
-/// TipsetKey JSON serialization/deserialization
-pub mod json {
-    use cid::Cid;
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use super::TipsetKey;
-
-    #[derive(Serialize)]
-    struct JsonCidRef<'a>(#[serde(with = "cid::ipld_dag_json")] &'a Cid);
-
-    /// JSON serialization.
-    pub fn serialize<S>(key: &TipsetKey, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        let cids = key
-            .cids
-            .iter()
-            .map(|cid| JsonCidRef(cid))
-            .collect::<Vec<_>>();
-        cids.serialize(serializer)
-    }
-
-    #[derive(Deserialize)]
-    struct JsonCid(#[serde(with = "cid::ipld_dag_json")] Cid);
-
-    /// JSON deserialization.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<TipsetKey, D::Error>
+// Implement JSON deserialization for TipsetKey.
+impl<'de> de::Deserialize<'de> for TipsetKey {
+    fn deserialize<D>(deserializer: D) -> Result<TipsetKey, D::Error>
     where
         D: de::Deserializer<'de>,
     {
-        let cids = Vec::<JsonCid>::deserialize(deserializer)?;
+        let cids = Vec::<Cid>::deserialize(deserializer)?;
+        Ok(TipsetKey { cids })
+    }
+}
+
+// Implement CBOR serialization for TipsetKey.
+impl encode::Encode for TipsetKey {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        e.encode(&self.cids)?.ok()
+    }
+}
+
+// Implement CBOR deserialization for TipsetKey.
+impl<'b> decode::Decode<'b> for TipsetKey {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
         Ok(TipsetKey {
-            cids: cids.into_iter().map(|cid| cid.0).collect(),
+            cids: d.decode::<Vec<Cid>>()?,
         })
     }
 }
@@ -120,7 +88,6 @@ pub mod json {
 mod tests {
     use cid::{Cid, Codec};
     use multihash::Blake2b256;
-    use serde::{Deserialize, Serialize};
 
     use super::TipsetKey;
 
@@ -150,9 +117,6 @@ mod tests {
 
     #[test]
     fn tipset_key_cbor_serde() {
-        #[derive(Debug, PartialEq, Serialize, Deserialize)]
-        struct CborTipsetKey(#[serde(with = "super::cbor")] TipsetKey);
-
         #[rustfmt::skip]
         let cases  = vec![
             (vec![], "80"),
@@ -171,22 +135,19 @@ mod tests {
         ];
 
         for (cids, expected) in cases {
-            let key = CborTipsetKey(TipsetKey::new(cids));
-            let ser = serde_cbor::to_vec(&key).unwrap();
+            let key = TipsetKey::new(cids);
+            let ser = minicbor::to_vec(&key).unwrap();
             let hex = hex::encode(ser);
             assert_eq!(hex, expected);
 
             let bytes = hex::decode(expected).unwrap();
-            let de = serde_cbor::from_slice::<CborTipsetKey>(&bytes).unwrap();
+            let de = minicbor::decode::<TipsetKey>(&bytes).unwrap();
             assert_eq!(de, key);
         }
     }
 
     #[test]
     fn tipset_key_json_serde() {
-        #[derive(Debug, PartialEq, Serialize, Deserialize)]
-        struct JsonTipsetKey(#[serde(with = "super::json")] TipsetKey);
-
         let cases = vec![
             (vec![], "[]"),
             (
@@ -204,10 +165,10 @@ mod tests {
         ];
 
         for (cids, expected) in cases {
-            let key = JsonTipsetKey(TipsetKey::new(cids));
+            let key = TipsetKey::new(cids);
             let ser = serde_json::to_string(&key).unwrap();
             assert_eq!(ser, expected);
-            let de = serde_json::from_str::<JsonTipsetKey>(expected).unwrap();
+            let de = serde_json::from_str::<TipsetKey>(expected).unwrap();
             assert_eq!(de, key);
         }
     }

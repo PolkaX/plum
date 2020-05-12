@@ -1,45 +1,79 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use minicbor::{decode, encode, Decoder, Encoder};
 use num_bigint::BigUint;
 use num_traits::{ToPrimitive, Zero};
+use serde::{de, ser};
 
-/// CBOR serialization/deserialization
-pub mod cbor {
-    use num_bigint::BigUint;
-    use serde::{de, ser};
-    use serde_bytes::{ByteBuf, Bytes};
+/// A BigUint wrapper that implement CBOR and JSON serialization/deserialization.
+#[derive(Clone, Default, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct BigUintWrapper(BigUint);
 
-    /// CBOR serialization
-    pub fn serialize<S>(uint: &BigUint, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        use serde_bytes::Serialize as _;
-        let mut v = uint.to_bytes_be();
+impl BigUintWrapper {
+    /// Consumes the wrapper, returning the underlying BigUint.
+    pub fn into_inner(self) -> BigUint {
+        self.0
+    }
 
+    /// Don't consume the wrapper, borrowing the underlying BigUint.
+    pub fn as_inner(&self) -> &BigUint {
+        &self.0
+    }
+}
+
+impl From<BigUint> for BigUintWrapper {
+    fn from(uint: BigUint) -> Self {
+        Self(uint)
+    }
+}
+
+// Implement CBOR serialization for BigUintWrapper.
+impl encode::Encode for BigUintWrapper {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        let mut v = self.0.to_bytes_be();
         if v == [0] {
             v = Vec::new()
         } else {
             v.insert(0, 0);
         }
-        Bytes::new(&v).serialize(serializer)
+        e.bytes(&v)?.ok()
     }
+}
 
-    /// CBOR deserialization
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<BigUint, D::Error>
+// Implement CBOR deserialization for BigUintWrapper.
+impl<'b> decode::Decode<'b> for BigUintWrapper {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let bytes = d.bytes()?;
+        Ok(BigUintWrapper(BigUint::from_bytes_be(bytes)))
+    }
+}
+
+// Implement JSON serialization for BigUintWrapper.
+impl ser::Serialize for BigUintWrapper {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        self.0.to_string().serialize(serializer)
+    }
+}
+
+// Implement JSON deserialization for BigUintWrapper.
+impl<'de> de::Deserialize<'de> for BigUintWrapper {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: de::Deserializer<'de>,
     {
-        use serde_bytes::Deserialize as _;
-        let v = ByteBuf::deserialize(deserializer)?;
-        Ok(BigUint::from_bytes_be(&v))
+        let v = String::deserialize(deserializer)?;
+        let uint = v
+            .parse::<BigUint>()
+            .map_err(|e| de::Error::custom(e.to_string()))?;
+        Ok(BigUintWrapper(uint))
     }
 }
 
 /// JSON serialization/deserialization
 pub mod json {
-    use std::str::FromStr;
-
     use num_bigint::BigUint;
     use serde::{de, ser, Deserialize, Serialize};
 
@@ -57,7 +91,8 @@ pub mod json {
         D: de::Deserializer<'de>,
     {
         let v = String::deserialize(deserializer)?;
-        Ok(BigUint::from_str(v.as_str()).map_err(|e| de::Error::custom(e.to_string()))?)
+        Ok(v.parse::<BigUint>()
+            .map_err(|e| de::Error::custom(e.to_string()))?)
     }
 }
 

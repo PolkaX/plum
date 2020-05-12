@@ -2,7 +2,7 @@
 
 use std::sync::Once;
 
-use plum_types::SectorSize;
+use plum_sector::SectorSize;
 
 static mut PARAMS: Params = Params {
     unixfs_chunk_size: 0,
@@ -89,7 +89,7 @@ pub struct Params {
     // The ratio of weight contributed by short-term vs long-term factors in a given round
     pub wratio_num: u64,
     pub wratio_den: u64,
-    // Proofs
+    // proofs
     // Epochs
     pub seal_randomness_lookback: u64,
     // Epochs
