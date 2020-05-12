@@ -1,7 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::collections::HashMap;
-use std::str::FromStr;
 use std::sync::Arc;
 
 use parking_lot::RwLock;
@@ -29,9 +28,9 @@ pub struct Key {
 impl Key {
     /// Create a new `Key` with given `KeyInfo`.
     pub fn new(info: KeyInfo) -> Result<Self> {
-        match info.ty {
-            KeyType::Secp256k1 => Self::new_secp256k1(info.privkey),
-            KeyType::Bls => Self::new_bls(info.privkey),
+        match info.r#type {
+            KeyType::Secp256k1 => Self::new_secp256k1(info.private_key),
+            KeyType::Bls => Self::new_bls(info.private_key),
             _ => Err(WalletError::UnknownKeyType),
         }
     }
@@ -45,8 +44,8 @@ impl Key {
         let address = Address::new_secp256k1_addr(&pubkey)?;
         Ok(Key {
             info: KeyInfo {
-                ty: KeyType::Secp256k1,
-                privkey: seckey.serialize().to_vec(),
+                r#type: KeyType::Secp256k1,
+                private_key: seckey.serialize().to_vec(),
             },
             pubkey,
             address,
@@ -61,8 +60,8 @@ impl Key {
         let address = Address::new_bls_addr(&pubkey)?;
         Ok(Key {
             info: KeyInfo {
-                ty: KeyType::Bls,
-                privkey: seckey.as_bytes(),
+                r#type: KeyType::Bls,
+                private_key: seckey.as_bytes(),
             },
             pubkey,
             address,
@@ -171,11 +170,12 @@ impl<KS: KeyStore> WalletImpl<KS> {
     /// Sign the message with the private key found by the given address in the key store.
     fn sign<M: AsRef<[u8]>>(&self, addr: &Address, msg: M) -> Result<Signature> {
         match self.find_key(addr) {
-            Some(key) => match key.info.ty {
-                KeyType::Secp256k1 => {
-                    Ok(Signature::sign_secp256k1(&key.info.privkey, msg.as_ref())?)
-                }
-                KeyType::Bls => Ok(Signature::sign_bls(&key.info.privkey, msg.as_ref())?),
+            Some(key) => match key.info.r#type {
+                KeyType::Secp256k1 => Ok(Signature::sign_secp256k1(
+                    &key.info.private_key,
+                    msg.as_ref(),
+                )?),
+                KeyType::Bls => Ok(Signature::sign_bls(&key.info.private_key, msg.as_ref())?),
                 _ => Err(WalletError::UnknownKeyType),
             },
             None => Err(WalletError::KeyStore(format!(
@@ -229,7 +229,7 @@ impl<KS: KeyStore> WalletImpl<KS> {
         for addr in &addrs {
             if addr.starts_with(WALLET_NAME_PREFIX) {
                 let addr_str = addr.trim_start_matches(WALLET_NAME_PREFIX);
-                let addr = Address::from_str(addr_str)?;
+                let addr = addr_str.parse::<Address>()?;
                 res.push(addr);
             }
         }
@@ -243,9 +243,9 @@ impl<KS: KeyStore> WalletImpl<KS> {
             .get(DEFAULT_KEY_NAME)
             .map_err(|err| WalletError::KeyStore(err.to_string()))?
         {
-            Some(key_info) => match key_info.ty {
-                KeyType::Secp256k1 => Ok(Some(Key::new_secp256k1(&key_info.privkey)?.address)),
-                KeyType::Bls => Ok(Some(Key::new_bls(&key_info.privkey)?.address)),
+            Some(key_info) => match key_info.r#type {
+                KeyType::Secp256k1 => Ok(Some(Key::new_secp256k1(&key_info.private_key)?.address)),
+                KeyType::Bls => Ok(Some(Key::new_bls(&key_info.private_key)?.address)),
                 _ => Err(WalletError::UnknownKeyType),
             },
             None => Ok(None),

@@ -1,70 +1,54 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use fixed_hash::construct_fixed_hash;
+use minicbor::{decode, encode, Decoder, Encoder};
+use serde::{de, ser};
 
 construct_fixed_hash! {
     /// Fixed-size uninterpreted hash type with 32 bytes (256 bits) size.
     pub struct H256(32);
 }
 
-/// H256 CBOR serialization/deserialization.
-pub mod cbor {
-    use serde::{de, ser};
-    use serde_bytes::{ByteBuf, Bytes, Deserialize, Serialize};
-
-    use super::H256;
-
-    /// Serialization of H256.
-    pub fn serialize<S>(h256: &H256, serializer: S) -> Result<S::Ok, S::Error>
+// Implement JSON serialization for H256.
+impl ser::Serialize for H256 {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
-        Bytes::new(h256.as_bytes()).serialize(serializer)
+        plum_bytes::serialize(self.as_bytes(), serializer)
     }
+}
 
-    /// Deserialization of H256.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<H256, D::Error>
+// Implement JSON deserialization for H256.
+impl<'de> de::Deserialize<'de> for H256 {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: de::Deserializer<'de>,
     {
-        let bytes = ByteBuf::deserialize(deserializer)?;
+        let bytes = plum_bytes::deserialize(deserializer)?;
         if bytes.len() == H256::len_bytes() {
             Ok(H256::from_slice(bytes.as_slice()))
         } else {
             Err(de::Error::custom("H256 length must be 32 Bytes"))
         }
     }
+}
 
-    /// Option<H256> CBOR serialization/deserialization.
-    pub mod option {
-        use super::*;
+// Implement CBOR serialization for H256.
+impl encode::Encode for H256 {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        e.bytes(self.as_bytes())?.ok()
+    }
+}
 
-        /// CBOR Serialization of Option<H256>.
-        pub fn serialize<S>(h256: &Option<H256>, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: ser::Serializer,
-        {
-            Bytes::new(
-                h256.as_ref()
-                    .map(|hash| hash.as_bytes())
-                    .unwrap_or_default(),
-            )
-            .serialize(serializer)
-        }
-
-        /// CBOR Deserialization of Option<H256>.
-        pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<H256>, D::Error>
-        where
-            D: de::Deserializer<'de>,
-        {
-            let bytes = ByteBuf::deserialize(deserializer)?;
-            if bytes.is_empty() {
-                Ok(None)
-            } else if bytes.len() == H256::len_bytes() {
-                Ok(Some(H256::from_slice(bytes.as_slice())))
-            } else {
-                Err(de::Error::custom("H256 length must be 32 Bytes"))
-            }
+// Implement CBOR deserialization for H256.
+impl<'b> decode::Decode<'b> for H256 {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let bytes = d.bytes()?;
+        if bytes.len() == H256::len_bytes() {
+            Ok(H256::from_slice(bytes))
+        } else {
+            Err(decode::Error::Message("H256 length must be 32 Bytes"))
         }
     }
 }

@@ -1,38 +1,43 @@
 // Copyright 2020 PolkaX
 
-use anyhow::Result;
 use cid::Cid;
-use plum_actor::abi::piece::{PieceInfo, UnpaddedPieceSize};
-use plum_actor::abi::sector::{ActorId, PoStProof, Randomness, SectorId, SectorInfo};
+
+pub use plum_piece::{PieceInfo, UnpaddedPieceSize};
+pub use plum_sector::{PoStProof, SectorId, SectorInfo};
+pub use plum_types::{ActorId, Randomness};
 
 pub trait Storage<R: std::io::Read> {
-    fn new_sector(sector: SectorId) -> Result<()>;
+    type Error: std::error::Error;
+
+    fn new_sector(sector: SectorId) -> Result<(), Self::Error>;
+
     fn add_piece(
         sector: SectorId,
         piece_siezes: UnpaddedPieceSize,
         new_piece_size: UnpaddedPieceSize,
         piece_data: std::io::BufReader<R>,
-    ) -> Result<PieceInfo>;
+    ) -> Result<PieceInfo, Self::Error>;
 }
 
 pub trait Prover {
+    type Error: std::error::Error;
+
     fn generate_winning_post(
         miner_id: ActorId,
         sector_info: &[SectorInfo],
         randomness: Randomness,
-    ) -> Result<PoStProof>;
+    ) -> Result<PoStProof, Self::Error>;
+
     fn generate_window_post(
         miner_id: ActorId,
         sector_info: &[SectorInfo],
         randomness: Randomness,
-    ) -> Result<PoStProof>;
+    ) -> Result<PoStProof, Self::Error>;
 }
 
 pub type PreCommit1Out = Vec<u8>;
 pub type Commit1Out = Vec<u8>;
 pub type Proof = Vec<u8>;
-pub type InteractiveSealRandomness = Randomness;
-pub type SealRandomness = Randomness;
 
 pub struct SectorCids {
     pub unsealed: Cid,
@@ -40,19 +45,25 @@ pub struct SectorCids {
 }
 
 pub trait Sealer {
+    type Error: std::error::Error;
+
     fn seal_pre_commit1(
         sector: SectorId,
-        ticket: SealRandomness,
+        ticket: Randomness,
         pieces: PieceInfo,
-    ) -> Result<PreCommit1Out>;
-    fn seal_pre_commit2(sector: SectorId, pc1o: PreCommit1Out) -> Result<SectorCids>;
+    ) -> Result<PreCommit1Out, Self::Error>;
+
+    fn seal_pre_commit2(sector: SectorId, pc1o: PreCommit1Out) -> Result<SectorCids, Self::Error>;
+
     fn seal_commit1(
         sector: SectorId,
-        ticket: SealRandomness,
-        seed: InteractiveSealRandomness,
+        ticket: Randomness,
+        seed: Randomness,
         pieces: &[PieceInfo],
         cids: SectorCids,
-    ) -> Result<Commit1Out>;
-    fn seal_commit2(sector: SectorId, c1o: Commit1Out) -> Result<Proof>;
-    fn finalize_sector(sector: SectorId) -> Result<()>;
+    ) -> Result<Commit1Out, Self::Error>;
+
+    fn seal_commit2(sector: SectorId, c1o: Commit1Out) -> Result<Proof, Self::Error>;
+
+    fn finalize_sector(sector: SectorId) -> Result<(), Self::Error>;
 }

@@ -1,24 +1,9 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use serde_derive::{Deserialize, Serialize};
-
-use plum_bigint::{bigint_cbor, bigint_json, biguint_cbor, biguint_json, BigInt, BigUint};
-
-#[derive(PartialEq, Debug, Serialize, Deserialize)]
-struct TestCborBigInt(#[serde(with = "bigint_cbor")] BigInt);
-
-#[derive(PartialEq, Debug, Serialize, Deserialize)]
-struct TestCborBigUint(#[serde(with = "biguint_cbor")] BigUint);
-
-#[derive(PartialEq, Debug, Serialize, Deserialize)]
-struct TestJsonBigInt(#[serde(with = "bigint_json")] BigInt);
-
-#[derive(PartialEq, Debug, Serialize, Deserialize)]
-struct TestJsonBigUint(#[serde(with = "biguint_json")] BigUint);
+use plum_bigint::{BigInt, BigIntWrapper, BigUint, BigUintWrapper};
 
 #[test]
 fn big_int_cbor_serde() {
-    use std::str::FromStr;
     let cases = vec![
         ("0", vec![64]),
         ("1", vec![66, 0, 1]),
@@ -34,17 +19,17 @@ fn big_int_cbor_serde() {
         ),
     ];
     for (s, expect) in cases {
-        let big_int = TestCborBigInt(BigInt::from_str(s).unwrap());
-        let ser = serde_cbor::to_vec(&big_int).unwrap();
+        let int = s.parse::<BigInt>().unwrap();
+        let cbor_wrapper = BigIntWrapper::from(int.clone());
+        let ser = minicbor::to_vec(&cbor_wrapper).unwrap();
         assert_eq!(ser, expect);
-        let de = serde_cbor::from_slice::<TestCborBigInt>(&ser).unwrap();
-        assert_eq!(de, big_int);
+        let de = minicbor::decode::<BigIntWrapper>(&ser).unwrap();
+        assert_eq!(de.into_inner(), int);
     }
 }
 
 #[test]
 fn big_uint_cbor_serde() {
-    use std::str::FromStr;
     let cases = vec![
         ("0", vec![64]),
         ("1", vec![66, 0, 1]),
@@ -59,17 +44,17 @@ fn big_uint_cbor_serde() {
         ),
     ];
     for (s, expect) in cases {
-        let big_uint = TestCborBigUint(BigUint::from_str(s).unwrap());
-        let ser = serde_cbor::to_vec(&big_uint).unwrap();
+        let uint = s.parse::<BigUint>().unwrap();
+        let cbor_wrapper = BigUintWrapper::from(uint.clone());
+        let ser = minicbor::to_vec(cbor_wrapper).unwrap();
         assert_eq!(ser, expect);
-        let de = serde_cbor::from_slice::<TestCborBigUint>(&ser).unwrap();
-        assert_eq!(de, big_uint);
+        let de = minicbor::decode::<BigUintWrapper>(&ser).unwrap();
+        assert_eq!(de.into_inner(), uint);
     }
 }
 
 #[test]
 fn big_int_json_serde() {
-    use std::str::FromStr;
     let cases = vec![
         ("0", "\"0\""),
         ("1", "\"1\""),
@@ -82,17 +67,17 @@ fn big_int_json_serde() {
         ),
     ];
     for (s, expect) in cases {
-        let big_int = TestJsonBigInt(BigInt::from_str(s).unwrap());
-        let ser = serde_json::to_string(&big_int).unwrap();
+        let int = s.parse::<BigInt>().unwrap();
+        let json_wrapper = BigIntWrapper::from(int.clone());
+        let ser = serde_json::to_string(&json_wrapper).unwrap();
         assert_eq!(ser, expect);
-        let de = serde_json::from_str::<TestJsonBigInt>(&ser).unwrap();
-        assert_eq!(de, big_int);
+        let de = serde_json::from_str::<BigIntWrapper>(&ser).unwrap();
+        assert_eq!(de.into_inner(), int);
     }
 }
 
 #[test]
-fn big_uint_serde() {
-    use std::str::FromStr;
+fn big_uint_json_serde() {
     let cases = vec![
         ("0", "\"0\""),
         ("1", "\"1\""),
@@ -104,10 +89,11 @@ fn big_uint_serde() {
         ),
     ];
     for (s, expect) in cases {
-        let big_uint = TestJsonBigUint(BigUint::from_str(s).unwrap());
-        let ser = serde_json::to_string(&big_uint).unwrap();
+        let uint = s.parse::<BigUint>().unwrap();
+        let json_wrapper = BigUintWrapper::from(uint.clone());
+        let ser = serde_json::to_string(&json_wrapper).unwrap();
         assert_eq!(ser, expect);
-        let de = serde_json::from_str::<TestJsonBigUint>(&ser).unwrap();
-        assert_eq!(de, big_uint);
+        let de = serde_json::from_str::<BigUintWrapper>(&ser).unwrap();
+        assert_eq!(de.into_inner(), uint);
     }
 }

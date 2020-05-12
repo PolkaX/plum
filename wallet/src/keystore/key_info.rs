@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use serde::{de, ser};
+use serde::{de, ser, Deserialize, Serialize};
 
 /// The Key type
 #[derive(Eq, PartialEq, Clone)]
@@ -38,40 +38,19 @@ impl fmt::Display for KeyType {
     }
 }
 
+// Implement JSON serialization for KeyType.
 impl ser::Serialize for KeyType {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
-        self::key_type_json::serialize(self, serializer)
+        self.to_string().serialize(serializer)
     }
 }
 
+// Implement JSON deserialization for KeyType.
 impl<'de> de::Deserialize<'de> for KeyType {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        self::key_type_json::deserialize(deserializer)
-    }
-}
-
-/// KeyType JSON serialization/deserialization.
-pub mod key_type_json {
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use super::KeyType;
-
-    /// JSON serialization
-    pub fn serialize<S>(key_type: &KeyType, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        key_type.to_string().serialize(serializer)
-    }
-
-    /// JSON deserialization
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<KeyType, D::Error>
     where
         D: de::Deserializer<'de>,
     {
@@ -87,77 +66,12 @@ pub mod key_type_json {
 }
 
 /// KeyInfo is used for storing keys in KeyStore.
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct KeyInfo {
     /// The key type.
-    pub ty: KeyType,
+    pub r#type: KeyType,
     /// The private key corresponding to key type.
-    pub privkey: Vec<u8>,
-}
-
-impl ser::Serialize for KeyInfo {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        self::key_info_json::serialize(self, serializer)
-    }
-}
-
-impl<'de> de::Deserialize<'de> for KeyInfo {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        self::key_info_json::deserialize(deserializer)
-    }
-}
-
-/// KeyInfo JSON serialization/deserialization.
-pub mod key_info_json {
-    use serde::{de, ser, Deserialize, Serialize};
-
-    use super::{KeyInfo, KeyType};
-
-    #[derive(Serialize)]
-    #[serde(rename_all = "PascalCase")]
-    struct JsonKeyInfoRef<'a> {
-        #[serde(with = "super::key_type_json")]
-        r#type: &'a KeyType,
-        #[serde(with = "plum_types::base64")]
-        private_key: &'a [u8],
-    }
-
-    /// JSON serialization
-    pub fn serialize<S>(key_info: &KeyInfo, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        JsonKeyInfoRef {
-            r#type: &key_info.ty,
-            private_key: &key_info.privkey,
-        }
-        .serialize(serializer)
-    }
-
-    #[derive(Deserialize)]
-    #[serde(rename_all = "PascalCase")]
-    struct JsonKeyInfo {
-        #[serde(with = "super::key_type_json")]
-        r#type: KeyType,
-        #[serde(with = "plum_types::base64")]
-        private_key: Vec<u8>,
-    }
-
-    /// JSON deserialization
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<KeyInfo, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let key_info = JsonKeyInfo::deserialize(deserializer)?;
-        Ok(KeyInfo {
-            ty: key_info.r#type,
-            privkey: key_info.private_key,
-        })
-    }
+    #[serde(with = "plum_bytes")]
+    pub private_key: Vec<u8>,
 }

@@ -9,5 +9,5 @@ mod key;
 mod tipset;
 
 pub use self::errors::TipsetError;
-pub use self::key::{cbor as tipset_key_cbor, json as tipset_key_json, TipsetKey};
-pub use self::tipset::{cbor as tipset_cbor, json as tipset_json, Tipset};
+pub use self::key::TipsetKey;
+pub use self::tipset::Tipset;

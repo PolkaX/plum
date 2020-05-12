@@ -6,4 +6,4 @@
 
 mod h256;
 
-pub use self::h256::{cbor as h256_cbor, H256};
+pub use self::h256::H256;
