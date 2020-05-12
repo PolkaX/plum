@@ -6,4 +6,4 @@
 
 mod types;
 
-pub use self::types::{json as execution_result_json, ExecutionResult};
+pub use self::types::ExecutionResult;

@@ -329,6 +329,7 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 [[package]]
 name = "cid"
 version = "0.5.0"
+source = "git+https://github.com/PolkaX/rust-cid?branch=impl-cbor-and-json#49e2cd8bcbe3ed110adf8a0229e688a59346ed9a"
 dependencies = [
  "minicbor",
  "multibase",
@@ -343,7 +344,7 @@ name = "cid"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50720fbd95ce5d9e51b6b81b7e4f5f93efdefb4b83aa46200dfc9fdfcd84b379"
-replace = "cid 0.5.0"
+replace = "cid 0.5.0 (git+https://github.com/PolkaX/rust-cid?branch=impl-cbor-and-json)"
 
 [[package]]
 name = "clap"
@@ -396,14 +397,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
 dependencies = [
  "bitflags",
-]
-
-[[package]]
-name = "codec-rle"
-version = "0.1.0"
-dependencies = [
- "num",
- "thiserror",
 ]
 
 [[package]]
@@ -2245,7 +2238,7 @@ dependencies = [
  "multihash",
  "serde",
  "serde_bytes",
- "serde_cbor 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_cbor",
  "smallvec 1.4.0",
  "tokio",
  "tokio-io-timeout",
@@ -2283,7 +2276,7 @@ dependencies = [
 name = "plum_params"
 version = "0.1.0"
 dependencies = [
- "plum_types",
+ "plum_sector",
 ]
 
 [[package]]
@@ -2893,18 +2886,12 @@ dependencies = [
 [[package]]
 name = "serde_cbor"
 version = "0.11.1"
-source = "git+https://github.com/PolkaX/cbor?branch=f64ser-hack#5b2fffab3709d13f4753288d599628ff636b2886"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e18acfa2f90e8b735b2836ab8d538de304cbb6729a7360729ea5a895d15a622"
 dependencies = [
  "half",
  "serde",
 ]
-
-[[package]]
-name = "serde_cbor"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e18acfa2f90e8b735b2836ab8d538de304cbb6729a7360729ea5a895d15a622"
-replace = "serde_cbor 0.11.1 (git+https://github.com/PolkaX/cbor?branch=f64ser-hack)"
 
 [[package]]
 name = "serde_derive"

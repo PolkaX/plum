@@ -15,7 +15,7 @@ serde_repr = "0.1"
 thiserror = "1.0"
 
 # ipfs
-#ipld-cbor = { package = "rust-ipld-cbor", git = "https://github.com/PolkaX/rust-ipfs", branch = "filecoin-master" }
+#ipld-core = { git = "https://github.com/PolkaX/rust-ipfs", branch = "filecoin-master" }
 
 plum_address = { path = "../primitives/address" }
 plum_bigint = { path = "../primitives/bigint" }

@@ -2,7 +2,7 @@
 
 use std::sync::Once;
 
-use plum_types::SectorSize;
+use plum_sector::SectorSize;
 
 static mut PARAMS: Params = Params {
     unixfs_chunk_size: 0,

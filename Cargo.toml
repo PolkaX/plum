@@ -16,15 +16,13 @@ path = "src/bin/main.rs"
 cli = { path = "./cli" }
 
 [replace]
-"cid:0.5.0" = { path = "../../../ipfs/rust-cid" }
-"serde_cbor:0.11.1" = {  git = "https://github.com/PolkaX/cbor", branch = "f64ser-hack" }
+"cid:0.5.0" = { git = "https://github.com/PolkaX/rust-cid", branch = "impl-cbor-and-json" }
 
 [workspace]
 members = [
   "actor",
   "chain",
   "cli",
-  "codec/rle",
   "crypto",
   "hashing",
   "libp2p",
