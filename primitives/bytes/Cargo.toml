@@ -7,5 +7,5 @@ license = "GPL-3.0"
 
 [dependencies]
 base64 = "0.12"
-minicbor = { version = "0.3", features = ["std"] }
+minicbor = { version = "0.4", features = ["std"] }
 serde = "1.0"
