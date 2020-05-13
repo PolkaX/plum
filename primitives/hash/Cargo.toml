@@ -7,7 +7,7 @@ license = "GPL-3.0"
 
 [dependencies]
 fixed-hash = "0.6"
-minicbor = { version = "0.3", features = ["std"] }
+minicbor = { version = "0.4", features = ["std"] }
 serde = "1.0"
 
 plum_bytes = { path = "../bytes" }

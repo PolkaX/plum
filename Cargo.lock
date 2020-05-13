@@ -329,7 +329,7 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 [[package]]
 name = "cid"
 version = "0.5.0"
-source = "git+https://github.com/PolkaX/rust-cid?branch=impl-cbor-and-json#49e2cd8bcbe3ed110adf8a0229e688a59346ed9a"
+source = "git+https://github.com/PolkaX/rust-cid?branch=impl-cbor-and-json#ce92de312ee78b57bf472332f1b435b63daf42e0"
 dependencies = [
  "minicbor",
  "multibase",
@@ -1628,9 +1628,9 @@ dependencies = [
 
 [[package]]
 name = "minicbor"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4709adb7e85ffb3844afb66f0d50ebd0336e7699445b5815b3a74ccf42efc15a"
+checksum = "2ba51ba9e365147a1bfb1442afbb5d887530eee5ed7dca410c2ba365ad617083"
 
 [[package]]
 name = "miniz_oxide"

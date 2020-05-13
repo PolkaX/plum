@@ -6,7 +6,7 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-minicbor = { version = "0.3", features = ["std"] }
+minicbor = { version = "0.4", features = ["std"] }
 num-bigint = "0.2"
 num-traits = "0.2"
 serde = "1.0"
