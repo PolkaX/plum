@@ -89,10 +89,10 @@ pub trait StateApi: RpcClient {
         self.request(
             "StateMinerSectors",
             vec![
-                helper::serialize_with(address_json::serialize, addr),
-                helper::serialize_with(bitfield_json::serialize, field),
+                helper::serialize(addr),
+                helper::serialize(field),
                 helper::serialize(&what),
-                helper::serialize_with(tipset_key_json::serialize, key),
+                helper::serialize(key),
             ],
         )
         .await

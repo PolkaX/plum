@@ -66,7 +66,7 @@ pub trait ClientApi: RpcClient {
         self.request(
             "ClientQueryAsk",
             vec![
-                helper::serialize_with(helper::peer_id::serialize, peer_id),
+                helper::serialize(&helper::PeerIdRefWrapper::from(peer_id)),
                 helper::serialize(miner),
             ],
         )

@@ -27,7 +27,7 @@ pub trait CommonApi: RpcClient {
     async fn net_connectedness(&self, peer_id: &PeerId) -> Result<Connectedness> {
         self.request(
             "NetConnectedness",
-            vec![helper::serialize_with(helper::peer_id::serialize, peer_id)],
+            vec![helper::serialize(&helper::PeerIdRefWrapper::from(peer_id))],
         )
         .await
     }
@@ -48,7 +48,7 @@ pub trait CommonApi: RpcClient {
     async fn net_disconnect(&self, peer_id: &PeerId) -> Result<()> {
         self.request(
             "NetDisconnect",
-            vec![helper::serialize_with(helper::peer_id::serialize, peer_id)],
+            vec![helper::serialize(&helper::PeerIdRefWrapper::from(peer_id))],
         )
         .await
     }
@@ -56,7 +56,7 @@ pub trait CommonApi: RpcClient {
     async fn net_find_peer(&self, peer_id: &PeerId) -> Result<PeerAddrInfo> {
         self.request(
             "NetFindPeer",
-            vec![helper::serialize_with(helper::peer_id::serialize, peer_id)],
+            vec![helper::serialize(&helper::PeerIdRefWrapper::from(peer_id))],
         )
         .await
     }

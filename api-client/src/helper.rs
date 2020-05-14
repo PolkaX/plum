@@ -1,23 +1,13 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use serde::{Deserialize, Serialize};
-use serde_json::{
-    value::Serializer as JsonValueSerializer, Error as JsonError, Value as JsonValue,
-};
+use serde_json::{value::Serializer as JsonValueSerializer, Value as JsonValue};
 
 #[inline]
 pub fn serialize<T: Serialize>(value: &T) -> JsonValue {
     value
         .serialize(JsonValueSerializer)
         .expect("Types never fail to serialize")
-}
-
-#[inline]
-pub fn serialize_with<F, T>(f: F, value: &T) -> JsonValue
-where
-    F: Fn(&T, JsonValueSerializer) -> Result<JsonValue, JsonError>,
-{
-    f(value, JsonValueSerializer).expect("Types never fail to serialize")
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -27,6 +17,15 @@ impl PeerIdWrapper {
     /// Consumes the wrapper, returning the underlying libp2p_core::PeerId.
     pub fn into_inner(self) -> libp2p_core::PeerId {
         self.0
+    }
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct PeerIdRefWrapper<'a>(#[serde(with = "self::peer_id")] &'a libp2p_core::PeerId);
+
+impl<'a> From<&'a libp2p_core::PeerId> for PeerIdRefWrapper<'a> {
+    fn from(peer_id: &'a libp2p_core::PeerId) -> Self {
+        Self(peer_id)
     }
 }
 

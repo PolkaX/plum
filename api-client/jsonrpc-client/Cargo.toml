@@ -1,7 +1,7 @@
 [package]
 name = "jsonrpc-client"
 version = "0.1.0"
-authors = ["PolkaX <https://github.com/PolkaX>"]
+authors = ["koushiro <koushiro.cqx@gmail.com>"]
 edition = "2018"
 description = "A JSON-RPC client library"
 
