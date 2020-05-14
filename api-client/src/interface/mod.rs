@@ -3,7 +3,6 @@
 pub(crate) mod common;
 pub(crate) mod full;
 pub(crate) mod storage;
-pub(crate) mod worker;
 
 /// Common API interface
 pub use self::common::*;
@@ -11,5 +10,3 @@ pub use self::common::*;
 pub use self::full::*;
 /// StorageMiner API interface
 pub use self::storage::*;
-/// Worker API interface
-pub use self::worker::*;
