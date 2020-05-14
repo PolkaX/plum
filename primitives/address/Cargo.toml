@@ -13,6 +13,7 @@ serde = "1.0"
 thiserror = "1.0"
 unsigned-varint = "0.3"
 
+# plum
 plum_hashing = { path = "../../hashing" }
 
 [dev-dependencies]

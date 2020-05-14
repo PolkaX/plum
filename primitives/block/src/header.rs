@@ -10,7 +10,7 @@ use crate::post_proof::PoStProof;
 use crate::ticket::Ticket;
 
 use plum_address::Address;
-use plum_bigint::{bigint_json, BigInt, BigIntWrapper};
+use plum_bigint::{bigint_json, BigInt, BigIntRefWrapper, BigIntWrapper};
 use plum_crypto::Signature;
 
 /// The header part of the block.
@@ -85,7 +85,7 @@ impl encode::Encode for BlockHeader {
             .encode(&self.beacon_entries)?
             .encode(&self.win_post_proof)?
             .encode(&self.parents)?
-            .encode(BigIntWrapper::from(self.parent_weight.clone()))?
+            .encode(BigIntRefWrapper::from(&self.parent_weight))?
             .u64(self.height)?
             .encode(&self.parent_state_root)?
             .encode(&self.parent_message_receipts)?

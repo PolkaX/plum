@@ -11,8 +11,10 @@ libsecp256k1 = "0.3"
 minicbor = { version = "0.4", features = ["std"] }
 rand = "0.7"
 serde = { version = "1.0", features = ["derive"] }
+serde_repr = "0.1"
 thiserror = "1.0"
 
+# plum
 plum_address = { path = "../primitives/address" }
 plum_bytes = { path = "../primitives/bytes" }
 plum_hashing = { path = "../hashing" }

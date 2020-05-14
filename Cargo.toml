@@ -13,7 +13,6 @@ name = "plum-node"
 path = "src/bin/main.rs"
 
 [dependencies]
-cli = { path = "./cli" }
 
 [replace]
 "cid:0.5.0" = { git = "https://github.com/PolkaX/rust-cid", branch = "impl-cbor-and-json" }
@@ -22,12 +21,12 @@ cli = { path = "./cli" }
 members = [
   "actor",
   "chain",
-  "cli",
+#  "cli",
   "crypto",
   "hashing",
-  "libp2p",
-  "network",
-  "peermgr",
+#  "libp2p",
+#  "network",
+#  "peermgr",
   "params",
   "primitives/address",
   "primitives/bigint",
@@ -44,4 +43,8 @@ members = [
   "vm",
   "wallet",
   "specs-storage",
+
+  # tools
+  "api-client/jsonrpc-client",
+  "api-client"
 ]

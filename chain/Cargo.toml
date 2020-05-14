@@ -10,4 +10,5 @@ cid = { version = "0.5", features = ["impl-serde"] }
 data-encoding = "2.1"
 lazy_static = "1.4"
 
+# plum
 plum_address = { path = "../primitives/address" }

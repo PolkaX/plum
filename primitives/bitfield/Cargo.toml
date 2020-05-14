@@ -12,6 +12,7 @@ serde_bytes = "0.11"
 
 rle = { path = "./rle" }
 
+# plum
 plum_bytes = { path = "../bytes" }
 
 [dev-dependencies]
