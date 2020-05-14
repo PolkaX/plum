@@ -3,5 +3,6 @@
 //! Plum Node CLI.
 
 fn main() {
-    cli::run();
+    // cli::run();
+    todo!()
 }

@@ -5,7 +5,7 @@ use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
 use plum_address::Address;
-use plum_bigint::{bigint_json, BigInt, BigIntWrapper};
+use plum_bigint::{bigint_json, BigInt, BigIntRefWrapper, BigIntWrapper};
 
 /// The unsigned message.
 #[derive(Eq, PartialEq, Clone, Debug, Hash, Serialize, Deserialize)]
@@ -65,9 +65,9 @@ impl encode::Encode for UnsignedMessage {
             .encode(&self.to)?
             .encode(&self.from)?
             .u64(self.nonce)?
-            .encode(BigIntWrapper::from(self.value.clone()))?
-            .encode(BigIntWrapper::from(self.gas_price.clone()))?
-            .encode(BigIntWrapper::from(self.gas_limit.clone()))?
+            .encode(BigIntRefWrapper::from(&self.value))?
+            .encode(BigIntRefWrapper::from(&self.gas_price))?
+            .encode(BigIntRefWrapper::from(&self.gas_limit))?
             .u64(self.method)?
             .bytes(&self.params)?
             .ok()

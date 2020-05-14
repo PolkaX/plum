@@ -19,6 +19,23 @@ impl BigUintWrapper {
     pub fn as_inner(&self) -> &BigUint {
         &self.0
     }
+
+    /// Don't consume the wrapper, mutable borrowing the underlying BigUint.
+    pub fn as_mut_inner(&mut self) -> &mut BigUint {
+        &mut self.0
+    }
+}
+
+impl AsRef<BigUint> for BigUintWrapper {
+    fn as_ref(&self) -> &BigUint {
+        self.as_inner()
+    }
+}
+
+impl AsMut<BigUint> for BigUintWrapper {
+    fn as_mut(&mut self) -> &mut BigUint {
+        self.as_mut_inner()
+    }
 }
 
 impl From<BigUint> for BigUintWrapper {
@@ -54,7 +71,7 @@ impl ser::Serialize for BigUintWrapper {
     where
         S: ser::Serializer,
     {
-        self.0.to_string().serialize(serializer)
+        self::json::serialize(self.as_inner(), serializer)
     }
 }
 
@@ -64,11 +81,53 @@ impl<'de> de::Deserialize<'de> for BigUintWrapper {
     where
         D: de::Deserializer<'de>,
     {
-        let v = String::deserialize(deserializer)?;
-        let uint = v
-            .parse::<BigUint>()
-            .map_err(|e| de::Error::custom(e.to_string()))?;
-        Ok(BigUintWrapper(uint))
+        Ok(Self(self::json::deserialize(deserializer)?))
+    }
+}
+
+/// A BigUint reference wrapper that implement CBOR and JSON serialization.
+#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct BigUintRefWrapper<'a>(&'a BigUint);
+
+impl<'a> BigUintRefWrapper<'a> {
+    /// Don't consume the wrapper, borrowing the underlying BigUint.
+    pub fn as_inner(&self) -> &BigUint {
+        self.0
+    }
+}
+
+impl<'a> AsRef<BigUint> for BigUintRefWrapper<'a> {
+    fn as_ref(&self) -> &BigUint {
+        self.as_inner()
+    }
+}
+
+impl<'a> From<&'a BigUint> for BigUintRefWrapper<'a> {
+    fn from(uint: &'a BigUint) -> Self {
+        Self(uint)
+    }
+}
+
+// Implement CBOR serialization for BigUintRefWrapper.
+impl<'a> encode::Encode for BigUintRefWrapper<'a> {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        let mut v = self.0.to_bytes_be();
+        if v == [0] {
+            v = Vec::new()
+        } else {
+            v.insert(0, 0);
+        }
+        e.bytes(&v)?.ok()
+    }
+}
+
+// Implement JSON serialization for BigUintRefWrapper.
+impl<'a> ser::Serialize for BigUintRefWrapper<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        self::json::serialize(self.as_inner(), serializer)
     }
 }
 
