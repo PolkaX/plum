@@ -6,7 +6,7 @@ use num_traits::{Signed, ToPrimitive, Zero};
 use serde::{de, ser};
 
 /// A BigInt wrapper that implement CBOR and JSON serialization/deserialization.
-#[derive(Clone, Default, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct BigIntWrapper(BigInt);
 
 impl BigIntWrapper {
@@ -18,6 +18,23 @@ impl BigIntWrapper {
     /// Don't consume the wrapper, borrowing the underlying BigInt.
     pub fn as_inner(&self) -> &BigInt {
         &self.0
+    }
+
+    /// Don't consume the wrapper, mutable borrowing the underlying BigInt.
+    pub fn as_mut_inner(&mut self) -> &mut BigInt {
+        &mut self.0
+    }
+}
+
+impl AsRef<BigInt> for BigIntWrapper {
+    fn as_ref(&self) -> &BigInt {
+        self.as_inner()
+    }
+}
+
+impl AsMut<BigInt> for BigIntWrapper {
+    fn as_mut(&mut self) -> &mut BigInt {
+        self.as_mut_inner()
     }
 }
 
@@ -79,7 +96,7 @@ impl ser::Serialize for BigIntWrapper {
     where
         S: ser::Serializer,
     {
-        self.0.to_string().serialize(serializer)
+        self::json::serialize(self.as_inner(), serializer)
     }
 }
 
@@ -89,11 +106,66 @@ impl<'de> de::Deserialize<'de> for BigIntWrapper {
     where
         D: de::Deserializer<'de>,
     {
-        let v = String::deserialize(deserializer)?;
-        let int = v
-            .parse::<BigInt>()
-            .map_err(|e| de::Error::custom(e.to_string()))?;
-        Ok(BigIntWrapper(int))
+        Ok(Self(self::json::deserialize(deserializer)?))
+    }
+}
+
+/// A BigInt reference wrapper that implement CBOR and JSON serialization.
+#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct BigIntRefWrapper<'a>(&'a BigInt);
+
+impl<'a> BigIntRefWrapper<'a> {
+    /// Don't consume the wrapper, borrowing the underlying BigInt.
+    pub fn as_inner(&self) -> &BigInt {
+        self.0
+    }
+}
+
+impl<'a> AsRef<BigInt> for BigIntRefWrapper<'a> {
+    fn as_ref(&self) -> &BigInt {
+        self.as_inner()
+    }
+}
+
+impl<'a> From<&'a BigInt> for BigIntRefWrapper<'a> {
+    fn from(int: &'a BigInt) -> Self {
+        Self(int)
+    }
+}
+
+// Implement CBOR serialization for BigIntRefWrapper.
+impl<'a> encode::Encode for BigIntRefWrapper<'a> {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        let (sign, mut v) = self.0.to_bytes_be();
+        let v = match sign {
+            Sign::Plus => {
+                let mut buf = Vec::with_capacity(1 + v.len());
+                buf.push(0);
+                buf.extend(v.iter());
+                buf
+            }
+            Sign::Minus => {
+                let mut buf = Vec::with_capacity(1 + v.len());
+                buf.push(1);
+                buf.extend(v.iter());
+                buf
+            }
+            Sign::NoSign => {
+                v.clear();
+                v
+            }
+        };
+        e.bytes(&v)?.ok()
+    }
+}
+
+// Implement JSON serialization for BigIntRefWrapper.
+impl<'a> ser::Serialize for BigIntRefWrapper<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        self::json::serialize(self.as_inner(), serializer)
     }
 }
 
@@ -115,9 +187,10 @@ pub mod json {
     where
         D: de::Deserializer<'de>,
     {
-        let v = String::deserialize(deserializer)?;
-        Ok(v.parse::<BigInt>()
-            .map_err(|e| de::Error::custom(e.to_string()))?)
+        let bigint = String::deserialize(deserializer)?
+            .parse::<BigInt>()
+            .map_err(|e| de::Error::custom(e.to_string()))?;
+        Ok(bigint)
     }
 }
 

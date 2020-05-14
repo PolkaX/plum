@@ -9,7 +9,7 @@
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{de, ser, Deserialize, Serialize};
 
-/// A wrapper of Vec<u8>.
+/// A wrapper of Vec<u8> that implement CBOR and JSON serialization/deserialization.
 #[derive(Ord, PartialOrd, Eq, PartialEq, Clone, Debug, Hash, Default)]
 pub struct Bytes(Vec<u8>);
 
@@ -22,6 +22,12 @@ impl AsRef<[u8]> for Bytes {
 impl AsMut<[u8]> for Bytes {
     fn as_mut(&mut self) -> &mut [u8] {
         self.as_mut_inner()
+    }
+}
+
+impl From<Vec<u8>> for Bytes {
+    fn from(bytes: Vec<u8>) -> Self {
+        Self(bytes)
     }
 }
 
@@ -62,7 +68,7 @@ impl ser::Serialize for Bytes {
     where
         S: ser::Serializer,
     {
-        base64::encode(self).serialize(serializer)
+        self::serialize(self.as_inner(), serializer)
     }
 }
 
@@ -72,10 +78,47 @@ impl<'de> de::Deserialize<'de> for Bytes {
     where
         D: de::Deserializer<'de>,
     {
-        let s = String::deserialize(deserializer)?;
-        let bytes = base64::decode(s)
-            .map_err(|err| de::Error::custom(format!("base64 decode error: {}", err)))?;
-        Ok(Bytes(bytes))
+        Ok(Self(self::deserialize(deserializer)?))
+    }
+}
+
+/// A wrapper of &[u8] that implement CBOR and JSON serialization.
+#[derive(Ord, PartialOrd, Eq, PartialEq, Clone, Debug, Hash, Default)]
+pub struct BytesRef<'a>(&'a [u8]);
+
+impl<'a> BytesRef<'a> {
+    /// Don't consume the wrapper, borrowing the underlying &[u8].
+    pub fn as_inner(&self) -> &[u8] {
+        self.0
+    }
+}
+
+impl<'a> AsRef<[u8]> for BytesRef<'a> {
+    fn as_ref(&self) -> &[u8] {
+        self.as_inner()
+    }
+}
+
+impl<'a> From<&'a [u8]> for BytesRef<'a> {
+    fn from(bytes: &'a [u8]) -> Self {
+        Self(bytes)
+    }
+}
+
+// Implement CBOR serialization for BytesRef.
+impl<'a> encode::Encode for BytesRef<'a> {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        e.bytes(self.as_inner())?.ok()
+    }
+}
+
+/// Implement JSON serialization of &[u8] using base64.
+impl<'a> ser::Serialize for BytesRef<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        self::serialize(self.as_inner(), serializer)
     }
 }
 

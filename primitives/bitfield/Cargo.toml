@@ -6,12 +6,13 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-minicbor = { version = "0.3", features = ["std"] }
+minicbor = { version = "0.4", features = ["std"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_bytes = "0.11"
 
 rle = { path = "./rle" }
 
+# plum
 plum_bytes = { path = "../bytes" }
 
 [dev-dependencies]

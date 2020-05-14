@@ -3,7 +3,7 @@
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
-use plum_bigint::{bigint_json, BigInt, BigIntWrapper};
+use plum_bigint::{bigint_json, BigInt, BigIntRefWrapper, BigIntWrapper};
 
 /// The receipt of applying message.
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
@@ -25,7 +25,7 @@ impl encode::Encode for MessageReceipt {
         e.array(3)?
             .u8(self.exit_code)?
             .bytes(&self.r#return)?
-            .encode(BigIntWrapper::from(self.gas_used.clone()))?
+            .encode(BigIntRefWrapper::from(&self.gas_used))?
             .ok()
     }
 }
