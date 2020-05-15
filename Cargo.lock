@@ -216,7 +216,7 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 [[package]]
 name = "cid"
 version = "0.5.0"
-source = "git+https://github.com/PolkaX/rust-cid?branch=impl-cbor-and-json#ce92de312ee78b57bf472332f1b435b63daf42e0"
+source = "git+https://github.com/PolkaX/rust-cid?branch=impl-cbor-and-json#47fa5770497b06e1e1c515f30a80783d7c2d302f"
 dependencies = [
  "minicbor",
  "multibase",
