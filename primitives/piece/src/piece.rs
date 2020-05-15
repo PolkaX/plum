@@ -1,10 +1,12 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use cid::Cid;
+use filecoin_proofs::types;
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
 use crate::size::PaddedPieceSize;
+use std::convert::TryInto;
 
 /// The information of a piece.
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize)]
@@ -36,3 +38,16 @@ impl<'b> decode::Decode<'b> for PieceInfo {
         })
     }
 }
+
+// impl TryInto<types::PieceInfo> for PieceInfo {
+//     type Error = ();
+//
+//     fn try_into(self) -> Result<types::PieceInfo, Self::Error> {
+//         let unpadded = self.size.unpadded();
+//
+//         Ok(types::PieceInfo {
+//             commitment: [],
+//             size: unpadded.into(),
+//         })
+//     }
+// }
