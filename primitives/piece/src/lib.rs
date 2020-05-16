@@ -7,7 +7,7 @@
 mod piece;
 mod size;
 
-pub use self::piece::PieceInfo;
+pub use self::piece::{convert_pieceinfos, PieceInfo};
 pub use self::size::{PaddedPieceSize, PieceSizeError, UnpaddedPieceSize};
 
 #[cfg(test)]

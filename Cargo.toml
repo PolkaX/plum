@@ -34,6 +34,7 @@ members = [
   "primitives/bitfield/rle",
   "primitives/block",
   "primitives/bytes",
+  "primitives/cid-ext",
   "primitives/hash",
   "primitives/message",
   "primitives/piece",
