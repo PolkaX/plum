@@ -1,12 +1,14 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+use std::convert::TryInto;
 
 use cid::Cid;
 use filecoin_proofs::types;
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
+use cid_ext::comm;
+
 use crate::size::PaddedPieceSize;
-use std::convert::TryInto;
 
 /// The information of a piece.
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize)]
@@ -39,15 +41,27 @@ impl<'b> decode::Decode<'b> for PieceInfo {
     }
 }
 
-// impl TryInto<types::PieceInfo> for PieceInfo {
-//     type Error = ();
-//
-//     fn try_into(self) -> Result<types::PieceInfo, Self::Error> {
-//         let unpadded = self.size.unpadded();
-//
-//         Ok(types::PieceInfo {
-//             commitment: [],
-//             size: unpadded.into(),
-//         })
-//     }
-// }
+impl TryInto<types::PieceInfo> for PieceInfo {
+    type Error = comm::CommCidErr;
+
+    fn try_into(self) -> Result<types::PieceInfo, Self::Error> {
+        let unpadded = self.size.unpadded();
+        let commitment = comm::cid_to_piece_commitment_v1(&self.piece_cid)?;
+        Ok(types::PieceInfo {
+            commitment,
+            size: unpadded.into(),
+        })
+    }
+}
+
+/// convert piece info list to filecoin proof pieceinfo list
+pub fn convert_pieceinfos(
+    pieceinfos: Vec<PieceInfo>,
+) -> Result<Vec<types::PieceInfo>, comm::CommCidErr> {
+    let mut v = Vec::with_capacity(pieceinfos.len());
+    for info in pieceinfos {
+        let p = info.try_into()?;
+        v.push(p);
+    }
+    Ok(v)
+}

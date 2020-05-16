@@ -13,5 +13,7 @@ thiserror = "1.0"
 
 filecoin-proofs = { git = "https://github.com/filecoin-project/rust-fil-proofs.git" }
 
+cid-ext = { path = "../cid-ext" }
+
 [dev-dependencies]
 serde_json = "1.0"
