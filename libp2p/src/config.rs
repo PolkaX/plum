@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use cid::{Cid, Codec};
+use cid::{Cid, Codec, IntoExt};
 use libp2p::{
     core::{Multiaddr, PeerId},
     gossipsub::Topic,
@@ -35,7 +35,7 @@ impl Default for Libp2pConfig {
 }
 
 pub fn genesis_hash() -> Cid {
-    let hash = multihash::Sha2_256::digest(GENESIS);
+    let hash = multihash::Sha2_256::digest(GENESIS).into_ext();
     Cid::new_v1(Codec::DagProtobuf, hash)
 }
 

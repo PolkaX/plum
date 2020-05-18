@@ -1,0 +1,16 @@
+[package]
+name = "plum_fc"
+version = "0.1.0"
+authors = ["The PolkaX Authors"]
+edition = "2018"
+license = "GPL-3.0"
+
+[dependencies]
+cid = "0.5"
+thiserror = "1.0"
+
+# filecoin
+filecoin-proofs = { git = "https://github.com/filecoin-project/rust-fil-proofs.git" }
+
+# plum
+plum_piece = { path = "../piece" }
