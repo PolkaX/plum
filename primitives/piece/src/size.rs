@@ -2,7 +2,6 @@
 
 use std::convert::TryFrom;
 
-use filecoin_proofs::{types, UnpaddedBytesAmount};
 use serde::{Deserialize, Serialize};
 
 const MIN_UNPADDED_PIECE_SIZE: u64 = 127;
@@ -25,12 +24,6 @@ impl TryFrom<u64> for UnpaddedPieceSize {
 
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         UnpaddedPieceSize::new(value)
-    }
-}
-
-impl Into<types::UnpaddedBytesAmount> for UnpaddedPieceSize {
-    fn into(self) -> UnpaddedBytesAmount {
-        UnpaddedBytesAmount(self.0)
     }
 }
 

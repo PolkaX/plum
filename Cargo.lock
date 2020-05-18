@@ -435,15 +435,6 @@ checksum = "50720fbd95ce5d9e51b6b81b7e4f5f93efdefb4b83aa46200dfc9fdfcd84b379"
 replace = "cid 0.5.0 (git+https://github.com/PolkaX/rust-cid?branch=impl-cbor-and-json)"
 
 [[package]]
-name = "cid-ext"
-version = "0.1.0"
-dependencies = [
- "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "filecoin-proofs",
- "thiserror",
-]
-
-[[package]]
 name = "cl-sys"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2625,6 +2616,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "plum_fc"
+version = "0.1.0"
+dependencies = [
+ "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "filecoin-proofs",
+ "plum_piece",
+ "thiserror",
+]
+
+[[package]]
 name = "plum_hash"
 version = "0.1.0"
 dependencies = [
@@ -2673,8 +2674,6 @@ name = "plum_piece"
 version = "0.1.0"
 dependencies = [
  "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cid-ext",
- "filecoin-proofs",
  "minicbor",
  "serde 1.0.110",
  "serde_json",
@@ -2687,7 +2686,6 @@ version = "0.1.0"
 dependencies = [
  "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "minicbor",
- "plum_address",
  "plum_bigint",
  "plum_bytes",
  "plum_types",
@@ -2720,6 +2718,7 @@ dependencies = [
  "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.4.0",
  "minicbor",
+ "plum_address",
  "plum_bigint",
  "plum_hash",
  "serde 1.0.110",
