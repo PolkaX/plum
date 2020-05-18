@@ -333,13 +333,3 @@ impl<'b> decode::Decode<'b> for SectorInfo {
         })
     }
 }
-
-/// convert actorid to prove id
-pub fn to_prove_id(actor_id: plum_types::ActorId) -> Result<[u8; 32], plum_address::AddressError> {
-    let addr = plum_address::Address::new_id_addr(actor_id)?;
-    let mut r: [u8; 32] = Default::default();
-    let v = addr.payload();
-    let len = std::cmp::min(v.len(), r.len());
-    &mut r[..len].copy_from_slice(&v[..len]);
-    Ok(r)
-}

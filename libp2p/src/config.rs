@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use cid::{Cid, Codec};
+use cid::{Cid, Codec, IntoExt};
 use libp2p::gossipsub::Topic;
 use libp2p::kad::{record::store::MemoryStore, KademliaConfig};
 use libp2p::{Multiaddr, PeerId};

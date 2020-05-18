@@ -11,9 +11,5 @@ minicbor = { version = "0.4", features = ["std"] }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0"
 
-filecoin-proofs = { git = "https://github.com/filecoin-project/rust-fil-proofs.git" }
-
-cid-ext = { path = "../cid-ext" }
-
 [dev-dependencies]
 serde_json = "1.0"
