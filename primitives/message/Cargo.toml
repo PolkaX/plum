@@ -15,7 +15,7 @@ serde = { version = "1.0", features = ["derive"] }
 plum_address = { path = "../address" }
 plum_bigint = { path = "../bigint" }
 plum_bytes = { path = "../bytes" }
-plum_crypto = { path = "../../crypto" }
+plum_crypto = { path = "../crypto" }
 
 [dev-dependencies]
 serde_json = "1.0"
