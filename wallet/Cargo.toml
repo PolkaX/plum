@@ -17,4 +17,4 @@ thiserror = "1.0"
 # plum
 plum_address = { path = "../primitives/address" }
 plum_bytes = { path = "../primitives/bytes" }
-plum_crypto = { path = "../crypto" }
+plum_crypto = { path = "../primitives/crypto" }

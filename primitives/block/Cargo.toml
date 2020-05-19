@@ -17,5 +17,5 @@ serde_repr = "0.1"
 plum_address = { path = "../address" }
 plum_bigint = { path = "../bigint" }
 plum_bytes = { path = "../bytes" }
-plum_crypto = { path = "../../crypto" }
+plum_crypto = { path = "../crypto" }
 plum_message = { path = "../message" }

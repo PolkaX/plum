@@ -23,7 +23,7 @@ plum_bigint = { path = "../primitives/bigint" }
 plum_bitfield = { path = "../primitives/bitfield" }
 plum_block = { path = "../primitives/block" }
 plum_bytes = { path = "../primitives/bytes" }
-plum_crypto = { path = "../crypto" }
+plum_crypto = { path = "../primitives/crypto" }
 plum_message = { path = "../primitives/message" }
 plum_piece = { path = "../primitives/piece" }
 plum_sector = { path = "../primitives/sector" }
