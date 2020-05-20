@@ -18,8 +18,17 @@ mod constant {
     pub const BLS_PRIVATE_KEY_LEN: usize = 32;
     /// The length of a BLS public key.
     pub const BLS_PUBLIC_KEY_LEN: usize = 48;
-    /// The length of a BLS message hash/digest.
-    pub const BLS_DIGEST_LEN: usize = 96;
+
+    /// The length of a secp256k1 signature.
+    pub const SECP256K1_SIGNATURE_LEN: usize = 64;
+    /// The length of a secp256k1 private key.
+    pub const SECP256K1_PRIVATE_KEY_LEN: usize = 32;
+    /// The length of a secp256k1 full public key.
+    pub const SECP256K1_FULL_PUBLIC_KEY_LEN: usize = 65;
+    /// The length of a secp256k1 raw public key.
+    pub const SECP256K1_RAW_PUBLIC_KEY_LEN: usize = 64;
+    /// The length of a secp256k1 compressed public key.
+    pub const SECP256K1_COMPRESSED_PUBLIC_KEY_LEN: usize = 33;
 
     /// The max length of an address encoded as a string,
     /// which includes the network prefix, protocol, and `BLS` public key.
@@ -38,4 +47,3 @@ pub use self::constant::*;
 pub use self::errors::AddressError;
 pub use self::network::{set_network, Network, NETWORK_DEFAULT};
 pub use self::protocol::Protocol;
-// pub use self::serde::{cbor as address_cbor, json as address_json};

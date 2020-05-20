@@ -15,7 +15,7 @@ use crate::protocol::Protocol;
 #[derive(PartialEq, Eq, Clone, Debug, Hash)]
 pub struct Address {
     // `ID` protocol: payload is VarInt encoding.
-    // `Secp256k1` protocol: payload is pubkey (length = 20)
+    // `Secp256k1` protocol: payload is the hash of pubkey (length = 20)
     // `Actor` protocol: payload length = 20
     // `BLS` protocol: payload is pubkey (length = 48)
     protocol: Protocol,
@@ -55,6 +55,12 @@ impl Address {
 
     /// Create an address using the `Secp256k1` protocol.
     pub fn new_secp256k1_addr(pubkey: &[u8]) -> Result<Self, AddressError> {
+        if pubkey.len() != constant::SECP256K1_FULL_PUBLIC_KEY_LEN
+            && pubkey.len() != constant::SECP256K1_RAW_PUBLIC_KEY_LEN
+            && pubkey.len() != constant::SECP256K1_COMPRESSED_PUBLIC_KEY_LEN
+        {
+            return Err(AddressError::InvalidPayload);
+        }
         Self::new(Protocol::Secp256k1, address_hash(pubkey))
     }
 

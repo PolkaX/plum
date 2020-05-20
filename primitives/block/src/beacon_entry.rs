@@ -10,22 +10,15 @@ pub struct BeaconEntry {
     round: u64,
     #[serde(with = "plum_bytes")]
     data: Vec<u8>,
-    prev_round: u64,
 }
 
 impl BeaconEntry {
-    /// Create a new BeachEntry with given round, prev round and data.
-    pub fn new(round: u64, prev_round: u64, data: Vec<u8>) -> Self {
+    /// Create a new BeachEntry with given round and data.
+    pub fn new(round: u64, data: Vec<u8>) -> Self {
         Self {
             round,
             data,
-            prev_round,
         }
-    }
-
-    /// Get previous round.
-    pub fn prev_round(&self) -> u64 {
-        self.prev_round
     }
 }
 
@@ -35,7 +28,6 @@ impl encode::Encode for BeaconEntry {
         e.array(3)?
             .u64(self.round)?
             .bytes(&self.data)?
-            .u64(self.prev_round)?
             .ok()
     }
 }
@@ -48,7 +40,6 @@ impl<'b> decode::Decode<'b> for BeaconEntry {
         Ok(BeaconEntry {
             round: d.u64()?,
             data: d.bytes()?.to_vec(),
-            prev_round: d.u64()?,
         })
     }
 }

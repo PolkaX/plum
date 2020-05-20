@@ -16,5 +16,5 @@ mod vrf;
 pub use self::errors::CryptoError;
 pub use self::key::{PrivateKey, PublicKey};
 pub use self::randomness::DomainSeparationTag;
-pub use self::signature::{Signature, SignatureType, SIGNATURE_MAX_LENGTH};
+pub use self::signature::{Signature, SignatureType};
 pub use self::vrf::{compute_vrf, verify_vrf, VrfPrivateKey, VrfProof, VrfPublicKey};
