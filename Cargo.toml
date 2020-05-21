@@ -43,7 +43,6 @@ members = [
   "primitives/types",
   "vm",
   "wallet",
-  "specs-storage",
 
   # tools
   "api-client/jsonrpc-client",

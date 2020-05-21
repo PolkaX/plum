@@ -3579,16 +3579,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7cb5678e1615754284ec264d9bb5b4c27d2018577fd90ac0ceb578591ed5ee4"
 
 [[package]]
-name = "specs-storage"
-version = "0.1.0"
-dependencies = [
- "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "plum_piece",
- "plum_sector",
- "plum_types",
-]
-
-[[package]]
 name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
