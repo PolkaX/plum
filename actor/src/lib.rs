@@ -1,3 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-pub mod builtin;
+mod builtin;
+
+pub use self::builtin::{
+    account, cron, init, /*market, miner,*/ multisig, paych, power, reward, system, verifreg,
+};

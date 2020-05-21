@@ -5,7 +5,7 @@ authors = ["PolkaX <github.com/polkax>"]
 edition = "2018"
 
 [dependencies]
-cid = { version = "0.5", features = ["impl-serde"] }
+cid = { version = "0.5" , features = ["cbor", "json"] }
 
 # plum
 plum_piece = { path = "../primitives/piece" }
