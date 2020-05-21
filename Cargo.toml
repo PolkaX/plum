@@ -19,7 +19,7 @@ path = "src/bin/main.rs"
 
 [workspace]
 members = [
-  "actor",
+#  "actor",
   "chain",
 #  "cli",
   "hashing",
