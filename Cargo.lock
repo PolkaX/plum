@@ -124,9 +124,9 @@ dependencies = [
 
 [[package]]
 name = "async-tungstenite"
-version = "0.4.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4187bb446c8ecb8849f17cef7553db8bdb09e482e806257130189958fb42dca7"
+checksum = "182617e5bbfe7001b6f2317883506f239c77313171620a04cc11292704d3e171"
 dependencies = [
  "futures-io",
  "futures-util",
@@ -981,8 +981,9 @@ dependencies = [
 
 [[package]]
 name = "filecoin-proofs"
-version = "1.0.0-alpha.0"
-source = "git+https://github.com/filecoin-project/rust-fil-proofs.git#30a60520657b47d42f1feb61f91f7eb8359060fe"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2a868ed2095a3d6e2796efeab37fe372d447917c1e8c93c6e44e3e158751fa1"
 dependencies = [
  "anyhow",
  "bellperson",
@@ -1004,6 +1005,7 @@ dependencies = [
  "generic-array 0.13.2",
  "hex",
  "humansize",
+ "indicatif",
  "itertools 0.9.0",
  "lazy_static 1.4.0",
  "log",
@@ -1582,6 +1584,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "076f042c5b7b98f31d205f1249267e12a6518c1481e9dae9764af19b707d2292"
 dependencies = [
  "autocfg 1.0.0",
+]
+
+[[package]]
+name = "indicatif"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "49a68371cf417889c9d7f98235b7102ea7c54fc59bcbd22f3dea785be9d27e40"
+dependencies = [
+ "console",
+ "lazy_static 1.4.0",
+ "number_prefix",
+ "regex",
 ]
 
 [[package]]
@@ -2165,6 +2179,12 @@ dependencies = [
  "hermit-abi",
  "libc",
 ]
+
+[[package]]
+name = "number_prefix"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17b02fc0ff9a9e4b35b3342880f48e896ebf69f2967921fe8646bf5b7125956a"
 
 [[package]]
 name = "numtoa"
@@ -3522,8 +3542,9 @@ dependencies = [
 
 [[package]]
 name = "sha2raw"
-version = "0.1.0"
-source = "git+https://github.com/filecoin-project/rust-fil-proofs.git#30a60520657b47d42f1feb61f91f7eb8359060fe"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6067924a813cc16b4df9df5fde0d94bdcf441e49f0b0de52f4d0a89b6988893"
 dependencies = [
  "block-buffer",
  "digest",
@@ -3592,8 +3613,9 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "storage-proofs"
-version = "1.0.0-alpha.0"
-source = "git+https://github.com/filecoin-project/rust-fil-proofs.git#30a60520657b47d42f1feb61f91f7eb8359060fe"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25f082e364f02276de7583903d4a6665c133d92d0b87bfbfa4b1d55309170b2f"
 dependencies = [
  "storage-proofs-core",
  "storage-proofs-porep",
@@ -3602,8 +3624,9 @@ dependencies = [
 
 [[package]]
 name = "storage-proofs-core"
-version = "1.0.0-alpha.0"
-source = "git+https://github.com/filecoin-project/rust-fil-proofs.git#30a60520657b47d42f1feb61f91f7eb8359060fe"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "475ecef9e45898c41e0969d19a78452b643b275e7407fde32ed30f05fb9036e2"
 dependencies = [
  "aes",
  "anyhow",
@@ -3638,8 +3661,9 @@ dependencies = [
 
 [[package]]
 name = "storage-proofs-porep"
-version = "1.0.0-alpha.0"
-source = "git+https://github.com/filecoin-project/rust-fil-proofs.git#30a60520657b47d42f1feb61f91f7eb8359060fe"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac6ddae598ab7e6e451f1f7ee9b51c3c3aaf0a9c28f3d25dd0720f3b5228fc43"
 dependencies = [
  "anyhow",
  "bellperson",
@@ -3666,8 +3690,9 @@ dependencies = [
 
 [[package]]
 name = "storage-proofs-post"
-version = "1.0.0-alpha.0"
-source = "git+https://github.com/filecoin-project/rust-fil-proofs.git#30a60520657b47d42f1feb61f91f7eb8359060fe"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec80478c147ce9024351e8dfbfe144985f5cd3f98c008910257102c28e3b45a8"
 dependencies = [
  "anyhow",
  "bellperson",
