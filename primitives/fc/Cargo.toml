@@ -10,7 +10,7 @@ cid = "0.5"
 thiserror = "1.0"
 
 # filecoin
-filecoin-proofs = { git = "https://github.com/filecoin-project/rust-fil-proofs.git" }
+filecoin-proofs = "1.0"
 
 # plum
 plum_piece = { path = "../piece" }
