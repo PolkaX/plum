@@ -7,7 +7,7 @@ license = "GPL-3.0"
 
 [dependencies]
 bytes = "0.5"
-cid = { version = "0.5", features = ["impl-serde"] }
+cid = { version = "0.5" , features = ["cbor", "json"] }
 fnv = "1.0.6"
 futures = "0.3"
 futures_codec = "0.3"

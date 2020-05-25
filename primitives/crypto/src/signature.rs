@@ -10,9 +10,6 @@ use plum_hashing::blake2b_256;
 
 use crate::errors::CryptoError;
 
-/// The maximum length of signature.
-pub const SIGNATURE_MAX_LENGTH: u32 = 200;
-
 /// The signature type.
 #[derive(Eq, PartialEq, Debug, Clone, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -57,6 +54,8 @@ pub struct Signature {
     /// The signature type.
     r#type: SignatureType,
     /// Tha actual signature bytes.
+    /// secp256k1: signature (64 bytes) + recovery_id (1 byte)
+    /// bls: signature (96 bytes)
     #[serde(with = "plum_bytes")]
     data: Vec<u8>,
 }
@@ -103,12 +102,15 @@ impl Signature {
         M: AsRef<[u8]>,
     {
         let seckey = secp256k1::SecretKey::parse_slice(privkey.as_ref())?;
-        let hashed_msg = blake2b_256(msg); //  secp256k1::util::MESSAGE_SIZE == 32 bytes
+        let hashed_msg = blake2b_256(msg);
         let message = secp256k1::Message::parse(&hashed_msg);
-        let (signature, _recovery_id) = secp256k1::sign(&message, &seckey);
+        let (signature, recovery_id) = secp256k1::sign(&message, &seckey);
+        let mut data = Vec::with_capacity(secp256k1::util::SIGNATURE_SIZE + 1);
+        data.extend_from_slice(&signature.serialize());
+        data.push(recovery_id.serialize());
         Ok(Self {
             r#type: SignatureType::Secp256k1,
-            data: signature.serialize().to_vec(),
+            data,
         })
     }
 
@@ -129,8 +131,32 @@ impl Signature {
         })
     }
 
+    /// Verify the signature with the given address and message.
+    pub fn verify<M: AsRef<[u8]>>(&self, addr: &Address, msg: M) -> Result<bool, CryptoError> {
+        let protocol = addr.protocol();
+        match (self.r#type, protocol) {
+            (SignatureType::Secp256k1, Protocol::Secp256k1) => {
+                let hashed_msg = blake2b_256(msg);
+                let message = secp256k1::Message::parse(&hashed_msg);
+                assert_eq!(self.data.len(), secp256k1::util::SIGNATURE_SIZE + 1);
+                let mut signature = [0u8; secp256k1::util::SIGNATURE_SIZE];
+                signature.copy_from_slice(&self.data[..secp256k1::util::SIGNATURE_SIZE]);
+                let signature = secp256k1::Signature::parse(&signature);
+                let recovery_id = self.data[secp256k1::util::SIGNATURE_SIZE];
+                let recovery_id = secp256k1::RecoveryId::parse(recovery_id)?;
+                let pubkey = secp256k1::recover(&message, &signature, &recovery_id)?;
+
+                let recovery_addr = Address::new_secp256k1_addr(&pubkey.serialize()[..])
+                    .expect("secp256k1 pubkey must be valid; qed");
+                Ok(&recovery_addr == addr)
+            }
+            (SignatureType::Bls, Protocol::Bls) => Ok(self.verify_bls(addr.payload(), msg)?),
+            _ => Err(CryptoError::NotSameType(self.r#type, protocol)),
+        }
+    }
+
     /// Verify the signature with the given public key and message.
-    pub fn verify<K, M>(&self, pubkey: K, msg: M) -> Result<bool, CryptoError>
+    pub fn verify_raw<K, M>(&self, pubkey: K, msg: M) -> Result<bool, CryptoError>
     where
         K: AsRef<[u8]>,
         M: AsRef<[u8]>,
@@ -147,11 +173,13 @@ impl Signature {
         K: AsRef<[u8]>,
         M: AsRef<[u8]>,
     {
-        let pubkey = secp256k1::PublicKey::parse_slice(pubkey.as_ref(), None)?;
         let hashed_msg = blake2b_256(msg);
-        let msg = secp256k1::Message::parse(&hashed_msg); //  secp256k1::util::MESSAGE_SIZE == 32 bytes
-        let signature = secp256k1::Signature::parse_slice(&self.data)?;
-        Ok(secp256k1::verify(&msg, &signature, &pubkey))
+        let message = secp256k1::Message::parse(&hashed_msg);
+        assert_eq!(self.data.len(), secp256k1::util::SIGNATURE_SIZE + 1);
+        let signature = &self.data[..secp256k1::util::SIGNATURE_SIZE];
+        let signature = secp256k1::Signature::parse_slice(&signature)?;
+        let pubkey = secp256k1::PublicKey::parse_slice(pubkey.as_ref(), None)?;
+        Ok(secp256k1::verify(&message, &signature, &pubkey))
     }
 
     /// Verify the `BLS` signature with the given `BLS` public key and message.
@@ -177,24 +205,6 @@ impl Signature {
     /// Return the actual signature bytes.
     pub fn as_bytes(&self) -> &[u8] {
         self.data.as_slice()
-    }
-
-    /// helper function to check signture type is same with address type
-    pub fn check_address_type(&self, addr: &Address) -> Result<(), CryptoError> {
-        let protocol = addr.protocol();
-        match self.r#type {
-            SignatureType::Secp256k1 => {
-                if protocol != Protocol::Secp256k1 {
-                    return Err(CryptoError::NotSameType(self.r#type, protocol));
-                }
-            }
-            SignatureType::Bls => {
-                if protocol != Protocol::Bls {
-                    return Err(CryptoError::NotSameType(self.r#type, protocol));
-                }
-            }
-        }
-        Ok(())
     }
 }
 
@@ -223,7 +233,7 @@ impl<'b> decode::Decode<'b> for Signature {
 
 #[cfg(test)]
 mod tests {
-    use super::{Signature, SignatureType};
+    use super::{Address, Signature, SignatureType};
     use crate::key::{PrivateKey, PublicKey};
 
     #[test]
@@ -233,8 +243,12 @@ mod tests {
         let (privkey, pubkey) = (privkey.into_vec(), pubkey.into_vec());
         let msg = "hello, world";
         let signature = Signature::sign_secp256k1(privkey, msg).unwrap();
-        let res = signature.verify_secp256k1(pubkey, msg);
-        assert_eq!(res, Ok(true))
+        let res = signature.verify_secp256k1(&pubkey, msg);
+        assert_eq!(res, Ok(true));
+
+        let addr = Address::new_secp256k1_addr(&pubkey).unwrap();
+        let res = signature.verify(&addr, msg);
+        assert_eq!(res, Ok(true));
     }
 
     #[test]
@@ -244,8 +258,12 @@ mod tests {
         let (privkey, pubkey) = (privkey.into_vec(), pubkey.into_vec());
         let msg = "hello, world";
         let signature = Signature::sign_bls(privkey, msg).unwrap();
-        let res = signature.verify_bls(pubkey, msg);
-        assert_eq!(res, Ok(true))
+        let res = signature.verify_bls(&pubkey, msg);
+        assert_eq!(res, Ok(true));
+
+        let addr = Address::new_bls_addr(&pubkey).unwrap();
+        let res = signature.verify(&addr, msg);
+        assert_eq!(res, Ok(true));
     }
 
     #[test]

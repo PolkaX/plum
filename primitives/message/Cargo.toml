@@ -6,7 +6,7 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-cid = { version = "0.5", features = ["impl-serde"] }
+cid = { version = "0.5" , features = ["cbor", "json"] }
 minicbor = { version = "0.4", features = ["std"] }
 multihash = "0.11"
 serde = { version = "1.0", features = ["derive"] }
@@ -15,7 +15,7 @@ serde = { version = "1.0", features = ["derive"] }
 plum_address = { path = "../address" }
 plum_bigint = { path = "../bigint" }
 plum_bytes = { path = "../bytes" }
-plum_crypto = { path = "../../crypto" }
+plum_crypto = { path = "../crypto" }
 
 [dev-dependencies]
 serde_json = "1.0"
