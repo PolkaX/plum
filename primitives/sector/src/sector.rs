@@ -1,6 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::convert::TryFrom;
+use std::{error, fmt};
 
 use cid::Cid;
 use minicbor::{decode, encode, Decoder, Encoder};
@@ -163,18 +164,50 @@ impl TryFrom<u64> for RegisteredProof {
     }
 }
 
+const TWO_KB: SectorSize = 2 << 10;
+const EIGHT_MB: SectorSize = 8 << 20;
+const FIVE_ONE_TWO_MB: SectorSize = 512 << 20;
+const THIRD_TWO_GB: SectorSize = 32 << 30;
+const SIXTY_TWO_GB: SectorSize = 2 * (THIRD_TWO_GB);
+
+#[derive(Debug, Clone)]
+pub struct UnknownSectorSize(SectorSize);
+impl fmt::Display for UnknownSectorSize {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "unknown sector size:{:}", self.0)
+    }
+}
+
+impl error::Error for UnknownSectorSize {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        None
+    }
+}
+
 impl RegisteredProof {
     /// return the sector size of proof
     pub fn sector_size(self) -> SectorSize {
         // Resolve to seal proof and then compute size from that.
         let seal_proof = self.registered_seal_proof();
         match seal_proof {
-            RegisteredProof::StackedDRG64GiBSeal => 2 * (32 << 30),
-            RegisteredProof::StackedDRG32GiBSeal => 32 << 30,
-            RegisteredProof::StackedDRG2KiBSeal => 2 << 10,
-            RegisteredProof::StackedDRG8MiBSeal => 8 << 20,
-            RegisteredProof::StackedDRG512MiBSeal => 512 << 20,
+            RegisteredProof::StackedDRG64GiBSeal => SIXTY_TWO_GB,
+            RegisteredProof::StackedDRG32GiBSeal => THIRD_TWO_GB,
+            RegisteredProof::StackedDRG2KiBSeal => TWO_KB,
+            RegisteredProof::StackedDRG8MiBSeal => EIGHT_MB,
+            RegisteredProof::StackedDRG512MiBSeal => FIVE_ONE_TWO_MB,
             _ => unreachable!("registered_seal_proof must in above 4 types"),
+        }
+    }
+
+    ///
+    pub fn from_sector_size(ssize: SectorSize) -> Result<Self, UnknownSectorSize> {
+        match ssize {
+            TWO_KB => Ok(RegisteredProof::StackedDRG2KiBSeal),
+            EIGHT_MB => Ok(RegisteredProof::StackedDRG8MiBSeal),
+            FIVE_ONE_TWO_MB => Ok(RegisteredProof::StackedDRG512MiBSeal),
+            THIRD_TWO_GB => Ok(RegisteredProof::StackedDRG32GiBSeal),
+            SIXTY_TWO_GB => Ok(RegisteredProof::StackedDRG64GiBSeal),
+            _ => Err(UnknownSectorSize(ssize)),
         }
     }
 

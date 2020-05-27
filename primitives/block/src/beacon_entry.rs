@@ -15,20 +15,14 @@ pub struct BeaconEntry {
 impl BeaconEntry {
     /// Create a new BeachEntry with given round and data.
     pub fn new(round: u64, data: Vec<u8>) -> Self {
-        Self {
-            round,
-            data,
-        }
+        Self { round, data }
     }
 }
 
 // Implement CBOR serialization for BeaconEntry.
 impl encode::Encode for BeaconEntry {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
-        e.array(3)?
-            .u64(self.round)?
-            .bytes(&self.data)?
-            .ok()
+        e.array(3)?.u64(self.round)?.bytes(&self.data)?.ok()
     }
 }
 
