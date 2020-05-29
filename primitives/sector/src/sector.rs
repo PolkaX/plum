@@ -170,15 +170,16 @@ const FIVE_ONE_TWO_MB: SectorSize = 512 << 20;
 const THIRD_TWO_GB: SectorSize = 32 << 30;
 const SIXTY_TWO_GB: SectorSize = 2 * (THIRD_TWO_GB);
 
+/// `SectorSize` to `RegisteredProof` meet unknown sector size
 #[derive(Debug, Clone)]
-pub struct UnknownSectorSize(SectorSize);
-impl fmt::Display for UnknownSectorSize {
+pub struct UnknownSectorSizeErr(SectorSize);
+impl fmt::Display for UnknownSectorSizeErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "unknown sector size:{:}", self.0)
     }
 }
 
-impl error::Error for UnknownSectorSize {
+impl error::Error for UnknownSectorSizeErr {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         None
     }
@@ -200,14 +201,14 @@ impl RegisteredProof {
     }
 
     ///
-    pub fn from_sector_size(ssize: SectorSize) -> Result<Self, UnknownSectorSize> {
+    pub fn from_sector_size(ssize: SectorSize) -> Result<Self, UnknownSectorSizeErr> {
         match ssize {
             TWO_KB => Ok(RegisteredProof::StackedDRG2KiBSeal),
             EIGHT_MB => Ok(RegisteredProof::StackedDRG8MiBSeal),
             FIVE_ONE_TWO_MB => Ok(RegisteredProof::StackedDRG512MiBSeal),
             THIRD_TWO_GB => Ok(RegisteredProof::StackedDRG32GiBSeal),
             SIXTY_TWO_GB => Ok(RegisteredProof::StackedDRG64GiBSeal),
-            _ => Err(UnknownSectorSize(ssize)),
+            _ => Err(UnknownSectorSizeErr(ssize)),
         }
     }
 

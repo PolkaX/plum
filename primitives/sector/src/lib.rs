@@ -12,7 +12,7 @@ pub use self::posting::{PoStProof, WindowPoStVerifyInfo, WinningPoStVerifyInfo};
 pub use self::sealing::{OnChainSealVerifyInfo, SealVerifyInfo};
 pub use self::sector::{
     readable_sector_size, RegisteredProof, SectorId, SectorInfo, SectorNumber, SectorQuality,
-    SectorSize, SpaceTime, StoragePower, UnknownSectorSize,
+    SectorSize, SpaceTime, StoragePower, UnknownSectorSizeErr,
 };
 
 #[cfg(test)]
