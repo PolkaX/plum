@@ -11,8 +11,6 @@ mod block_msg;
 mod election_proof;
 mod header;
 mod msg_meta;
-// TODO: need to move the module to abi
-mod post_proof;
 mod ticket;
 
 pub use self::beacon_entry::BeaconEntry;
