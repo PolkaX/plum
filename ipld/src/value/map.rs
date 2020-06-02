@@ -4,12 +4,15 @@ use std::borrow;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::fmt;
+use std::ops;
 
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
+use crate::value::IpldValue;
+
 /// The Map kind of IPLD Data Model.
-pub type Map<K, V> = BTreeMap<K, V>;
+pub type Map = BTreeMap<MapKey, IpldValue>;
 
 /// In DAG-CBOR, map keys must be strings, as defined by the [IPLD Data Model](https://github.com/ipld/specs/blob/master/data-model-layer/data-model.md)
 /// The keys in every map must be sorted lowest value to highest.
@@ -70,6 +73,32 @@ impl borrow::Borrow<str> for MapKey {
 impl borrow::BorrowMut<str> for MapKey {
     fn borrow_mut(&mut self) -> &mut str {
         self.0.borrow_mut()
+    }
+}
+
+impl ops::Deref for MapKey {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ops::DerefMut for MapKey {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl AsRef<str> for MapKey {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl AsMut<str> for MapKey {
+    fn as_mut(&mut self) -> &mut str {
+        &mut self.0
     }
 }
 

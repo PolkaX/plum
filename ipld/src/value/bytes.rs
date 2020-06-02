@@ -61,6 +61,9 @@ impl<'b> decode::Decode<'b> for Bytes {
     }
 }
 
+const SLASH: &str = "/";
+const BYTES: &str = "bytes";
+
 // See [DAG-JSON](https://github.com/ipld/specs/blob/master/block-layer/codecs/dag-json.md#bytes-kind) for details.
 // Implement JSON serialization for Bytes.
 impl ser::Serialize for Bytes {
