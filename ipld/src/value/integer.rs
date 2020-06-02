@@ -52,12 +52,6 @@ impl From<u64> for Integer {
     }
 }
 
-impl From<i128> for Integer {
-    fn from(i: i128) -> Self {
-        Integer(i)
-    }
-}
-
 impl From<i8> for Integer {
     fn from(i: i8) -> Self {
         Integer(i128::from(i))
@@ -79,6 +73,12 @@ impl From<i32> for Integer {
 impl From<i64> for Integer {
     fn from(i: i64) -> Self {
         Integer(i128::from(i))
+    }
+}
+
+impl From<i128> for Integer {
+    fn from(i: i128) -> Self {
+        Integer(i)
     }
 }
 
@@ -166,7 +166,7 @@ impl<'de> de::Deserialize<'de> for Integer {
             where
                 E: de::Error,
             {
-                Ok(Integer(i128::from(v)))
+                Ok(Integer::from(v))
             }
 
             #[inline]
@@ -174,7 +174,7 @@ impl<'de> de::Deserialize<'de> for Integer {
             where
                 E: de::Error,
             {
-                Ok(Integer(i128::from(v)))
+                Ok(Integer::from(v))
             }
 
             #[inline]
@@ -182,7 +182,7 @@ impl<'de> de::Deserialize<'de> for Integer {
             where
                 E: de::Error,
             {
-                Ok(Integer(v))
+                Ok(Integer::from(v))
             }
         }
 
