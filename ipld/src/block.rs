@@ -2,13 +2,13 @@
 
 use cid::{Cid, Codec, IntoExt};
 
-// See [Concept: Block](https://github.com/ipld/specs/blob/master/block-layer/block.md) for details
 /// A IPLD Block is a CID and the binary data value for that CID.
 ///
 /// +-----+--------------------------------+
 /// | CID | Data                           |
 /// +-----+--------------------------------+
 ///
+/// See [Concept: Block](https://github.com/ipld/specs/blob/master/block-layer/block.md) for details.
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct IpldBlock {
     cid: Cid,
