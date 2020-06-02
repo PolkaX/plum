@@ -2553,6 +2553,7 @@ dependencies = [
  "plum_bytes",
  "plum_crypto",
  "plum_message",
+ "plum_sector",
  "serde 1.0.110",
  "serde_json",
  "serde_repr",

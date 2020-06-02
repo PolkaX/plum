@@ -6,12 +6,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::beacon_entry::BeaconEntry;
 use crate::election_proof::ElectionProof;
-use crate::post_proof::PoStProof;
 use crate::ticket::Ticket;
 
 use plum_address::Address;
 use plum_bigint::{bigint_json, BigInt, BigIntRefWrapper, BigIntWrapper};
 use plum_crypto::Signature;
+use plum_sector::PoStProof;
 
 /// The header part of the block.
 #[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize, Deserialize)]
