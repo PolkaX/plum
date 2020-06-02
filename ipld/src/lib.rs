@@ -10,4 +10,4 @@ mod paths;
 mod value;
 
 pub use self::block::IpldBlock;
-pub use self::value::{Integer, Bytes, IpldValue, Map, MapKey};
+pub use self::value::{Bytes, Integer, IpldValue, Map, MapKey};

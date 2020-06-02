@@ -5,9 +5,6 @@ use std::fmt;
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{de, ser};
 
-const SLASH: &str = "/";
-const BYTES: &str = "bytes";
-
 /// The Bytes kind of IPLD Data Model.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Bytes(Vec<u8>);
@@ -83,6 +80,9 @@ impl<'de> de::Deserialize<'de> for Bytes {
         D: de::Deserializer<'de>,
     {
         use serde_json::{Map, Value};
+
+        const SLASH: &str = "/";
+        const BYTES: &str = "bytes";
 
         // JSON Object represents IPLD Bytes if it is `{ "/": {"bytes": "..."} }`
         let map = Map::<String, Value>::deserialize(deserializer)?;
