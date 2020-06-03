@@ -1535,7 +1535,9 @@ name = "plum_fc"
 version = "0.1.0"
 dependencies = [
  "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "plum_address",
  "plum_piece",
+ "plum_types",
  "thiserror",
 ]
 
@@ -1645,7 +1647,6 @@ dependencies = [
  "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static",
  "minicbor",
- "plum_address",
  "plum_bigint",
  "plum_hash",
  "serde",
