@@ -9,8 +9,5 @@ license = "GPL-3.0"
 cid = "0.5"
 thiserror = "1.0"
 
-# filecoin
-filecoin-proofs = "2.0"
-
 # plum
 plum_piece = { path = "../piece" }
