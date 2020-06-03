@@ -6,13 +6,8 @@
 
 mod block;
 mod error;
-mod link;
-mod node;
-mod paths;
-mod selector;
 #[macro_use]
 mod value;
-mod walker;
 
 pub use self::block::IpldBlock;
 pub use self::error::IpldError;
