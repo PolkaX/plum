@@ -22,7 +22,7 @@ impl BeaconEntry {
 // Implement CBOR serialization for BeaconEntry.
 impl encode::Encode for BeaconEntry {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
-        e.array(3)?.u64(self.round)?.bytes(&self.data)?.ok()
+        e.array(2)?.u64(self.round)?.bytes(&self.data)?.ok()
     }
 }
 
@@ -30,7 +30,7 @@ impl encode::Encode for BeaconEntry {
 impl<'b> decode::Decode<'b> for BeaconEntry {
     fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
         let array_len = d.array()?;
-        assert_eq!(array_len, Some(3));
+        assert_eq!(array_len, Some(2));
         Ok(BeaconEntry {
             round: d.u64()?,
             data: d.bytes()?.to_vec(),

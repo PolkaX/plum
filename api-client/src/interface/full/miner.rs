@@ -14,7 +14,7 @@ use crate::client::RpcClient;
 use crate::errors::Result;
 use crate::helper;
 
-///
+/// MethodGroup: Miner.
 #[doc(hidden)]
 #[async_trait::async_trait]
 pub trait MinerApi: RpcClient {
@@ -67,7 +67,7 @@ pub struct BlockTemplate {
     pub ticket: Ticket,
     pub eproof: ElectionProof,
     pub beacon_values: Vec<BeaconEntry>,
-    pub message: SignedMessage,
+    pub messages: Vec<SignedMessage>,
     pub epoch: ChainEpoch,
     pub timestamp: u64,
     #[serde(rename = "WinningPoStProof")]

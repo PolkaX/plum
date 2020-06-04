@@ -173,17 +173,14 @@ const SIXTY_TWO_GB: SectorSize = 2 * (THIRD_TWO_GB);
 /// `SectorSize` to `RegisteredProof` meet unknown sector size
 #[derive(Debug, Clone)]
 pub struct UnknownSectorSizeErr(SectorSize);
+
 impl fmt::Display for UnknownSectorSizeErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "unknown sector size:{:}", self.0)
     }
 }
 
-impl error::Error for UnknownSectorSizeErr {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        None
-    }
-}
+impl error::Error for UnknownSectorSizeErr {}
 
 impl RegisteredProof {
     /// return the sector size of proof

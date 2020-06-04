@@ -11,7 +11,7 @@ use crate::client::RpcClient;
 use crate::errors::Result;
 use crate::helper;
 
-///
+/// MethodGroup: Wallet.
 #[doc(hidden)]
 #[async_trait::async_trait]
 pub trait WalletApi: RpcClient {

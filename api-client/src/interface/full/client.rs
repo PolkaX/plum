@@ -13,7 +13,8 @@ use crate::client::RpcClient;
 use crate::errors::Result;
 use crate::helper;
 
-///
+/// MethodGroup: Client.
+/// The Client methods all have to do with interacting with the storage and retrieval markets as a client.
 #[doc(hidden)]
 #[async_trait::async_trait]
 pub trait ClientApi: RpcClient {
@@ -29,6 +30,7 @@ pub trait ClientApi: RpcClient {
             .await
     }
 
+    // return the latest information about a given deal.
     async fn client_get_deal_info(&self, cid: &Cid) -> Result<DealInfo> {
         self.request("ClientGetDealInfo", vec![helper::serialize(cid)])
             .await
@@ -62,11 +64,11 @@ pub trait ClientApi: RpcClient {
         &self,
         peer_id: &PeerId,
         miner: &Address,
-    ) -> Result<SignedStorageAsk> {
+    ) -> Result<storagemarket::SignedStorageAsk> {
         self.request(
             "ClientQueryAsk",
             vec![
-                helper::serialize(&helper::PeerIdRefWrapper::from(peer_id)),
+                helper::serialize(&PeerIdRefWrapper::from(peer_id)),
                 helper::serialize(miner),
             ],
         )
@@ -119,7 +121,7 @@ pub struct StartDealParams {
     #[serde(with = "bigint_json")]
     pub epoch_price: BigInt,
     pub min_blocks_duration: u64,
-    deal_start_epoch: ChainEpoch,
+    pub deal_start_epoch: ChainEpoch,
 }
 
 ///
@@ -139,8 +141,7 @@ pub struct Import {
 pub struct DealInfo {
     pub proposal_cid: Cid,
     // pub state: storagemarket::StorageDealStatus,
-    // more information about deal state, particularly errors
-    pub message: String,
+    pub message: String,    // more information about deal state, particularly errors
     pub provider: Address,
 
     #[serde(rename = "PieceCID")]
@@ -172,7 +173,7 @@ pub struct QueryOffer {
     pub payment_interval_increase: u64,
     pub miner: Address,
     #[serde(rename = "MinerPeerID")]
-    #[serde(with = "crate::helper::peer_id")]
+    #[serde(with = "plum_peerid")]
     pub miner_peer_id: PeerId,
 }
 
@@ -209,7 +210,7 @@ pub struct RetrievalOrder {
     pub client: Address,
     pub miner: Address,
     #[serde(rename = "MinerPeerID")]
-    #[serde(with = "crate::helper::peer_id")]
+    #[serde(with = "plum_peerid")]
     pub miner_peer_id: PeerId,
 }
 

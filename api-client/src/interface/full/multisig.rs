@@ -10,7 +10,8 @@ use crate::client::RpcClient;
 use crate::errors::Result;
 use crate::helper;
 
-///
+// MethodGroup: Msig.
+/// The Msig methods are used to interact with multisig wallets on the filecoin network.
 #[doc(hidden)]
 #[allow(clippy::too_many_arguments)]
 #[async_trait::async_trait]

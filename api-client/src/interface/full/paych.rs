@@ -4,16 +4,18 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use cid::Cid;
+use plum_actor::paych;
 use plum_address::Address;
-use plum_bigint::{/*bigint_json, */ BigInt, BigIntRefWrapper};
-// use plum_bytes::BytesRef;
-// use plum_types::ChainEpoch;
+use plum_bigint::{bigint_json, BigInt, BigIntRefWrapper, BigIntWrapper};
+use plum_bytes::BytesRef;
+use plum_types::ChainEpoch;
 
 use crate::client::RpcClient;
 use crate::errors::Result;
 use crate::helper;
 
-///
+/// MethodGroup: Paych.
+/// The Paych methods are for interacting with and managing payment channels.
 #[doc(hidden)]
 #[async_trait::async_trait]
 pub trait PaychApi: RpcClient {
@@ -53,7 +55,6 @@ pub trait PaychApi: RpcClient {
             .await
     }
 
-    /*
     async fn paych_new_payment(
         &self,
         from: &Address,
@@ -65,7 +66,7 @@ pub trait PaychApi: RpcClient {
             vec![
                 helper::serialize(from),
                 helper::serialize(to),
-                helper::serialize(vouchers),
+                helper::serialize(&vouchers),
             ],
         )
         .await
@@ -74,7 +75,7 @@ pub trait PaychApi: RpcClient {
     async fn paych_voucher_check_valid(
         &self,
         addr: &Address,
-        sign_vouch: &SignedVoucher,
+        sign_vouch: &paych::SignedVoucher,
     ) -> Result<()> {
         self.request(
             "PaychVoucherCheckValid",
@@ -86,7 +87,7 @@ pub trait PaychApi: RpcClient {
     async fn paych_voucher_check_spendable(
         &self,
         addr: &Address,
-        sign_vouch: &SignedVoucher,
+        sign_vouch: &paych::SignedVoucher,
         secret: &[u8],
         proof: &[u8],
     ) -> Result<bool> {
@@ -107,7 +108,7 @@ pub trait PaychApi: RpcClient {
         addr: &Address,
         amt: &BigInt,
         lane: u64,
-    ) -> Result<SignedVoucher> {
+    ) -> Result<paych::SignedVoucher> {
         self.request(
             "PaychVoucherCreate",
             vec![
@@ -122,23 +123,25 @@ pub trait PaychApi: RpcClient {
     async fn paych_voucher_add(
         &self,
         addr: &Address,
-        signed_vouch: &SignedVoucher,
+        signed_voucher: &paych::SignedVoucher,
         proof: &[u8],
         min_delta: &BigInt,
     ) -> Result<BigInt> {
-        self.request(
-            "PaychVoucherAdd",
-            vec![
-                helper::serialize(addr),
-                helper::serialize(signed_vouch),
-                helper::serialize(&BytesRef::from(proof)),
-                helper::serialize(&BigIntRefWrapper::from(min_delta)),
-            ],
-        )
-        .await
+        let bigint: BigIntWrapper = self
+            .request(
+                "PaychVoucherAdd",
+                vec![
+                    helper::serialize(addr),
+                    helper::serialize(signed_voucher),
+                    helper::serialize(&BytesRef::from(proof)),
+                    helper::serialize(&BigIntRefWrapper::from(min_delta)),
+                ],
+            )
+            .await?;
+        Ok(bigint.into_inner())
     }
 
-    async fn paych_voucher_list(&self, addr: &Address) -> Result<Vec<SignedVoucher>> {
+    async fn paych_voucher_list(&self, addr: &Address) -> Result<Vec<paych::SignedVoucher>> {
         self.request("PayChVoucherList", vec![helper::serialize(addr)])
             .await
     }
@@ -146,7 +149,7 @@ pub trait PaychApi: RpcClient {
     async fn paych_voucher_submit(
         &self,
         addr: &Address,
-        signed_vouch: &SignedVoucher,
+        signed_vouch: &paych::SignedVoucher,
     ) -> Result<Cid> {
         self.request(
             "PaychVoucherSubmit",
@@ -154,7 +157,6 @@ pub trait PaychApi: RpcClient {
         )
         .await
     }
-    */
 }
 
 ///
@@ -185,19 +187,20 @@ pub enum PchDir {
     Outbound = 2,
 }
 
-/*
 ///
 #[doc(hidden)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct PaymentInfo {
     pub channel: Address,
     pub channel_message: Cid,
-    pub vouchers: Vec<SignedVoucher>,
+    pub vouchers: Vec<paych::SignedVoucher>,
 }
 
 ///
 #[doc(hidden)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct VoucherSpec {
     #[serde(with = "bigint_json")]
     pub amount: BigInt,
@@ -205,6 +208,5 @@ pub struct VoucherSpec {
     pub time_lock_max: ChainEpoch,
     pub min_settle: ChainEpoch,
 
-    pub extra: ModVerifyParams,
+    pub extra: paych::ModVerifyParams,
 }
-*/
