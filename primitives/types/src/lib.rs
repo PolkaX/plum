@@ -60,7 +60,7 @@ impl<'b> decode::Decode<'b> for Actor {
 }
 
 /// Epoch number of the chain state, which acts as a proxy for time within the VM.
-pub type ChainEpoch = u64;
+pub type ChainEpoch = i64;
 ///
 pub type EpochDuration = u64;
 

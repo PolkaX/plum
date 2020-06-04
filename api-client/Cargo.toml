@@ -18,6 +18,7 @@ thiserror = "1.0"
 tokio = { version = "0.2", features = ["macros", "time"] }
 
 # plum
+plum_actor = { path = "../actor" }
 plum_address = { path = "../primitives/address" }
 plum_bigint = { path = "../primitives/bigint" }
 plum_bitfield = { path = "../primitives/bitfield" }

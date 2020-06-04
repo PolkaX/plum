@@ -10,8 +10,8 @@ pub mod account;
 pub mod cron;
 ///
 pub mod init;
-// ///
-// pub mod market;
+///
+pub mod market;
 // ///
 // pub mod miner;
 ///
