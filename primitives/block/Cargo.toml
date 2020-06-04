@@ -20,3 +20,4 @@ plum_bytes = { path = "../bytes" }
 plum_crypto = { path = "../crypto" }
 plum_message = { path = "../message" }
 plum_sector = { path = "../sector" }
+plum_types = { path = "../types" }

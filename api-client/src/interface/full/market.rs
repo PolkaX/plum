@@ -1,5 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use cid::Cid;
 use plum_address::Address;
 use plum_bigint::{BigInt, BigIntRefWrapper};
 
@@ -7,7 +8,7 @@ use crate::client::RpcClient;
 use crate::errors::Result;
 use crate::helper;
 
-///
+/// MethodGroup: Market.
 #[doc(hidden)]
 #[async_trait::async_trait]
 pub trait MarketApi: RpcClient {
@@ -16,7 +17,7 @@ pub trait MarketApi: RpcClient {
         addr: &Address,
         wallet: &Address,
         amt: &BigInt,
-    ) -> Result<()> {
+    ) -> Result<Cid> {
         self.request(
             "MarketEnsureAvailable",
             vec![

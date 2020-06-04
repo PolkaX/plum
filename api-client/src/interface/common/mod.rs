@@ -6,6 +6,9 @@ pub use self::types::*;
 
 use libp2p_core::PeerId;
 
+use plum_bytes::Bytes;
+use plum_peerid::{PeerIdRefWrapper, PeerIdWrapper};
+
 use crate::client::RpcClient;
 use crate::errors::Result;
 use crate::helper;
@@ -19,15 +22,17 @@ pub trait CommonApi: RpcClient {
             .await
     }
 
-    async fn auth_new(&self, permissions: &[Permission]) -> Result<String> {
-        self.request("AuthNew", vec![helper::serialize(&permissions)])
-            .await
+    async fn auth_new(&self, permissions: &[Permission]) -> Result<Vec<u8>> {
+        let bytes: Bytes = self
+            .request("AuthNew", vec![helper::serialize(&permissions)])
+            .await?;
+        Ok(bytes.into_inner())
     }
 
     async fn net_connectedness(&self, peer_id: &PeerId) -> Result<Connectedness> {
         self.request(
             "NetConnectedness",
-            vec![helper::serialize(&helper::PeerIdRefWrapper::from(peer_id))],
+            vec![helper::serialize(&PeerIdRefWrapper::from(peer_id))],
         )
         .await
     }
@@ -48,7 +53,7 @@ pub trait CommonApi: RpcClient {
     async fn net_disconnect(&self, peer_id: &PeerId) -> Result<()> {
         self.request(
             "NetDisconnect",
-            vec![helper::serialize(&helper::PeerIdRefWrapper::from(peer_id))],
+            vec![helper::serialize(&PeerIdRefWrapper::from(peer_id))],
         )
         .await
     }
@@ -56,14 +61,14 @@ pub trait CommonApi: RpcClient {
     async fn net_find_peer(&self, peer_id: &PeerId) -> Result<PeerAddrInfo> {
         self.request(
             "NetFindPeer",
-            vec![helper::serialize(&helper::PeerIdRefWrapper::from(peer_id))],
+            vec![helper::serialize(&PeerIdRefWrapper::from(peer_id))],
         )
         .await
     }
 
     // returns peer id of libp2p node backing this API.
     async fn id(&self) -> Result<PeerId> {
-        let peer_id: helper::PeerIdWrapper = self.request("ID", vec![]).await?;
+        let peer_id: PeerIdWrapper = self.request("ID", vec![]).await?;
         Ok(peer_id.into_inner())
     }
 
@@ -82,5 +87,10 @@ pub trait CommonApi: RpcClient {
             vec![helper::serialize(&subsystem), helper::serialize(&level)],
         )
         .await
+    }
+
+    // trigger graceful shutdown
+    async fn shutdown(&self) -> Result<()> {
+        self.request("Shutdown", vec![]).await
     }
 }

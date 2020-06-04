@@ -1434,7 +1434,12 @@ dependencies = [
  "multihash 0.11.2",
  "plum_address",
  "plum_bigint",
+ "plum_bitfield",
+ "plum_bytes",
+ "plum_crypto",
+ "plum_peerid",
  "plum_piece",
+ "plum_sector",
  "plum_types",
  "serde",
  "thiserror",
@@ -1475,6 +1480,7 @@ dependencies = [
  "plum_bytes",
  "plum_crypto",
  "plum_message",
+ "plum_peerid",
  "plum_piece",
  "plum_sector",
  "plum_tipset",
@@ -1525,6 +1531,7 @@ dependencies = [
  "plum_crypto",
  "plum_message",
  "plum_sector",
+ "plum_types",
  "serde",
  "serde_json",
  "serde_repr",
@@ -1623,6 +1630,7 @@ dependencies = [
  "plum_bigint",
  "plum_bytes",
  "plum_crypto",
+ "plum_types",
  "serde",
  "serde_json",
 ]
@@ -1632,6 +1640,15 @@ name = "plum_params"
 version = "0.1.0"
 dependencies = [
  "plum_sector",
+]
+
+[[package]]
+name = "plum_peerid"
+version = "0.1.0"
+dependencies = [
+ "libp2p-core",
+ "minicbor",
+ "serde",
 ]
 
 [[package]]
@@ -1671,6 +1688,7 @@ dependencies = [
  "plum_bigint",
  "plum_block",
  "plum_crypto",
+ "plum_types",
  "serde",
  "serde_json",
  "thiserror",

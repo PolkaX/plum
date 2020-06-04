@@ -8,12 +8,14 @@ use jsonrpc_client::{NotificationStream, SubscriptionId};
 use cid::Cid;
 use plum_block::{BlockHeader, BlockMsg};
 use plum_tipset::Tipset;
+use plum_types::ChainEpoch;
 
 use crate::client::RpcClient;
 use crate::errors::Result;
 use crate::helper;
 
-///
+/// MethodGroup: Sync.
+/// The Sync method group contains methods for interacting with and observing the lotus sync service.
 #[doc(hidden)]
 #[async_trait::async_trait]
 pub trait SyncApi: RpcClient {
@@ -52,7 +54,7 @@ pub struct SyncState {
 }
 
 ///
-// FIXME: fix start and end serialization/deserialization
+// FIXME: fix serialization/deserialization of `start` and `end`
 #[doc(hidden)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -61,10 +63,10 @@ pub struct ActiveSync {
     pub target: Tipset,
 
     pub stage: SyncStateStage,
-    pub height: u64,
+    pub height: ChainEpoch,
 
-    pub start: String, // need to serialize to the format '2009-11-10T23:00:00Z'
-    pub end: String,   // need to serialize to the format '2009-11-10T23:00:00Z'
+    pub start: String, // will be serialized to the RFC 3339 format, like '2009-11-10T23:00:00Z'
+    pub end: String,   // will be serialized to the RFC 3339 format, like '2009-11-10T23:00:00Z'
     pub message: String,
 }
 

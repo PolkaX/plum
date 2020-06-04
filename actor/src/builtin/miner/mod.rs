@@ -1,6 +1,13 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-pub mod actor;
-pub mod state;
+mod actor;
+mod deadlines;
+mod policy;
+mod state;
 #[cfg(test)]
-pub mod tests;
+mod test;
+
+pub use self::actor::*;
+pub use self::deadlines::*;
+pub use self::policy::*;
+pub use self::state::*;

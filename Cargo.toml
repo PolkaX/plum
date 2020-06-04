@@ -28,6 +28,8 @@ members = [
 #  "network",
 #  "peermgr",
   "params",
+
+  # primitives
   "primitives/address",
   "primitives/bigint",
   "primitives/bitfield",
@@ -38,10 +40,12 @@ members = [
   "primitives/fc",
   "primitives/hash",
   "primitives/message",
+  "primitives/peerid",
   "primitives/piece",
   "primitives/sector",
   "primitives/tipset",
   "primitives/types",
+
   "vm",
   "wallet",
 

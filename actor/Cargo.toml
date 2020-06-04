@@ -15,10 +15,12 @@ thiserror = "1.0"
 # plum
 plum_address = { path = "../primitives/address" }
 plum_bigint = { path = "../primitives/bigint" }
-#plum_bitfield = { path = "../primitives/bitfield" }
-#plum_crypto = { path = "../primitives/crypto" }
+plum_bytes = { path = "../primitives/bytes" }
+plum_bitfield = { path = "../primitives/bitfield" }
+plum_crypto = { path = "../primitives/crypto" }
+plum_peerid = { path = "../primitives/peerid" }
 plum_piece = { path = "../primitives/piece" }
-#plum_sector = { path = "../primitives/sector" }
+plum_sector = { path = "../primitives/sector" }
 plum_types = { path = "../primitives/types" }
 
 [dev-dependencies]
