@@ -72,12 +72,12 @@ impl encode::Encode for OnChainSealVerifyInfo {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
         e.array(7)?
             .encode(&self.sealed_cid)?
-            .u64(self.interactive_epoch)?
+            .i64(self.interactive_epoch)?
             .encode(&self.registered_proof)?
             .bytes(&self.proof)?
             .encode(&self.deal_ids)?
             .u64(self.sector_number)?
-            .u64(self.seal_rand_epoch)?
+            .i64(self.seal_rand_epoch)?
             .ok()
     }
 }
@@ -89,12 +89,12 @@ impl<'b> decode::Decode<'b> for OnChainSealVerifyInfo {
         assert_eq!(array_len, Some(7));
         Ok(OnChainSealVerifyInfo {
             sealed_cid: d.decode::<Cid>()?,
-            interactive_epoch: d.u64()?,
+            interactive_epoch: d.i64()?,
             registered_proof: d.decode::<RegisteredProof>()?,
             proof: d.bytes()?.to_vec(),
             deal_ids: d.decode::<Vec<DealId>>()?,
             sector_number: d.u64()?,
-            seal_rand_epoch: d.u64()?,
+            seal_rand_epoch: d.i64()?,
         })
     }
 }

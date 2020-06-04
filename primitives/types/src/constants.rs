@@ -1,9 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::{BigInt, ChainEpoch};
-
-/// The Undefined chain epoch.
-pub const CHAIN_EPOCH_UNDEFINED: ChainEpoch = std::u64::MAX;
+use crate::BigInt;
 
 /// Number of token units in an abstract "FIL" token.
 /// The network works purely in the indivisible token amounts. This constant converts to a fixed decimal with more

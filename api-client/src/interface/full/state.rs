@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 use cid::Cid;
+use plum_actor::market;
 use plum_address::Address;
 use plum_bigint::{bigint_json, BigInt, BigIntWrapper};
 // use plum_bitfield::BitField;
@@ -265,7 +266,6 @@ pub trait StateApi: RpcClient {
             .await
     }
 
-    /*
     async fn state_market_deals(&self, key: &TipsetKey) -> Result<HashMap<String, MarketDeal>> {
         self.request("StateMarketDeals", vec![helper::serialize(key)])
             .await
@@ -278,7 +278,6 @@ pub trait StateApi: RpcClient {
         )
         .await
     }
-    */
 
     async fn state_lookup_id(&self, addr: &Address, key: &TipsetKey) -> Result<Address> {
         self.request(
@@ -402,7 +401,6 @@ pub struct MarketBalance {
     pub locked: BigInt,
 }
 
-/*
 ///
 #[doc(hidden)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -411,7 +409,6 @@ pub struct MarketDeal {
     pub proposal: market::DealProposal,
     pub state: market::DealState,
 }
-*/
 
 ///
 #[doc(hidden)]
