@@ -7,9 +7,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BeaconEntry {
-    round: u64,
+    ///
+    pub round: u64,
     #[serde(with = "plum_bytes")]
-    data: Vec<u8>,
+    ///
+    pub data: Vec<u8>,
 }
 
 impl BeaconEntry {
