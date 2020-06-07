@@ -1550,10 +1550,14 @@ dependencies = [
 name = "plum_chain"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "blake2b_simd",
+ "byteorder",
  "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "data-encoding",
- "lazy_static",
- "plum_address",
+ "plum_crypto",
+ "plum_hashing",
+ "plum_types",
+ "thiserror",
 ]
 
 [[package]]
