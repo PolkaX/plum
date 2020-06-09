@@ -51,7 +51,6 @@ pub struct BlockHeader {
     pub block_sig: Signature,
     ///
     pub fork_signaling: u64,
-
     /*
     /// internal
     #[serde(skip)]
