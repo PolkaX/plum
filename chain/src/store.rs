@@ -22,3 +22,21 @@ pub fn draw_randomness(
     data.write_all(entropy)?;
     Ok(blake2b_256(data))
 }
+
+#[test]
+fn test_draw_randomness() {
+    let expected = [
+        191, 174, 254, 242, 10, 42, 253, 148, 119, 250, 248, 182, 115, 7, 83, 19, 254, 63, 158,
+        201, 225, 132, 255, 104, 143, 36, 237, 29, 197, 96, 117, 219,
+    ];
+    assert_eq!(
+        expected,
+        draw_randomness(
+            &b"rbase".to_vec(),
+            DomainSeparationTag::TicketProduction,
+            123,
+            &b"entropy".to_vec()
+        )
+        .unwrap()
+    );
+}
