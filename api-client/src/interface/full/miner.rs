@@ -23,7 +23,7 @@ pub trait MinerApi: RpcClient {
         addr: &Address,
         height: ChainEpoch,
         key: &TipsetKey,
-    ) -> Result<MiningBaseInfo> {
+    ) -> Result<Option<MiningBaseInfo>> {
         self.request(
             "MinerGetBaseInfo",
             vec![

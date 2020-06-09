@@ -131,7 +131,11 @@ pub trait StateApi: RpcClient {
         .await
     }
 
-    async fn state_miner_info(&self, addr: &Address, key: &TipsetKey) -> Result<miner::MinerInfo> {
+    async fn state_miner_info(
+        &self,
+        addr: &Address,
+        key: &TipsetKey,
+    ) -> Result<Option<miner::MinerInfo>> {
         self.request(
             "StateMinerInfo",
             vec![helper::serialize(addr), helper::serialize(key)],
