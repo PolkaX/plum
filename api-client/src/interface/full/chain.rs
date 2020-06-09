@@ -89,9 +89,11 @@ pub trait ChainApi: RpcClient {
         .await
     }
 
-    async fn chain_read_obj(&self, cid: &Cid) -> Result<String> {
-        self.request("ChainReadObj", vec![helper::serialize(cid)])
-            .await
+    async fn chain_read_obj(&self, cid: &Cid) -> Result<Vec<u8>> {
+        let bytes: Bytes = self
+            .request("ChainReadObj", vec![helper::serialize(cid)])
+            .await?;
+        Ok(bytes.into_inner())
     }
 
     async fn chain_has_obj(&self, cid: &Cid) -> Result<bool> {
