@@ -175,7 +175,7 @@ const SIXTY_TWO_GB: SectorSize = 2 * (THIRD_TWO_GB);
 pub struct UnknownSectorSizeErr(SectorSize);
 
 impl fmt::Display for UnknownSectorSizeErr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "unknown sector size:{:}", self.0)
     }
 }
