@@ -4,7 +4,7 @@ use std::borrow;
 use std::cmp::Ordering;
 use std::fmt;
 
-use serde::{Deserialize, Serialize};
+use serde::{de, ser};
 
 /// A Key represents the unique identifier of an object.
 /// Our Key scheme is inspired by file systems and Google App Engine key model.
@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 /// Key("/Comedy/MontyPython/Sketch:CheeseShop")
 /// Key("/Comedy/MontyPython/Sketch:CheeseShop/Character:Mousebender")
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Key(String);
 
 impl PartialOrd for Key {
@@ -46,9 +46,52 @@ impl fmt::Display for Key {
     }
 }
 
+impl From<&Key> for Key {
+    fn from(key: &Key) -> Self {
+        key.clone()
+    }
+}
+
+impl From<String> for Key {
+    fn from(key: String) -> Self {
+        Self::new(key)
+    }
+}
+
+impl From<&str> for Key {
+    fn from(key: &str) -> Self {
+        Self::new(key)
+    }
+}
+
 impl AsRef<str> for Key {
     fn as_ref(&self) -> &str {
-        &self.0
+        self.as_str()
+    }
+}
+
+impl AsRef<[u8]> for Key {
+    fn as_ref(&self) -> &[u8] {
+        self.as_bytes()
+    }
+}
+
+impl ser::Serialize for Key {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        self.0.serialize(serializer)
+    }
+}
+
+impl<'de> de::Deserialize<'de> for Key {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let key = String::deserialize(deserializer)?;
+        Ok(Self::new(key))
     }
 }
 
@@ -101,6 +144,25 @@ impl Key {
         Self(input.to_owned())
     }
 
+    /// Return a random (uuid) generated key,
+    /// like Key::random() == Key::new("/f98719ea086343f7b71f32ea9d9d521d").
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::collections::HashSet;
+    /// use plum_ipfs_datastore::Key;
+    ///  let mut keys = HashSet::with_capacity(1000);
+    ///  for _ in 0..1000 {
+    ///     keys.insert(Key::random());
+    /// }
+    /// assert_eq!(keys.len(), 1000);
+    /// ```
+    pub fn random() -> Self {
+        let uuid = uuid::Uuid::new_v4();
+        Self::new(uuid.to_string().replace("-", ""))
+    }
+
     /// Create a key out of a namespace slice.
     pub fn with_namespaces<I, T>(namespaces: I) -> Self
     where
@@ -123,6 +185,11 @@ impl Key {
     /// Return the byte slice of this key's content.
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
+    }
+
+    /// Return the string slice of this key's content.
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
     }
 
     /// Return the reverse of this key.
@@ -253,7 +320,7 @@ impl Key {
     /// ```
     pub fn parent(&self) -> Self {
         let mut list = self.list();
-        if list.len() == 0 || list.len() == 1 {
+        if list.is_empty() || list.len() == 1 {
             Self::new(SLASH)
         } else {
             list.pop(); // pop the last namespace
@@ -268,19 +335,70 @@ impl Key {
     ///
     /// ```
     /// use plum_ipfs_datastore::Key;
-    /// let child = Key::new("/").child(Key::new("Child"));
+    /// let child = Key::new("/").child("Child");
     /// assert_eq!(child, Key::new("/Child"));
-    /// let child = Key::new("/Comedy/MontyPython").child(Key::new("Actor:JohnCleese"));
+    /// let child = Key::new("/Comedy/MontyPython").child("Actor:JohnCleese");
     /// assert_eq!(child, Key::new("/Comedy/MontyPython/Actor:JohnCleese"));
     /// ```
-    pub fn child<K: AsRef<str>>(&self, key: K) -> Self {
+    pub fn child<K: Into<Key>>(&self, child: K) -> Self {
+        let child = child.into();
         if self.0 == SLASH {
-            Self::new(key)
-        } else if key.as_ref() == SLASH {
+            Self::new(child)
+        } else if child.as_str() == SLASH {
             self.clone()
         } else {
-            unsafe { Key::new_unchecked(format!("{}{}", self.0, key.as_ref())) }
+            unsafe { Key::new_unchecked(format!("{}{}", self.0, child)) }
         }
+    }
+
+    /// Return whether this key is a prefix of `descendant`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use plum_ipfs_datastore::Key;
+    /// assert!(Key::new("/Comedy").is_ancestor_of("/Comedy/MontyPython"));
+    /// assert!(!Key::new("/A").is_ancestor_of("/AB"));
+    /// ```
+    pub fn is_ancestor_of<K: Into<Key>>(&self, descendant: K) -> bool {
+        let descendant = descendant.into();
+        if descendant.as_str().len() <= self.as_str().len() {
+            return false;
+        }
+        if self.as_str() == SLASH {
+            return true;
+        }
+
+        // start with 'ancestor.as_str() + /'
+        descendant.as_str().starts_with(self.as_str())
+            && descendant.as_bytes()[self.as_str().len()] == b'/'
+    }
+
+    /// Return whether this key contains another as a prefix.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use plum_ipfs_datastore::Key;
+    /// assert!(Key::new("/Comedy/MontyPython").is_descendant_of("/Comedy"));
+    /// assert!(!Key::new("/AB").is_descendant_of("/A"));
+    /// ```
+    pub fn is_descendant_of<K: Into<Key>>(&self, ancestor: K) -> bool {
+        ancestor.into().is_ancestor_of(self)
+    }
+
+    /// Return whether this key has only one namespace.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use plum_ipfs_datastore::Key;
+    /// assert!(Key::new("/").is_top_level());
+    /// assert!(Key::new("/Comedy").is_top_level());
+    /// assert!(!Key::new("/Comedy/MontyPython").is_top_level());
+    /// ```
+    pub fn is_top_level(&self) -> bool {
+        self.list().is_empty() || self.list().len() == 1
     }
 }
 
@@ -312,4 +430,90 @@ pub fn namespace_value(namespace: &str) -> &str {
         .rfind(COLON)
         .map(|i| namespace.split_at(i + 1).1)
         .unwrap_or(namespace)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Key;
+
+    #[test]
+    fn test_ancestry() {
+        let k1 = Key::new("/A/B/C");
+        let k2 = Key::new("/A/B/C/D");
+        let k3 = Key::new("/AB");
+        let k4 = Key::new("/A");
+
+        assert_eq!(k1.to_string(), "/A/B/C");
+        assert_eq!(k2.to_string(), "/A/B/C/D");
+
+        assert!(k1.is_ancestor_of(&k2));
+        assert!(k2.is_descendant_of(&k1));
+        assert!(k4.is_ancestor_of(&k1));
+        assert!(k4.is_ancestor_of(&k2));
+
+        assert!(!k4.is_descendant_of(&k2));
+        assert!(!k4.is_descendant_of(&k1));
+        assert!(!k3.is_descendant_of(&k4));
+        assert!(!k4.is_ancestor_of(&k3));
+
+        assert!(k2.is_descendant_of(&k4));
+        assert!(k1.is_descendant_of(&k4));
+
+        assert!(!k2.is_ancestor_of(&k4));
+        assert!(!k1.is_ancestor_of(&k4));
+        assert!(!k2.is_ancestor_of(&k2));
+        assert!(!k1.is_ancestor_of(&k1));
+
+        assert_eq!(k1.child("D"), k2);
+        assert_eq!(k1, k2.parent());
+        assert_eq!(k1.path(), k2.parent().path());
+    }
+
+    #[test]
+    fn test_less() {
+        fn assert_less<A: Into<Key>, B: Into<Key>>(a: A, b: B) {
+            let a = a.into();
+            let b = b.into();
+            assert!(a < b);
+            assert!(!(b < a));
+        }
+
+        assert_less("/a/b/c", "/a/b/c/d");
+        assert_less("/a/b", "/a/b/c/d");
+        assert_less("/a", "/a/b/c/d");
+        assert_less("/a/a/c", "/a/b/c");
+        assert_less("/a/a/d", "/a/b/c");
+        assert_less("/a/b/c/d/e/f/g/h", "/b");
+        assert_less("/", "/a");
+    }
+
+    #[test]
+    fn test_json() {
+        struct Case {
+            key: Key,
+            data: Vec<u8>,
+        }
+
+        let cases = vec![
+            Case {
+                key: Key::new("/a/b/c"),
+                data: b"\"/a/b/c\"".to_vec(),
+            },
+            Case {
+                key: Key::new("/shouldescapekey\"/with/quote"),
+                data: b"\"/shouldescapekey\\\"/with/quote\"".to_vec(),
+            },
+            Case {
+                key: Key::new(""),
+                data: b"\"/\"".to_vec(),
+            },
+        ];
+
+        for case in cases {
+            let ser = serde_json::to_vec(&case.key).unwrap();
+            assert_eq!(ser, case.data);
+            let key = serde_json::from_slice::<Key>(&ser).unwrap();
+            assert_eq!(key, case.key);
+        }
+    }
 }
