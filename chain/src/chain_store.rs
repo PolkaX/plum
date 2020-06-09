@@ -1,3 +1,5 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 use anyhow::Result;
 use blake2b_simd::Params;
 use byteorder::{BigEndian, WriteBytesExt};
