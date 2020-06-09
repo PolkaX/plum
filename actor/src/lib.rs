@@ -3,5 +3,6 @@
 mod builtin;
 
 pub use self::builtin::{
-    account, cron, init, market, miner, multisig, paych, power, reward, system, verifreg, network::*,
+    account, cron, init, market, miner, multisig, network::*, paych, power, reward, system,
+    verifreg,
 };
