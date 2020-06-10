@@ -50,7 +50,7 @@ impl From<Protocol> for u8 {
 }
 
 impl fmt::Display for Protocol {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", u8::from(*self))
     }
 }
