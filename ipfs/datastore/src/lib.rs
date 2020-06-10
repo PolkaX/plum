@@ -12,7 +12,9 @@ mod mount;
 mod store;
 
 pub use self::error::DataStoreError;
-pub use self::impls::{FailDataStore, FailFunc, LogDataStore, MapDataStore, SyncDataStore};
+pub use self::impls::{
+    DummyDataStore, FailDataStore, FailFunc, LogDataStore, MapDataStore, SyncDataStore,
+};
 pub use self::key::{namespace_type, namespace_value, Key};
 pub use self::store::{Batch, BatchDataStore};
 pub use self::store::{CheckedDataStore, GcDataStore, PersistentDataStore, ScrubbedDataStore};

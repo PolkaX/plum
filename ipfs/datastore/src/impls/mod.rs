@@ -2,6 +2,7 @@
 
 mod batch;
 mod delay;
+mod dummy;
 mod fail;
 mod log;
 mod map;
@@ -9,6 +10,7 @@ mod retry;
 mod sync;
 mod transform;
 
+pub use self::dummy::DummyDataStore;
 pub use self::fail::{FailDataStore, FailFunc};
 pub use self::log::LogDataStore;
 pub use self::map::MapDataStore;
