@@ -19,16 +19,18 @@ path = "src/bin/main.rs"
 
 [workspace]
 members = [
-  "actor",
   "chain",
 #  "cli",
   "hashing",
-  "ipfs/datastore",
-  "ipld",
 #  "libp2p",
 #  "network",
 #  "peermgr",
   "params",
+  "wallet",
+
+  # IPFS and IPLD
+  "ipfs/datastore",
+  "ipld",
 
   # primitives
   "primitives/address",
@@ -47,8 +49,9 @@ members = [
   "primitives/tipset",
   "primitives/types",
 
+  # VM
   "vm",
-  "wallet",
+  "actor",
 
   # tools
   "api-client/jsonrpc-client",
