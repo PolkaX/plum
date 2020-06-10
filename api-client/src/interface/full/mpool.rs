@@ -1,7 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
+use serde::Deserialize;
+use serde_repr::Deserialize_repr;
 
 use cid::Cid;
 use plum_address::Address;
@@ -15,7 +15,9 @@ use crate::client::RpcClient;
 use crate::errors::Result;
 use crate::helper;
 
-///
+/// MethodGroup: Mpool.
+/// The Mpool methods are for interacting with the message pool.
+/// The message pool manages all incoming and outgoing 'messages' going over the network.
 #[doc(hidden)]
 #[async_trait::async_trait]
 pub trait MpoolApi: RpcClient {
@@ -68,7 +70,7 @@ pub trait MpoolApi: RpcClient {
 
 ///
 #[doc(hidden)]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MpoolUpdate {
     pub r#type: MpoolChange,
@@ -78,7 +80,7 @@ pub struct MpoolUpdate {
 ///
 #[doc(hidden)]
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Serialize_repr, Deserialize_repr)]
+#[derive(Copy, Clone, Debug, Deserialize_repr)]
 pub enum MpoolChange {
     MpoolAdd = 0,
     MpoolRemove = 1,

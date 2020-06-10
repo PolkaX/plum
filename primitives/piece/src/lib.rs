@@ -76,7 +76,7 @@ mod tests {
             .unwrap();
 
         let info = PieceInfo {
-            size: PaddedPieceSize::new(128).unwrap(),
+            size: PaddedPieceSize::new(128),
             piece_cid: cid,
         };
         let expected = vec![
@@ -98,7 +98,7 @@ mod tests {
             .unwrap();
 
         let info = PieceInfo {
-            size: PaddedPieceSize::new(128).unwrap(),
+            size: PaddedPieceSize::new(128),
             piece_cid: cid,
         };
         let expected = "{\

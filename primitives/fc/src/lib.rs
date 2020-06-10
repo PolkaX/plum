@@ -12,26 +12,15 @@ pub use self::comm::{
     replica_commitment_v1_to_cid, CommCidErr, FILECOIN_CODEC_TYPE,
 };
 
-use filecoin_proofs::types::{PieceInfo as FcPieceInfo, UnpaddedBytesAmount};
+use plum_address::{Address, AddressError};
+use plum_types::ActorId;
 
-use plum_piece::PieceInfo;
-
-/// Convert piece info to filecoin proof piece info.
-pub fn convert_pieceinfo(pieceinfo: PieceInfo) -> Result<FcPieceInfo, CommCidErr> {
-    let unpadded = pieceinfo.size.unpadded();
-    let commitment = cid_to_piece_commitment_v1(&pieceinfo.piece_cid)?;
-    Ok(FcPieceInfo {
-        commitment,
-        size: UnpaddedBytesAmount(u64::from(unpadded)),
-    })
-}
-
-/// convert piece info list to filecoin proof pieceinfo list
-pub fn convert_pieceinfos(pieceinfos: Vec<PieceInfo>) -> Result<Vec<FcPieceInfo>, CommCidErr> {
-    let mut v = Vec::with_capacity(pieceinfos.len());
-    for info in pieceinfos {
-        let p = convert_pieceinfo(info)?;
-        v.push(p);
-    }
-    Ok(v)
+/// Convert actorid to prove id
+pub fn to_prove_id(actor_id: ActorId) -> Result<[u8; 32], AddressError> {
+    let addr = Address::new_id_addr(actor_id)?;
+    let mut res: [u8; 32] = Default::default();
+    let payload = addr.payload();
+    let len = std::cmp::min(payload.len(), res.len());
+    res[..len].copy_from_slice(&payload[..len]);
+    Ok(res)
 }

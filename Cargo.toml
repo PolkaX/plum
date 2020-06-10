@@ -9,7 +9,7 @@ license = "GPL-3.0"
 name = "plum"
 
 [[bin]]
-name = "plum-node"
+name = "plum_node"
 path = "src/bin/main.rs"
 
 [dependencies]
@@ -19,7 +19,6 @@ path = "src/bin/main.rs"
 
 [workspace]
 members = [
-#  "actor",
   "chain",
 #  "cli",
   "hashing",
@@ -27,6 +26,13 @@ members = [
 #  "network",
 #  "peermgr",
   "params",
+  "wallet",
+
+  # IPFS and IPLD
+  "ipfs/datastore",
+  "ipld",
+
+  # primitives
   "primitives/address",
   "primitives/bigint",
   "primitives/bitfield",
@@ -37,12 +43,15 @@ members = [
   "primitives/fc",
   "primitives/hash",
   "primitives/message",
+  "primitives/peerid",
   "primitives/piece",
   "primitives/sector",
   "primitives/tipset",
   "primitives/types",
+
+  # VM
   "vm",
-  "wallet",
+  "actor",
 
   # tools
   "api-client/jsonrpc-client",

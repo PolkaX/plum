@@ -98,6 +98,19 @@ impl Address {
         &self.payload
     }
 
+    /// If the `Address` is an ID address, return the ID of Address if possible.
+    /// Returns None otherwise.
+    pub fn as_id(&self) -> Option<u64> {
+        if let Protocol::Id = self.protocol {
+            let id = unsigned_varint::decode::u64(&self.payload)
+                .expect("unsigned varint decode payload of ID Address shouldn't be fail; qed")
+                .0;
+            Some(id)
+        } else {
+            None
+        }
+    }
+
     /// Return the encoded bytes of address (protocol + payload).
     pub fn as_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(1 + self.payload.len());

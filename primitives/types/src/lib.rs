@@ -8,7 +8,6 @@ use cid::Cid;
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
-use plum_address::{Address, AddressError};
 use plum_bigint::{bigint_json, BigInt, BigIntWrapper};
 use plum_hash::H256;
 
@@ -60,18 +59,8 @@ impl<'b> decode::Decode<'b> for Actor {
     }
 }
 
-/// Convert actorid to prove id
-pub fn to_prove_id(actor_id: ActorId) -> Result<[u8; 32], AddressError> {
-    let addr = Address::new_id_addr(actor_id)?;
-    let mut res: [u8; 32] = Default::default();
-    let payload = addr.payload();
-    let len = std::cmp::min(payload.len(), res.len());
-    res[..len].copy_from_slice(&payload[..len]);
-    Ok(res)
-}
-
 /// Epoch number of the chain state, which acts as a proxy for time within the VM.
-pub type ChainEpoch = u64;
+pub type ChainEpoch = i64;
 ///
 pub type EpochDuration = u64;
 

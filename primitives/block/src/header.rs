@@ -6,12 +6,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::beacon_entry::BeaconEntry;
 use crate::election_proof::ElectionProof;
-use crate::post_proof::PoStProof;
 use crate::ticket::Ticket;
 
 use plum_address::Address;
 use plum_bigint::{bigint_json, BigInt, BigIntRefWrapper, BigIntWrapper};
 use plum_crypto::Signature;
+use plum_sector::PoStProof;
+use plum_types::ChainEpoch;
 
 /// The header part of the block.
 #[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize, Deserialize)]
@@ -34,7 +35,7 @@ pub struct BlockHeader {
     #[serde(with = "bigint_json")]
     pub parent_weight: BigInt,
     ///
-    pub height: u64,
+    pub height: ChainEpoch,
     ///
     pub parent_state_root: Cid,
     ///
@@ -50,6 +51,11 @@ pub struct BlockHeader {
     pub block_sig: Signature,
     ///
     pub fork_signaling: u64,
+    /*
+    /// internal
+    #[serde(skip)]
+    validated: bool, // true if the signature has been validated
+    */
 }
 
 impl BlockHeader {
@@ -86,7 +92,7 @@ impl encode::Encode for BlockHeader {
             .encode(&self.win_post_proof)?
             .encode(&self.parents)?
             .encode(BigIntRefWrapper::from(&self.parent_weight))?
-            .u64(self.height)?
+            .i64(self.height)?
             .encode(&self.parent_state_root)?
             .encode(&self.parent_message_receipts)?
             .encode(&self.messages)?
@@ -111,7 +117,7 @@ impl<'b> decode::Decode<'b> for BlockHeader {
             win_post_proof: d.decode::<Vec<PoStProof>>()?,
             parents: d.decode::<Vec<Cid>>()?,
             parent_weight: d.decode::<BigIntWrapper>()?.into_inner(),
-            height: d.u64()?,
+            height: d.i64()?,
             parent_state_root: d.decode::<Cid>()?,
             parent_message_receipts: d.decode::<Cid>()?,
             messages: d.decode::<Cid>()?,
@@ -119,6 +125,7 @@ impl<'b> decode::Decode<'b> for BlockHeader {
             timestamp: d.u64()?,
             block_sig: d.decode::<Signature>()?,
             fork_signaling: d.u64()?,
+            /*validated: Default::default(),*/
         })
     }
 }
@@ -134,7 +141,7 @@ mod tests {
     use crate::election_proof::ElectionProof;
     use crate::ticket::Ticket;
 
-    fn new_block_header() -> BlockHeader {
+    pub fn dummy_block_header() -> BlockHeader {
         let cid: Cid = "bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"
             .parse()
             .unwrap();
@@ -159,12 +166,13 @@ mod tests {
             timestamp: 0u64,
             block_sig: Signature::new_bls("boo! im a signature"),
             fork_signaling: 0u64,
+            /*validated: false,*/
         }
     }
 
     #[test]
     fn block_header_cbor_serde() {
-        let header = new_block_header();
+        let header = dummy_block_header();
         let expected = vec![
             143, 69, 0, 191, 214, 251, 5, 129, 88, 32, 118, 114, 102, 32, 112, 114, 111, 111, 102,
             48, 48, 48, 48, 48, 48, 48, 118, 114, 102, 32, 112, 114, 111, 111, 102, 48, 48, 48, 48,
@@ -197,7 +205,7 @@ mod tests {
         unsafe {
             set_network(Network::Test);
         }
-        let header = new_block_header();
+        let header = dummy_block_header();
         let expected = "{\
             \"Miner\":\"t012512063\",\
                 \"Ticket\":{\"VRFProof\":\"dnJmIHByb29mMDAwMDAwMHZyZiBwcm9vZjAwMDAwMDA=\"},\

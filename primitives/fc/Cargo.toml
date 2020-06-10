@@ -9,8 +9,7 @@ license = "GPL-3.0"
 cid = "0.5"
 thiserror = "1.0"
 
-# filecoin
-filecoin-proofs = { git = "https://github.com/filecoin-project/rust-fil-proofs.git" }
-
 # plum
 plum_piece = { path = "../piece" }
+plum_address = { path = "../address" }
+plum_types = { path = "../types" }

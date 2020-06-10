@@ -7,17 +7,19 @@ use jsonrpc_client::{NotificationStream, SubscriptionId};
 use cid::Cid;
 use plum_bigint::{BigInt, BigIntWrapper};
 use plum_block::BlockHeader;
-use plum_bytes::BytesRef;
+use plum_bytes::{Bytes, BytesRef};
 use plum_crypto::DomainSeparationTag;
 use plum_message::{MessageReceipt, SignedMessage, UnsignedMessage};
 use plum_tipset::{Tipset, TipsetKey};
-use plum_types::ChainEpoch;
+use plum_types::{ChainEpoch, Randomness};
 
 use crate::client::RpcClient;
 use crate::errors::Result;
 use crate::helper;
 
-///
+/// MethodGroup: Chain.
+/// The Chain method group contains methods for interacting with the blockchain,
+/// but that do not require any form of state computation.
 #[doc(hidden)]
 #[async_trait::async_trait]
 pub trait ChainApi: RpcClient {
@@ -37,7 +39,7 @@ pub trait ChainApi: RpcClient {
         personalization: &DomainSeparationTag,
         rand_epoch: ChainEpoch,
         entropy: &[u8],
-    ) -> Result<Vec<u8>> {
+    ) -> Result<Randomness> {
         self.request(
             "ChainGetRandomness",
             vec![
@@ -87,9 +89,11 @@ pub trait ChainApi: RpcClient {
         .await
     }
 
-    async fn chain_read_obj(&self, cid: &Cid) -> Result<String> {
-        self.request("ChainReadObj", vec![helper::serialize(cid)])
-            .await
+    async fn chain_read_obj(&self, cid: &Cid) -> Result<Vec<u8>> {
+        let bytes: Bytes = self
+            .request("ChainReadObj", vec![helper::serialize(cid)])
+            .await?;
+        Ok(bytes.into_inner())
     }
 
     async fn chain_has_obj(&self, cid: &Cid) -> Result<bool> {
@@ -97,15 +101,13 @@ pub trait ChainApi: RpcClient {
             .await
     }
 
-    /*
-    async fn chain_stat_obj(&self, cid1: &Cid, cid2: &Cid) -> Result<ObjStat> {
+    async fn chain_stat_obj(&self, obj: &Cid, base: &Cid) -> Result<ObjStat> {
         self.request(
             "ChainHasObj",
-            vec![helper::serialize(cid1), helper::serialize(cid2)],
+            vec![helper::serialize(obj), helper::serialize(base)],
         )
         .await
     }
-    */
 
     async fn chain_set_head(&self, key: &TipsetKey) -> Result<()> {
         self.request("ChainSetHead", vec![helper::serialize(key)])
@@ -145,7 +147,7 @@ pub trait ChainApi: RpcClient {
     async fn chain_export(
         &self,
         key: &TipsetKey,
-    ) -> Result<(SubscriptionId, NotificationStream<String>)> {
+    ) -> Result<(SubscriptionId, NotificationStream<Bytes>)> {
         self.subscribe("ChainExport", vec![helper::serialize(key)])
             .await
     }
@@ -174,7 +176,7 @@ pub struct HeadChange {
 #[serde(rename_all = "PascalCase")]
 pub struct IpldObject {
     cid: Cid,
-    obj: IpldValue,
+    obj: IpldNode,
 }
 */
 
@@ -194,4 +196,12 @@ pub struct BlockMessages {
 pub struct ParentMessage {
     pub cid: Cid,
     pub message: UnsignedMessage,
+}
+
+#[doc(hidden)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ObjStat {
+    pub size: u64,
+    pub links: u64,
 }

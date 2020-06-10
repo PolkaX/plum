@@ -4,115 +4,51 @@ use serde::{Deserialize, Serialize};
 
 use cid::Cid;
 use plum_address::Address;
-use plum_bigint::{bigint_json, BigInt};
-use plum_crypto::Signature;
-use plum_sector::RegisteredProof;
-use plum_types::DealId;
+use plum_bigint::bigint_json;
+use plum_piece::PaddedPieceSize;
+use plum_types::{ChainEpoch, TokenAmount};
 
-// use ipld_cbor::IpldNode;
-
-use super::error::StorageMarketError;
-
+// Note: Deal Collateral is only released and returned to clients and miners
+// when the storage deal stops counting towards power. In the current iteration,
+// it will be released when the sector containing the storage deals expires,
+// even though some storage deals can expire earlier than the sector does.
+// Collaterals are denominated in PerEpoch to incur a cost for self dealing or
+// minimal deals that last for a long time.
+// Note: ClientCollateralPerEpoch may not be needed and removed pending future confirmation.
+// There will be a Minimum value for both client and provider deal collateral.
+///
+#[doc(hidden)]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct StorageDealProposal {
-    // cid bytes
-    pub piece_ref: Cid,
-    pub piece_size: u64,
-
+#[serde(rename_all = "PascalCase")]
+pub struct DealProposal {
+    #[serde(rename = "PieceCID")]
+    pub piece_cid: Cid, // CommP
+    pub piece_size: PaddedPieceSize,
+    pub verified_deal: bool,
     pub client: Address,
     pub provider: Address,
 
-    pub proposal_expiration: u64,
-    pub duration: u64, // TODO: spec
+    // Nominal start epoch. Deal payment is linear between StartEpoch and EndEpoch,
+    // with total amount StoragePricePerEpoch * (EndEpoch - StartEpoch).
+    // Storage deal must appear in a sealed (proven) sector no later than StartEpoch,
+    // otherwise it is invalid.
+    pub start_epoch: ChainEpoch,
+    pub end_epoch: ChainEpoch,
     #[serde(with = "bigint_json")]
-    pub storage_price_per_epoch: BigInt,
+    pub storage_price_per_epoch: TokenAmount,
+
     #[serde(with = "bigint_json")]
-    pub storage_collateral: BigInt,
-    // to not share, maybe do not need option
-    pub proposer_signature: Option<Signature>,
+    pub provider_collateral: TokenAmount,
+    #[serde(with = "bigint_json")]
+    pub client_collateral: TokenAmount,
 }
 
-impl StorageDealProposal {
-    pub fn total_storage_price(&self) -> BigInt {
-        self.storage_price_per_epoch.clone() * self.duration
-    }
-
-    pub fn sign<F>(&mut self, sign_func: F) -> Result<(), StorageMarketError>
-    where
-        F: Fn(&[u8]) -> Signature,
-    {
-        if self.proposer_signature.is_some() {
-            return Err(StorageMarketError::AlreadySigned);
-        }
-        // todo why use an empty bytes?
-        let sign = sign_func(&[]);
-        self.proposer_signature = Some(sign);
-        Ok(())
-    }
-
-    // pub fn cid(&self) -> Result<Cid, StorageMarketError> {
-    //     let node = IpldNode::from_object(self.clone(), multihash::Code::Sha2_256)?;
-    //     Ok(node.as_ref().clone())
-    // }
-
-    /// if worker is same as self.client, then do nothing for verify.
-    pub fn verify(&self, worker: Option<Address>) -> Result<(), StorageMarketError> {
-        let verify_func = || -> Result<(), StorageMarketError> {
-            let mut unsigned = self.clone();
-            unsigned.proposer_signature = None;
-            let buf = serde_cbor::to_vec(&unsigned)?;
-            if let Some(ref sign) = self.proposer_signature {
-                sign.check_address_type(&self.client)?;
-                let pk = self.client.payload();
-                if sign.verify(pk, buf)? {
-                    Ok(())
-                } else {
-                    Err(plum_crypto::CryptoError::VerifyFailed.into())
-                }
-            } else {
-                Err(StorageMarketError::NotSigned)
-            }
-        };
-
-        if let Some(addr) = worker {
-            if self.client != addr {
-                verify_func()?;
-            }
-        // worker is same as client, do nothing
-        } else {
-            // worker is none
-            verify_func()?;
-        }
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize_tuple, Deserialize_tuple)]
-pub struct ComputeDataCommitmentParams {
-    pub deal_ids: Vec<DealId>,
-    pub sector_type: RegisteredProof,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct OnMinerSectorsTerminateParams {
-    pub deal_ids: Vec<DealId>,
-}
-
-impl Serialize for OnMinerSectorsTerminateParams {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
-    where
-        S: Serializer,
-    {
-        (&self.deal_ids,).serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for OnMinerSectorsTerminateParams {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let r: (Vec<DealId>,) = Deserialize::deserialize(deserializer)?;
-        Ok(OnMinerSectorsTerminateParams { deal_ids: r.0 })
-    }
+///
+#[doc(hidden)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct DealState {
+    pub sector_start_epoch: ChainEpoch, // -1 if not yet included in proven sector
+    pub last_updated_epoch: ChainEpoch, // -1 if deal state never updated
+    pub slash_epoch: ChainEpoch,        // -1 if deal never slashed
 }

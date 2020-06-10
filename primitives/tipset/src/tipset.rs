@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use plum_bigint::BigInt;
 use plum_block::{BlockHeader, Ticket};
+use plum_types::ChainEpoch;
 
 use crate::errors::TipsetError;
 use crate::key::TipsetKey;
@@ -17,7 +18,7 @@ pub struct Tipset {
     #[serde(rename = "Cids")]
     key: TipsetKey,
     blocks: Vec<BlockHeader>,
-    height: u64,
+    height: ChainEpoch,
 }
 
 impl PartialEq for Tipset {
@@ -57,8 +58,8 @@ impl Tipset {
         for block in &blocks {
             if block.height != height {
                 return Err(TipsetError::MismatchingHeight {
-                    expected: height,
-                    found: block.height,
+                    expected: height as u64,
+                    found: block.height as u64,
                 });
             }
 
@@ -102,7 +103,7 @@ impl Tipset {
     }
 
     /// Return the height of the first block.
-    pub fn height(&self) -> u64 {
+    pub fn height(&self) -> ChainEpoch {
         self.height
     }
 
@@ -153,7 +154,7 @@ impl encode::Encode for Tipset {
         e.array(3)?
             .encode(&self.key)?
             .encode(&self.blocks)?
-            .u64(self.height)?
+            .i64(self.height)?
             .ok()
     }
 }
@@ -166,7 +167,7 @@ impl<'b> decode::Decode<'b> for Tipset {
         Ok(Tipset {
             key: d.decode::<TipsetKey>()?,
             blocks: d.decode::<Vec<BlockHeader>>()?,
-            height: d.u64()?,
+            height: d.i64()?,
         })
     }
 }
@@ -182,7 +183,7 @@ mod tests {
     use super::Tipset;
     use crate::key::TipsetKey;
 
-    fn new_tipset() -> Tipset {
+    fn dummy_tipset() -> Tipset {
         let cid: Cid = "bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"
             .parse()
             .unwrap();
@@ -218,7 +219,7 @@ mod tests {
 
     #[test]
     fn tipset_cbor_serde() {
-        let tipset = new_tipset();
+        let tipset = dummy_tipset();
         let expected = vec![
             131, 129, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161, 80,
             48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55, 160,
@@ -254,7 +255,7 @@ mod tests {
             set_network(Network::Test);
         }
 
-        let tipset = new_tipset();
+        let tipset = dummy_tipset();
         let expected = "{\
             \"Cids\":[{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"}],\
             \"Blocks\":[{\

@@ -5,9 +5,10 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 use cid::Cid;
+use plum_actor::{market, miner, power};
 use plum_address::Address;
 use plum_bigint::{bigint_json, BigInt, BigIntWrapper};
-// use plum_bitfield::BitField;
+use plum_bitfield::BitField;
 use plum_message::{MessageReceipt, UnsignedMessage};
 use plum_sector::SectorNumber;
 use plum_tipset::{Tipset, TipsetKey};
@@ -18,7 +19,8 @@ use crate::client::RpcClient;
 use crate::errors::Result;
 use crate::helper;
 
-///
+/// MethodGroup: State.
+/// The State methods are used to query, inspect, and interact with chain state.
 #[doc(hidden)]
 #[async_trait::async_trait]
 pub trait StateApi: RpcClient {
@@ -78,20 +80,19 @@ pub trait StateApi: RpcClient {
         self.request("StateNetworkName", vec![]).await
     }
 
-    /*
     async fn state_miner_sectors(
         &self,
         addr: &Address,
-        field: &BitField,
-        what: bool,
+        filter: &BitField,
+        filter_out: bool,
         key: &TipsetKey,
     ) -> Result<Vec<ChainSectorInfo>> {
         self.request(
             "StateMinerSectors",
             vec![
                 helper::serialize(addr),
-                helper::serialize(field),
-                helper::serialize(&what),
+                helper::serialize(filter),
+                helper::serialize(&filter_out),
                 helper::serialize(key),
             ],
         )
@@ -109,6 +110,7 @@ pub trait StateApi: RpcClient {
         )
         .await
     }
+
     async fn state_miner_proving_deadline(
         &self,
         addr: &Address,
@@ -124,21 +126,19 @@ pub trait StateApi: RpcClient {
     async fn state_miner_power(&self, addr: &Address, key: &TipsetKey) -> Result<MinerPower> {
         self.request(
             "StateMinerPower",
-            vec![
-                helper::serialize(addr),
-                helper::serialize(key),
-            ],
+            vec![helper::serialize(addr), helper::serialize(key)],
         )
         .await
     }
 
-    async fn state_miner_info(&self, addr: &Address, key: &TipsetKey) -> Result<miner::MinerInfo> {
+    async fn state_miner_info(
+        &self,
+        addr: &Address,
+        key: &TipsetKey,
+    ) -> Result<Option<miner::MinerInfo>> {
         self.request(
             "StateMinerInfo",
-            vec![
-                helper::serialize(addr),
-                helper::serialize(key),
-            ],
+            vec![helper::serialize(addr), helper::serialize(key)],
         )
         .await
     }
@@ -154,15 +154,31 @@ pub trait StateApi: RpcClient {
         )
         .await
     }
-    */
 
-    async fn state_miner_faults(
-        &self,
-        addr: &Address,
-        key: &TipsetKey,
-    ) -> Result<Vec<SectorNumber>> {
+    async fn state_miner_faults(&self, addr: &Address, key: &TipsetKey) -> Result<BitField> {
         self.request(
             "StateMinerFaults",
+            vec![helper::serialize(addr), helper::serialize(key)],
+        )
+        .await
+    }
+
+    // Returns all non-expired Faults that occur within lookback epochs of the given tipset
+    async fn state_all_miner_faults(
+        &self,
+        lookback: ChainEpoch,
+        key: &TipsetKey,
+    ) -> Result<Vec<Fault>> {
+        self.request(
+            "StateAllMinerFaults",
+            vec![helper::serialize(&lookback), helper::serialize(key)],
+        )
+        .await
+    }
+
+    async fn state_miner_recoveries(&self, addr: &Address, key: &TipsetKey) -> Result<BitField> {
+        self.request(
+            "StateMinerRecoveries",
             vec![helper::serialize(addr), helper::serialize(key)],
         )
         .await
@@ -201,26 +217,22 @@ pub trait StateApi: RpcClient {
         Ok(bigint.into_inner())
     }
 
-    /*
     async fn state_sector_pre_commit_info(
         &self,
         addr: &Address,
         sector_number: SectorNumber,
         key: &TipsetKey,
     ) -> Result<miner::SectorPreCommitOnChainInfo> {
-        let bigint: BigIntWrapper = self
-            .request(
-                "StateSectorPreCommitInfo",
-                vec![
-                    helper::serialize(addr),
-                    helper::serialize(&sector_number),
-                    helper::serialize(key),
-                ],
-            )
-            .await?;
-        Ok(bigint.into_inner())
+        self.request(
+            "StateSectorPreCommitInfo",
+            vec![
+                helper::serialize(addr),
+                helper::serialize(&sector_number),
+                helper::serialize(key),
+            ],
+        )
+        .await
     }
-    */
 
     async fn state_pledge_collateral(&self, key: &TipsetKey) -> Result<BigInt> {
         let bigint: BigIntWrapper = self
@@ -265,7 +277,6 @@ pub trait StateApi: RpcClient {
             .await
     }
 
-    /*
     async fn state_market_deals(&self, key: &TipsetKey) -> Result<HashMap<String, MarketDeal>> {
         self.request("StateMarketDeals", vec![helper::serialize(key)])
             .await
@@ -278,7 +289,6 @@ pub trait StateApi: RpcClient {
         )
         .await
     }
-    */
 
     async fn state_lookup_id(&self, addr: &Address, key: &TipsetKey) -> Result<Address> {
         self.request(
@@ -352,13 +362,14 @@ pub struct ActorState {
     pub balance: BigInt,
     // pub state: interface{},
 }
+*/
 
 ///
 #[doc(hidden)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ChainSectorInfo {
-    // pub info: miner::SectorOnChainInfo,
+    pub info: miner::SectorOnChainInfo,
     pub id: SectorNumber,
 }
 
@@ -370,7 +381,6 @@ pub struct MinerPower {
     pub miner_power: power::Claim,
     pub total_power: power::Claim,
 }
-*/
 
 ///
 #[doc(hidden)]
@@ -379,6 +389,15 @@ pub struct MinerPower {
 pub struct MinerSectors {
     pub pset: u64,
     pub sset: u64,
+}
+
+///
+#[doc(hidden)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Fault {
+    pub miner: Address,
+    pub epoch: ChainEpoch,
 }
 
 ///
@@ -402,7 +421,6 @@ pub struct MarketBalance {
     pub locked: BigInt,
 }
 
-/*
 ///
 #[doc(hidden)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -411,7 +429,6 @@ pub struct MarketDeal {
     pub proposal: market::DealProposal,
     pub state: market::DealState,
 }
-*/
 
 ///
 #[doc(hidden)]

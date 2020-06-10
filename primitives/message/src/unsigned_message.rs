@@ -6,11 +6,15 @@ use serde::{Deserialize, Serialize};
 
 use plum_address::Address;
 use plum_bigint::{bigint_json, BigInt, BigIntRefWrapper, BigIntWrapper};
+use plum_types::MethodNum;
 
 /// The unsigned message.
 #[derive(Eq, PartialEq, Clone, Debug, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct UnsignedMessage {
+    ///
+    pub version: i64,
+
     /// The receiver of the unsigned message.
     pub to: Address,
     /// The sender of the unsigned message.
@@ -29,7 +33,7 @@ pub struct UnsignedMessage {
     pub gas_limit: BigInt,
 
     /// The method.
-    pub method: u64,
+    pub method: MethodNum,
     /// The params of method.
     #[serde(with = "plum_bytes")]
     pub params: Vec<u8>,
@@ -61,7 +65,8 @@ impl UnsignedMessage {
 // Implement CBOR serialization for UnsignedMessage.
 impl encode::Encode for UnsignedMessage {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
-        e.array(8)?
+        e.array(9)?
+            .i64(self.version)?
             .encode(&self.to)?
             .encode(&self.from)?
             .u64(self.nonce)?
@@ -78,8 +83,9 @@ impl encode::Encode for UnsignedMessage {
 impl<'b> decode::Decode<'b> for UnsignedMessage {
     fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
         let array_len = d.array()?;
-        assert_eq!(array_len, Some(8));
+        assert_eq!(array_len, Some(9));
         Ok(UnsignedMessage {
+            version: d.i64()?,
             to: d.decode::<Address>()?,
             from: d.decode::<Address>()?,
             nonce: d.u64()?,
@@ -111,6 +117,7 @@ mod tests {
         ];
 
         UnsignedMessage {
+            version: 0,
             to: Address::new_bls_addr(&to_pubkey).unwrap(),
             from: Address::new_bls_addr(&from_pubkey).unwrap(),
             nonce: 197u64,
@@ -129,7 +136,7 @@ mod tests {
         }
         let unsigned_message = new_unsigned_message();
         let expected = vec![
-            136, 88, 49, 3, 82, 253, 252, 7, 33, 130, 101, 79, 22, 63, 95, 15, 154, 98, 29, 114,
+            137, 0, 88, 49, 3, 82, 253, 252, 7, 33, 130, 101, 79, 22, 63, 95, 15, 154, 98, 29, 114,
             149, 102, 199, 77, 16, 3, 124, 77, 123, 187, 4, 7, 209, 226, 198, 73, 129, 133, 90,
             216, 104, 29, 13, 134, 209, 233, 30, 0, 22, 121, 57, 203, 88, 49, 3, 47, 130, 130, 203,
             226, 249, 105, 111, 49, 68, 192, 170, 76, 237, 86, 219, 217, 103, 220, 40, 151, 128,
@@ -153,6 +160,7 @@ mod tests {
         }
         let unsigned_message = new_unsigned_message();
         let expected = "{\
+            \"Version\":0,\
             \"To\":\"t3kl67ybzbqjsu6fr7l4hzuyq5okkwnr2ncabxytl3xmcapupcyzeydbk23bub2dmg2hur4aawpe44w3wptsvq\",\
             \"From\":\"t3f6bifs7c7fuw6mkeycvez3kw3pmwpxbis6agv4563ctdvsqw4gfwq25a3qqiz7womw6xbir5uabgwykazd5a\",\
             \"Nonce\":197,\

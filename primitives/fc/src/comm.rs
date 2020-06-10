@@ -5,7 +5,7 @@ use cid::{
     FilecoinUnsealedV1,
 };
 
-use filecoin_proofs::types::Commitment;
+pub type Commitment = [u8; 32];
 
 ///
 pub const FILECOIN_CODEC_TYPE: Codec = Codec::Raw;
