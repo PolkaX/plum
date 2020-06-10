@@ -6,5 +6,7 @@
 
 mod datastore;
 mod key;
+// mod query;
+mod store;
 
 pub use self::key::{namespace_type, namespace_value, Key};
