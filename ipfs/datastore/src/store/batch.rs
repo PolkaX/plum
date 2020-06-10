@@ -1,5 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use crate::error::Result;
 use crate::store::{DataStore, DataStoreWrite};
 
 /// BatchDataStore support deferred, grouped updates to the database.
@@ -14,11 +15,11 @@ pub trait BatchDataStore: DataStore {
     type Batch: Batch;
 
     ///
-    fn batch(&self) -> Result<Self::Batch, ()>;
+    fn batch(&self) -> Result<Self::Batch>;
 }
 
 ///
 pub trait Batch: DataStoreWrite {
     ///
-    fn commit(&self) -> Result<(), ()>;
+    fn commit(&self) -> Result<()>;
 }

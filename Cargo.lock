@@ -1619,9 +1619,12 @@ dependencies = [
 name = "plum_ipfs_datastore"
 version = "0.1.0"
 dependencies = [
+ "log",
+ "parking_lot",
  "path-clean",
  "serde",
  "serde_json",
+ "thiserror",
  "uuid",
 ]
 

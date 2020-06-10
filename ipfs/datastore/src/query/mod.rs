@@ -32,7 +32,7 @@ use std::time::Instant;
 /// * offset - skip a number of results (for efficient pagination)
 /// * limit - impose a numeric limit on the number of results
 ///
-/// Datastore combines these operations into a simple Query class that allows
+/// DataStore combines these operations into a simple Query class that allows
 /// applications to define their constraints in a simple, generic, way without
 /// introducing datastore specific calls, languages, etc.
 ///
