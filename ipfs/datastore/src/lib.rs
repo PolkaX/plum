@@ -4,7 +4,7 @@
 
 #![deny(missing_docs)]
 
-mod datastore;
+mod impls;
 mod key;
 // mod query;
 mod store;
