@@ -42,7 +42,7 @@ impl DataStoreRead for MapDataStore {
         Ok(self
             .values
             .get(key)
-            .ok_or(DataStoreError::NotFound(key.to_string()))?
+            .ok_or_else(|| DataStoreError::NotFound(key.to_string()))?
             .to_owned())
     }
 
@@ -61,7 +61,7 @@ impl DataStoreRead for MapDataStore {
         Ok(self
             .values
             .get(key)
-            .ok_or(DataStoreError::NotFound(key.to_string()))?
+            .ok_or_else(|| DataStoreError::NotFound(key.to_string()))?
             .len())
     }
 }

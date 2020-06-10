@@ -15,3 +15,4 @@ pub use self::fail::{FailDataStore, FailFunc};
 pub use self::log::LogDataStore;
 pub use self::map::MapDataStore;
 pub use self::sync::SyncDataStore;
+pub use self::transform::{KeyTransform, TransformDataStore};
