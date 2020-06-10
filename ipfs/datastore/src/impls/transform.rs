@@ -12,12 +12,12 @@ use crate::store::{Scrub, ScrubbedDataStore};
 
 /// KeyTransform is an object with a pair of functions for transforming keys invertibly.
 pub trait KeyTransform {
-    ///
+    /// Convert origin `key` into target key.
     fn convert_key<K>(&self, key: &K) -> Key
     where
         K: Borrow<Key>;
 
-    ///
+    /// Invert target `key` into origin key.
     fn invert_key<K>(&self, key: &K) -> Key
     where
         K: Borrow<Key>;

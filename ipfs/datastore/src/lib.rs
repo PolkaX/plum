@@ -13,6 +13,7 @@ mod key;
 mod store;
 
 pub use self::error::DataStoreError;
+pub use self::impls::{Delay, DelayDataStore};
 pub use self::impls::{DummyDataStore, LogDataStore, MapDataStore, SyncDataStore};
 pub use self::impls::{FailDataStore, FailFunc};
 pub use self::impls::{KeyTransform, TransformDataStore};

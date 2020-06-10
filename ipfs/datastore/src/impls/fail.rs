@@ -8,18 +8,18 @@ use crate::store::{DataStore, DataStoreRead, DataStoreWrite};
 use crate::store::{Persistent, PersistentDataStore};
 
 /// The user-provided fail function.
-pub type FailFunc = Box<dyn Fn(&str) -> Result<()>>;
+pub trait FailFunc: Fn(&str) -> Result<()> {}
 
 /// FailDataStore is a datastore which fails according to a user-provided function.
-pub struct FailDataStore<DS: DataStore> {
-    err_func: FailFunc,
+pub struct FailDataStore<F: FailFunc, DS: DataStore> {
+    err_func: F,
     child: DS,
 }
 
-impl<DS: DataStore> FailDataStore<DS> {
+impl<F: FailFunc, DS: DataStore> FailDataStore<F, DS> {
     /// Create a new datastore with the given error function.
     /// The `err_func` will be called with different strings depending on the datastore function.
-    pub fn new(err_func: FailFunc, datastore: DS) -> Self {
+    pub fn new(err_func: F, datastore: DS) -> Self {
         Self {
             err_func,
             child: datastore,
@@ -27,7 +27,7 @@ impl<DS: DataStore> FailDataStore<DS> {
     }
 }
 
-impl<DS: DataStore> DataStore for FailDataStore<DS> {
+impl<F: FailFunc, DS: DataStore> DataStore for FailDataStore<F, DS> {
     fn sync<K>(&self, prefix: K) -> Result<()>
     where
         K: Into<Key>,
@@ -41,7 +41,7 @@ impl<DS: DataStore> DataStore for FailDataStore<DS> {
     }
 }
 
-impl<DS: DataStore> DataStoreRead for FailDataStore<DS> {
+impl<F: FailFunc, DS: DataStore> DataStoreRead for FailDataStore<F, DS> {
     fn get<K>(&self, key: &K) -> Result<Vec<u8>>
     where
         K: Borrow<Key>,
@@ -67,7 +67,7 @@ impl<DS: DataStore> DataStoreRead for FailDataStore<DS> {
     }
 }
 
-impl<DS: DataStore> DataStoreWrite for FailDataStore<DS> {
+impl<F: FailFunc, DS: DataStore> DataStoreWrite for FailDataStore<F, DS> {
     fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
     where
         K: Into<Key>,
@@ -86,7 +86,7 @@ impl<DS: DataStore> DataStoreWrite for FailDataStore<DS> {
     }
 }
 
-impl<DS: PersistentDataStore> Persistent for FailDataStore<DS> {
+impl<F: FailFunc, DS: PersistentDataStore> Persistent for FailDataStore<F, DS> {
     fn disk_usage(&self) -> Result<u64> {
         (self.err_func)("disk-usage")?;
         self.child.disk_usage()

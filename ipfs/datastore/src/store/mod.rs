@@ -85,6 +85,7 @@ pub trait DataStoreRead {
 // ********************** Extended DataStore interfaces ***********************
 // ============================================================================
 
+// FIXME: batch???
 mod batch;
 mod check;
 mod gc;
