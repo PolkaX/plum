@@ -4,6 +4,9 @@
 
 #![deny(missing_docs)]
 
+mod gas;
+mod gas_v0;
 mod types;
 
+pub use self::gas::*;
 pub use self::types::ExecutionResult;

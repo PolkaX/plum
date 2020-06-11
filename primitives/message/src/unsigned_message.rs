@@ -1,5 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use anyhow::{anyhow, Result};
 use cid::{Cid, Codec, IntoExt};
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
@@ -59,6 +60,41 @@ impl UnsignedMessage {
     /// Return the required funds.
     pub fn required_funds(&self) -> BigInt {
         self.value.clone() + (&self.gas_price * &self.gas_limit)
+    }
+
+    pub fn validate_for_block_inclusion(&self, min_gas: Gas) -> Result<()> {
+        if self.version != 0 {
+            return Err(anyhow!("'Version' unsupported"));
+        }
+
+        if self.value < 0.into() {
+            return Err(anyhow!("'Value' field cannot be negative"));
+        }
+
+        if self.value > TotalFilecoinInt {
+            return Err(anyhow!(
+                "'Value' field cannot be greater than total filecoin supply"
+            ));
+        }
+
+        if self.gas_price < 0.into() {
+            return Err(anyhow!("'GasPrice' field cannot be negative"));
+        }
+
+        if self.gas_limit > build.BlockGasLimit {
+            return Err(anyhow!(
+                "'GasLimit' field cannot be greater than a block's gas limit"
+            ));
+        }
+
+        // since prices might vary with time, this is technically semantic validation
+        if self.gas_limit < min_gas {
+            return Err(anyhow!(
+                "'GasLimit' field cannot be less than the cost of storing a message on chain",
+            ));
+        }
+
+        Ok(())
     }
 }
 

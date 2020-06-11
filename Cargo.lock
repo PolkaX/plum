@@ -1559,6 +1559,7 @@ dependencies = [
  "anyhow",
  "byteorder",
  "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "plum_actor",
  "plum_crypto",
  "plum_hashing",
  "plum_types",
@@ -1645,6 +1646,7 @@ dependencies = [
 name = "plum_message"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "minicbor",
  "multihash 0.11.2",
@@ -1732,7 +1734,13 @@ dependencies = [
 name = "plum_vm"
 version = "0.1.0"
 dependencies = [
+ "lazy_static",
+ "plum_actor",
+ "plum_crypto",
  "plum_message",
+ "plum_piece",
+ "plum_sector",
+ "plum_types",
  "serde",
 ]
 

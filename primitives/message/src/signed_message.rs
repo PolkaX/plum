@@ -41,6 +41,18 @@ impl SignedMessage {
         let hash = multihash::Blake2b256::digest(data.as_ref()).into_ext();
         Cid::new_v1(Codec::DagCBOR, hash)
     }
+
+    /// Returns the size of cbor encoded SignedMessage.
+    pub fn cbor_encoded_len(&self) -> usize {
+        let data = minicbor::to_vec(self)
+            .expect("CBOR serialization of SignedMessage shouldn't be failed");
+        data.len()
+    }
+
+    ///
+    pub fn vm_message(&self) -> &UnsignedMessage {
+        &self.message
+    }
 }
 
 // Implement CBOR serialization for SignedMessage.

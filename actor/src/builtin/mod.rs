@@ -13,9 +13,13 @@ pub mod init;
 ///
 pub mod market;
 ///
+pub mod methods;
+///
 pub mod miner;
 ///
 pub mod multisig;
+///
+pub mod network;
 ///
 pub mod paych;
 ///
@@ -26,6 +30,3 @@ pub mod reward;
 pub mod system;
 ///
 pub mod verifreg;
-
-///
-pub mod network;
