@@ -1054,6 +1054,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2ba51ba9e365147a1bfb1442afbb5d887530eee5ed7dca410c2ba365ad617083"
 dependencies = [
  "half",
+ "minicbor-derive",
+]
+
+[[package]]
+name = "minicbor-derive"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3436a67b46fbf4b5cc25a37341b3daf0371496dac1161422b96225dde8f603ee"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1664,6 +1676,7 @@ name = "plum_params"
 version = "0.1.0"
 dependencies = [
  "plum_sector",
+ "plum_types",
 ]
 
 [[package]]
