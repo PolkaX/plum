@@ -43,13 +43,13 @@ impl SignedMessage {
     }
 
     /// Returns the size of cbor encoded SignedMessage.
-    pub fn cbor_encoded_len(&self) -> usize {
+    pub fn size(&self) -> usize {
         let data = minicbor::to_vec(self)
             .expect("CBOR serialization of SignedMessage shouldn't be failed");
         data.len()
     }
 
-    ///
+    /// Returns the reference of inner message to be used in vm.
     pub fn vm_message(&self) -> &UnsignedMessage {
         &self.message
     }

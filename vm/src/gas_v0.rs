@@ -1,3 +1,5 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 use crate::gas::{Pricelist, Size};
 use plum_actor::MethodSend;
 use plum_bigint::BigInt;
@@ -81,6 +83,7 @@ pub struct PricelistV0 {
 }
 
 impl Pricelist for PricelistV0 {
+    // TODO: handle these clones
     fn on_chain_message(&self, msg_size: Size) -> Gas {
         self.on_chain_message_base.clone()
             + self.on_chain_message_per_byte.clone() * BigInt::from(msg_size)

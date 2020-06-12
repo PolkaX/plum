@@ -1,3 +1,5 @@
+// Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
+
 use crate::gas_v0::PricelistV0;
 use lazy_static::lazy_static;
 use plum_crypto::SignatureType;
