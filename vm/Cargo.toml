@@ -14,5 +14,6 @@ plum_message = { path = "../primitives/message" }
 plum_types = { path = "../primitives/types" }
 plum_sector = { path = "../primitives/sector" }
 plum_piece = { path = "../primitives/piece" }
+plum_bigint = { path = "../primitives/bigint" }
 plum_actor = { path = "../actor" }
 plum_crypto = { path = "../primitives/crypto" }

@@ -1749,6 +1749,7 @@ version = "0.1.0"
 dependencies = [
  "lazy_static",
  "plum_actor",
+ "plum_bigint",
  "plum_crypto",
  "plum_message",
  "plum_piece",

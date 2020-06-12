@@ -1,9 +1,10 @@
-use crate::gas::{Gas, Pricelist, Size};
+use crate::gas::{Pricelist, Size};
 use plum_actor::MethodSend;
+use plum_bigint::BigInt;
 use plum_crypto::SignatureType;
 use plum_piece::PieceInfo;
 use plum_sector::{RegisteredProof, SealVerifyInfo, WindowPoStVerifyInfo};
-use plum_types::{MethodNum, TokenAmount};
+use plum_types::{Gas, MethodNum, TokenAmount};
 
 ///
 #[derive(Debug, Clone)]
@@ -81,42 +82,43 @@ pub struct PricelistV0 {
 
 impl Pricelist for PricelistV0 {
     fn on_chain_message(&self, msg_size: Size) -> Gas {
-        self.on_chain_message_base + self.on_chain_message_per_byte * msg_size as Gas
+        self.on_chain_message_base.clone()
+            + self.on_chain_message_per_byte.clone() * BigInt::from(msg_size)
     }
 
     fn on_chain_return_value(&self, data_size: Size) -> Gas {
-        data_size as Gas * self.on_chain_return_value_per_byte
+        BigInt::from(data_size) * self.on_chain_return_value_per_byte.clone()
     }
 
     fn on_method_invocation(&self, value: TokenAmount, method_num: MethodNum) -> Gas {
-        let mut invocation = self.send_base;
+        let mut invocation = self.send_base.clone();
         if value != 0.into() {
-            invocation += self.send_transfer_funds;
+            invocation += self.send_transfer_funds.clone();
         }
         if method_num != MethodSend {
-            invocation += self.send_invoke_method;
+            invocation += self.send_invoke_method.clone();
         }
         invocation
     }
 
     fn on_ipld_get(&self, data_size: Size) -> Gas {
-        self.ipld_get_base + data_size as Gas * self.ipld_get_per_byte
+        self.ipld_get_base.clone() + BigInt::from(data_size) * self.ipld_get_per_byte.clone()
     }
 
     fn on_ipld_put(&self, data_size: Size) -> Gas {
-        self.ipld_put_base + data_size as Gas * self.ipld_put_per_byte
+        self.ipld_put_base.clone() + BigInt::from(data_size) * self.ipld_put_per_byte.clone()
     }
 
     fn on_create_actor(&self) -> Gas {
-        self.create_actor_base + self.create_actor_extra
+        self.create_actor_base.clone() + self.create_actor_extra.clone()
     }
 
     fn on_delete_actor(&self) -> Gas {
-        self.delete_actor
+        self.delete_actor.clone()
     }
 
     fn on_verify_signature(&self, sig_type: SignatureType, plan_text_size: Size) -> Gas {
-        let gas_for = |s: Size| 3 * s as Gas + 2;
+        let gas_for = |s: Size| BigInt::from(3) * BigInt::from(s) + BigInt::from(2);
         match sig_type {
             SignatureType::Bls => gas_for(plan_text_size),
             SignatureType::Secp256k1 => gas_for(plan_text_size),
@@ -124,7 +126,7 @@ impl Pricelist for PricelistV0 {
     }
 
     fn on_hashing(&self, data_size: Size) -> Gas {
-        self.hashing_base + data_size as Gas * self.hashing_per_byte
+        self.hashing_base.clone() + BigInt::from(data_size) * self.hashing_per_byte.clone()
     }
 
     fn on_compute_unsealed_sector_cid(
@@ -133,20 +135,20 @@ impl Pricelist for PricelistV0 {
         _pieces: Vec<PieceInfo>,
     ) -> Gas {
         // TODO: this needs more cost tunning, check with @lotus
-        self.compute_unsealed_sector_cid_base
+        self.compute_unsealed_sector_cid_base.clone()
     }
 
     fn on_verify_seal(&self, _info: SealVerifyInfo) -> Gas {
         // TODO: this needs more cost tunning, check with @lotus
-        self.verify_seal_base
+        self.verify_seal_base.clone()
     }
 
     fn on_verify_post(&self, _info: WindowPoStVerifyInfo) -> Gas {
         // TODO: this needs more cost tunning, check with @lotus
-        self.verify_post_base
+        self.verify_post_base.clone()
     }
 
     fn on_verify_consensus_fault(&self) -> Gas {
-        self.verify_consensus_fault
+        self.verify_consensus_fault.clone()
     }
 }

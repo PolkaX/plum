@@ -99,4 +99,4 @@ pub type DealId = u64;
 pub type DealWeight = BigInt;
 
 ///
-pub type Gas = u64;
+pub type Gas = BigInt;

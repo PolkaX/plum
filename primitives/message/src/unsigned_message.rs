@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use plum_address::Address;
 use plum_bigint::{bigint_json, BigInt, BigIntRefWrapper, BigIntWrapper};
-use plum_types::MethodNum;
+use plum_types::{Gas, MethodNum};
 
 /// The unsigned message.
 #[derive(Eq, PartialEq, Clone, Debug, Hash, Serialize, Deserialize)]
@@ -62,35 +62,36 @@ impl UnsignedMessage {
         self.value.clone() + (&self.gas_price * &self.gas_limit)
     }
 
+    /// Returns true if this message is valid to be include in a block.
     pub fn validate_for_block_inclusion(&self, min_gas: Gas) -> Result<()> {
         if self.version != 0 {
-            return Err(anyhow!("'Version' unsupported"));
+            return Err(anyhow!("version unsupported"));
         }
 
         if self.value < 0.into() {
-            return Err(anyhow!("'Value' field cannot be negative"));
+            return Err(anyhow!("value field cannot be negative"));
         }
 
-        if self.value > TotalFilecoinInt {
+        if self.value > *plum_types::TOTAL_FILECOIN {
             return Err(anyhow!(
-                "'Value' field cannot be greater than total filecoin supply"
+                "value field cannot be greater than total filecoin supply"
             ));
         }
 
         if self.gas_price < 0.into() {
-            return Err(anyhow!("'GasPrice' field cannot be negative"));
+            return Err(anyhow!("gas_price field cannot be negative"));
         }
 
-        if self.gas_limit > build.BlockGasLimit {
+        if self.gas_limit > plum_types::BLOCK_GAS_LIMIT.into() {
             return Err(anyhow!(
-                "'GasLimit' field cannot be greater than a block's gas limit"
+                "gas_limit field cannot be greater than a block's gas limit"
             ));
         }
 
         // since prices might vary with time, this is technically semantic validation
-        if self.gas_limit < min_gas {
+        if self.gas_limit < min_gas.into() {
             return Err(anyhow!(
-                "'GasLimit' field cannot be less than the cost of storing a message on chain",
+                "gas_limit field cannot be less than the cost of storing a message on chain",
             ));
         }
 

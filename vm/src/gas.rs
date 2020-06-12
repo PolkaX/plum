@@ -56,19 +56,19 @@ lazy_static! {
         m.insert(
             0,
             PricelistV0 {
-                on_chain_message_base: 0,
-                on_chain_message_per_byte: 2,
-                on_chain_return_value_per_byte: 8,
-                send_base: 5,
-                send_transfer_funds: 5,
-                send_invoke_method: 10,
-                ipld_get_base: 10,
-                ipld_get_per_byte: 1,
-                ipld_put_base: 20,
-                ipld_put_per_byte: 2,
-                create_actor_base: 40, // IPLD put + 20
-                create_actor_extra: 500,
-                delete_actor: -500, // -createActorExtra
+                on_chain_message_base: 0.into(),
+                on_chain_message_per_byte: 2.into(),
+                on_chain_return_value_per_byte: 8.into(),
+                send_base: 5.into(),
+                send_transfer_funds: 5.into(),
+                send_invoke_method: 10.into(),
+                ipld_get_base: 10.into(),
+                ipld_get_per_byte: 1.into(),
+                ipld_put_base: 20.into(),
+                ipld_put_per_byte: 2.into(),
+                create_actor_base: 40.into(), // IPLD put + 20
+                create_actor_extra: 500.into(),
+                delete_actor: (-500).into(), // -createActorExtra
 
                 // NOTE: handled inside on_verify_signature()
                 // Dragons: this cost is not persistable, create a LinearCost{a,b} struct that has a `.Cost(x) -> ax + b`
@@ -77,12 +77,12 @@ lazy_static! {
                 // crypto.SigTypeSecp256k1: func(x int64) int64 { return 3*x + 2 },
                 // },
 
-                hashing_base: 5,
-                hashing_per_byte: 2,
-                compute_unsealed_sector_cid_base: 100,
-                verify_seal_base: 2000,
-                verify_post_base: 700,
-                verify_consensus_fault: 10,
+                hashing_base: 5.into(),
+                hashing_per_byte: 2.into(),
+                compute_unsealed_sector_cid_base: 100.into(),
+                verify_seal_base: 2000.into(),
+                verify_post_base: 700.into(),
+                verify_consensus_fault: 10.into(),
             },
         );
         m
