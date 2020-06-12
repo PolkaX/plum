@@ -9,7 +9,7 @@ mod sealing;
 mod sector;
 
 pub use self::posting::{PoStProof, WindowPoStVerifyInfo, WinningPoStVerifyInfo};
-pub use self::sealing::{OnChainSealVerifyInfo, SealVerifyInfo};
+pub use self::sealing::SealVerifyInfo;
 pub use self::sector::{
     readable_sector_size, RegisteredProof, SectorId, SectorInfo, SectorNumber, SectorQuality,
     SectorSize, SpaceTime, StoragePower, UnknownSectorSizeErr,
@@ -108,78 +108,18 @@ mod tests {
             }",
         );
 
-        // OnChainSealVerifyInfo
-        let on_chain = OnChainSealVerifyInfo {
-            sealed_cid: cid.clone(),
-            interactive_epoch: 12_345_678,
-            registered_proof,
-            proof: vec![1, 2, 3, 4, 5, 6, 7, 8],
-            deal_ids: vec![8, 7, 6],
-            sector_number: 1111,
-            seal_rand_epoch: 87_654_321,
-        };
-        asset_cbor(
-            &on_chain,
-            vec![
-                135, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161, 80, 48,
-                167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55, 160,
-                199, 184, 78, 250, 26, 0, 188, 97, 78, 7, 72, 1, 2, 3, 4, 5, 6, 7, 8, 131, 8, 7, 6,
-                25, 4, 87, 26, 5, 57, 127, 177,
-            ],
-        );
-        assert_json(
-            &on_chain,
-            "{\
-                \"SealedCID\":{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"},\
-                \"InteractiveEpoch\":12345678,\
-                \"RegisteredProof\":7,\
-                \"Proof\":\"AQIDBAUGBwg=\",\
-                \"DealIDs\":[8,7,6],\
-                \"SectorNumber\":1111,\
-                \"SealRandEpoch\":87654321\
-            }",
-        );
-
         // SealVerifyInfo
-        let info = SealVerifyInfo {
+        let _info = SealVerifyInfo {
+            registered_proof,
             sector_id,
-            on_chain,
             randomness: [1; 32].into(),
             interactive_randomness: [2; 32].into(),
+            proof: vec![1, 2, 3, 4, 5, 6, 7, 8],
+            sealed_cid: cid.clone(),
             unsealed_cid: cid,
+            deal_ids: vec![8, 7, 6],
         };
-        asset_cbor(
-            &info,
-            vec![
-                133, 130, 24, 100, 24, 100, 135, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122,
-                115, 187, 29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232,
-                201, 142, 225, 217, 73, 55, 160, 199, 184, 78, 250, 26, 0, 188, 97, 78, 7, 72, 1,
-                2, 3, 4, 5, 6, 7, 8, 131, 8, 7, 6, 25, 4, 87, 26, 5, 57, 127, 177, 88, 32, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 88, 32, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-                2, 2, 2, 2, 2, 2, 2, 2, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187,
-                29, 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142,
-                225, 217, 73, 55, 160, 199, 184, 78, 250,
-            ],
-        );
-        assert_json(
-            &info,
-            "{\
-                \"Miner\":100,\"Number\":100,\
-                \"OnChain\":{\
-                    \"SealedCID\":{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"},\
-                    \"InteractiveEpoch\":12345678,\
-                    \"RegisteredProof\":7,\
-                    \"Proof\":\"AQIDBAUGBwg=\",\
-                    \"DealIDs\":[8,7,6],\
-                    \"SectorNumber\":1111,\
-                    \"SealRandEpoch\":87654321\
-                },\
-                \"Randomness\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=\",\
-                \"InteractiveRandomness\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI=\",\
-                \"UnsealedCID\":{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"}\
-            }",
-        );
+        // TODO need check
 
         // PoStProof
         let post_proof = PoStProof {

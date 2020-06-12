@@ -8,3 +8,4 @@ license = "GPL-3.0"
 [dependencies]
 # plum
 plum_sector = { path = "../primitives/sector" }
+plum_types = { path = "../primitives/types" }
