@@ -3,6 +3,7 @@
 use std::sync::Once;
 
 use plum_sector::SectorSize;
+use plum_types::ChainEpoch;
 
 static mut PARAMS: Params = Params {
     unixfs_chunk_size: 0,
@@ -75,29 +76,29 @@ pub struct Params {
     pub sector_challenge_ratio_div: u64,
     // Payments
     // Epochs
-    pub payment_channel_closing_delay: u64,
+    pub payment_channel_closing_delay: ChainEpoch,
     // Consensus / Network
     // Seconds
-    pub allowable_clock_drift: u64,
+    pub allowable_clock_drift: ChainEpoch,
     // Epochs
-    pub fork_length_threshold: u64,
+    pub fork_length_threshold: ChainEpoch,
     // Blocks (e)
     pub blocks_per_epoch: u64,
     // Epochs
-    pub finality: u64,
+    pub finality: ChainEpoch,
     // constants for Weight calculation
     // The ratio of weight contributed by short-term vs long-term factors in a given round
     pub wratio_num: u64,
     pub wratio_den: u64,
     // proofs
     // Epochs
-    pub seal_randomness_lookback: u64,
+    pub seal_randomness_lookback: ChainEpoch,
     // Epochs
-    pub seal_randomness_lookback_limit: u64,
+    pub seal_randomness_lookback_limit: ChainEpoch,
     // Maximum lookback that randomness can be sourced from for a seal proof submission
-    pub max_seal_lookback: u64,
+    pub max_seal_lookback: ChainEpoch,
     // Epochs
-    pub ec_randomness_lookback: u64,
+    pub ec_randomness_lookback: ChainEpoch,
     pub power_collateral_proportion: u64,
     pub per_capita_collateral_proportion: u64,
     pub collateral_precision: u64,
@@ -122,22 +123,22 @@ pub struct Fil {
 
 pub struct Chain {
     pub sector_sizes: [SectorSize; 8],
-    pub block_delay: u64,
-    pub propagation_delay: u64,
+    pub block_delay: ChainEpoch,
+    pub propagation_delay: ChainEpoch,
     // fallback_po_st_delay is the number of epochs the miner needs to wait after
     //  ElectionPeriodStart before starting fallback post computation
     //
     // Epochs
-    pub fallback_po_st_delay: u64,
+    pub fallback_po_st_delay: ChainEpoch,
     // slashable_power_delay is the number of epochs after ElectionPeriodStart, after
     // which the miner is slashed
     //
     // Epochs
-    pub slashable_power_delay: u64,
+    pub slashable_power_delay: ChainEpoch,
     // Epochs
-    pub interactive_po_rep_delay: u64,
+    pub interactive_po_rep_delay: ChainEpoch,
     // Epochs
-    pub interactive_po_rep_confidence: u64,
+    pub interactive_po_rep_confidence: ChainEpoch,
     // Bytes
     pub minimum_miner_power: u64,
 }
