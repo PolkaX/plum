@@ -22,6 +22,8 @@ pub const TICKET_RANDOMNESS_LOOKBACK: u64 = 1;
 pub const BLOCK_DELAY: u64 = 45;
 ///
 pub const PROPAGATION_DELAY: u64 = 5;
+///
+pub const BLOCKS_PER_EPOCH: u64 = 5;
 
 ///////////////
 // Limits
