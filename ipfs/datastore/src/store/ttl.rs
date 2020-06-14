@@ -18,3 +18,5 @@ pub trait Ttl {
 /// TtlDataStore is an interface that should be implemented by data stores
 /// that support expiring entries.
 pub trait TtlDataStore: Ttl + DataStore {}
+
+impl<T: Ttl + DataStore> TtlDataStore for T {}
