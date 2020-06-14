@@ -1629,6 +1629,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "plum_ipfs_blockstore"
+version = "0.1.0"
+
+[[package]]
 name = "plum_ipfs_datastore"
 version = "0.1.0"
 dependencies = [
@@ -1653,10 +1657,6 @@ dependencies = [
  "serde_json",
  "thiserror",
 ]
-
-[[package]]
-name = "plum_ipld_blockstore"
-version = "0.1.0"
 
 [[package]]
 name = "plum_message"

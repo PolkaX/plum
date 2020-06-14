@@ -30,8 +30,8 @@ members = [
 
   # IPFS and IPLD
   "ipfs/datastore",
+  "ipfs/blockstore",
   "ipld",
-  "ipld/blockstore",
 
   # primitives
   "primitives/address",
