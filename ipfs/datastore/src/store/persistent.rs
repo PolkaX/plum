@@ -3,6 +3,7 @@
 use crate::error::Result;
 use crate::store::DataStore;
 
+/// An interface that report disk usage.
 pub trait Persistent {
     /// Report disk usage, return the space used by a datastore, in bytes.
     fn disk_usage(&self) -> Result<u64>;

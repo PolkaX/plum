@@ -3,7 +3,7 @@
 use crate::error::Result;
 use crate::store::DataStore;
 
-///
+/// An interface that free disk space.
 pub trait Gc {
     /// Free disk space.
     fn collect_garbage(&self) -> Result<()>;
