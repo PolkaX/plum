@@ -4,12 +4,10 @@
 
 #![deny(missing_docs)]
 
-mod block;
 mod error;
 #[macro_use]
 mod value;
 
-pub use self::block::IpldBlock;
 pub use self::error::IpldError;
 pub use self::value::{Bytes, Integer, IpldValue, Map, MapKey};
 

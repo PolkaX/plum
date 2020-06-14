@@ -1,5 +1,5 @@
 [package]
-name = "plum_ipfs_blockstore"
+name = "plum_ipfs_block"
 version = "0.1.0"
 authors = ["The PolkaX Authors"]
 edition = "2018"
@@ -7,6 +7,5 @@ license = "GPL-3.0"
 
 [dependencies]
 cid = { version = "0.5", features = ["cbor", "json"] }
-thiserror = "1.0"
-
-plum_ipfs_block = { path = "../block" }
+minicbor = { version = "0.4", features = ["std"] }
+multihash = "0.11"

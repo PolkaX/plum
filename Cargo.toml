@@ -29,8 +29,9 @@ members = [
   "wallet",
 
   # IPFS and IPLD
-  "ipfs/datastore",
+  "ipfs/block",
   "ipfs/blockstore",
+  "ipfs/datastore",
   "ipld",
 
   # primitives
