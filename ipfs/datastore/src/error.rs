@@ -2,7 +2,7 @@
 
 pub(crate) type Result<T> = std::result::Result<T, DataStoreError>;
 
-/// The error type used for data store
+/// The error type used for data store.
 #[doc(hidden)]
 #[derive(Clone, Debug, thiserror::Error)]
 pub enum DataStoreError {

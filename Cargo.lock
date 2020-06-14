@@ -1629,6 +1629,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "plum_ipfs_block"
+version = "0.1.0"
+dependencies = [
+ "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "minicbor",
+ "multihash 0.11.2",
+]
+
+[[package]]
+name = "plum_ipfs_blockstore"
+version = "0.1.0"
+dependencies = [
+ "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "plum_ipfs_block",
+ "thiserror",
+]
+
+[[package]]
 name = "plum_ipfs_datastore"
 version = "0.1.0"
 dependencies = [
@@ -1648,7 +1666,6 @@ dependencies = [
  "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "minicbor",
  "multibase",
- "multihash 0.11.2",
  "serde",
  "serde_json",
  "thiserror",
