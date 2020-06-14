@@ -27,12 +27,16 @@ use crate::key::Key;
 /// proper error reporting. Thus, all DataStore calls may return errors, which
 /// should be checked by callers.
 pub trait DataStore: DataStoreWrite + DataStoreRead {
+    /// Guarantees that any `put` or `delete` calls under prefix that returned before `sync(prefix)`
+    /// was called will be observed after `sync(prefix)` returns, even if the program crashes.
+    /// If `put/delete` operations already satisfy these requirements then Sync may be a no-op.
     ///
+    ///  If the prefix fails to `sync` this method returns an error.
     fn sync<K>(&self, prefix: K) -> Result<()>
     where
         K: Into<Key>;
 
-    ///
+    /// Close I/O.
     fn close(&self) -> Result<()>;
 }
 

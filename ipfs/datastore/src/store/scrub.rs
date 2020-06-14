@@ -3,7 +3,7 @@
 use crate::error::Result;
 use crate::store::DataStore;
 
-///
+/// An interface that check data integrity and/or error correction.
 pub trait Scrub {
     /// Check data integrity and/or error correction.
     fn scrub(&self) -> Result<()>;

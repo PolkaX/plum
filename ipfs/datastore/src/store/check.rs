@@ -3,7 +3,7 @@
 use crate::error::Result;
 use crate::store::DataStore;
 
-///
+/// An interface check on-disk data integrity.
 pub trait Check {
     /// Check on-disk data integrity.
     fn check(&self) -> Result<()>;
