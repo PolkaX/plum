@@ -9,7 +9,7 @@ use cid::{
     FilecoinUnsealedV1,
 };
 
-pub type Commitment = [u8; 32];
+type Commitment = [u8; 32];
 
 ///
 pub const FILECOIN_CODEC_TYPE: Codec = Codec::Raw;
@@ -40,7 +40,7 @@ pub fn commitment_to_cid(
 }
 
 /// Extracts the raw data commitment from a CID given the multihash type.
-fn cid_to_commitment(
+pub fn cid_to_commitment(
     cid: &Cid,
     multihash_code: FilecoinMultihashCode,
 ) -> Result<Commitment, CommCidErr> {

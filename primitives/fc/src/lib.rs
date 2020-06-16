@@ -6,11 +6,7 @@
 
 mod commcid;
 
-pub use self::commcid::{
-    cid_to_data_commitment_v1, cid_to_piece_commitment_v1, cid_to_replica_commitment_v1,
-    commitment_to_cid, data_commitment_v1_to_cid, piece_commitment_v1_to_cid,
-    replica_commitment_v1_to_cid, CommCidErr, FILECOIN_CODEC_TYPE,
-};
+pub use self::commcid::*;
 
 use plum_address::{Address, AddressError};
 use plum_types::ActorId;
