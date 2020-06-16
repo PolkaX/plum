@@ -59,23 +59,26 @@ pub fn cid_to_piece_commitment_v1(cid: &Cid) -> Result<Commitment, CommCidErr> {
 
 ///
 pub fn cid_to_data_commitment_v1(cid: &Cid) -> Result<Commitment, CommCidErr> {
-    let hash = cid_to_commitment(cid, FilecoinMultihashCode::FcUnsealedV1)?;
-    let mut r = Commitment::default();
-    // hash.digest must be 32 bytes, if not panic here.
-    r.copy_from_slice(hash.digest());
-    Ok(r)
+    cid_to_commitment(cid, FilecoinMultihashCode::FcUnsealedV1)
 }
 
 ///
 pub fn cid_to_replica_commitment_v1(cid: &Cid) -> Result<Commitment, CommCidErr> {
-    let hash = cid_to_commitment(cid, FilecoinMultihashCode::FcSealedV1)?;
-    let mut r = Commitment::default();
-    // hash.digest must be 32 bytes, if not panic here.
-    r.copy_from_slice(hash.digest());
-    Ok(r)
+    cid_to_commitment(cid, FilecoinMultihashCode::FcSealedV1)
 }
 
 fn cid_to_commitment(
+    cid: &Cid,
+    multihash_code: FilecoinMultihashCode,
+) -> Result<Commitment, CommCidErr> {
+    let hash = cid_to_multihash(cid, multihash_code)?;
+    let mut c = Commitment::default();
+    // hash.digest must be 32 bytes, if not panic here.
+    c.copy_from_slice(hash.digest());
+    Ok(c)
+}
+
+fn cid_to_multihash(
     cid: &Cid,
     expect: FilecoinMultihashCode,
 ) -> Result<ExtMultihashRef, CommCidErr> {

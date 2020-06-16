@@ -4,9 +4,9 @@
 
 #![deny(missing_docs)]
 
-mod comm;
+mod commcid;
 
-pub use self::comm::{
+pub use self::commcid::{
     cid_to_data_commitment_v1, cid_to_piece_commitment_v1, cid_to_replica_commitment_v1,
     commitment_to_cid, data_commitment_v1_to_cid, piece_commitment_v1_to_cid,
     replica_commitment_v1_to_cid, CommCidErr, FILECOIN_CODEC_TYPE,
