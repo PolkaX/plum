@@ -1,5 +1,9 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+//! This module provides the conversion utilities between cid and piece/data/replica commitments.
+//!
+//! Ref filecoin-project/go-fil-commcid
+
 use cid::{
     Cid, Codec, ExtCode, ExtMultihashRef, FilecoinMultihashCode, FilecoinSealedV1,
     FilecoinUnsealedV1,
@@ -14,32 +18,15 @@ pub const FILECOIN_CODEC_TYPE: Codec = Codec::Raw;
 #[doc(hidden)]
 #[derive(thiserror::Error, Debug)]
 pub enum CommCidErr {
-    #[error("not support for this code:{0:?}")]
-    NotSupport(FilecoinMultihashCode),
-    #[error("invalid multihash code:{0:?}")]
+    #[error("invalid multihash code: {0:?}")]
     InvalidHash(ExtCode),
-    #[error("receive an unexpect multihash code|expect:{0:?}|get:{0:?}")]
-    UnexpectHash(FilecoinMultihashCode, FilecoinMultihashCode),
+    #[error("this multihash code: {0:?} is unsupported")]
+    UnsupportedMultihashCode(FilecoinMultihashCode),
+    #[error("receive an unexpect multihash code (expected: {0:?}, found: {1:?})")]
+    UnexpectedMultihashCode(FilecoinMultihashCode, FilecoinMultihashCode),
 }
 
-///
-pub fn replica_commitment_v1_to_cid(commitment: Commitment) -> Cid {
-    commitment_to_cid(commitment, FilecoinMultihashCode::FcSealedV1)
-        .expect("`commitment_to_cid` must receive `FcSealedV1`")
-}
-
-///
-pub fn data_commitment_v1_to_cid(commitment: Commitment) -> Cid {
-    commitment_to_cid(commitment, FilecoinMultihashCode::FcUnsealedV1)
-        .expect("`commitment_to_cid` must receive `FcUnsealedV1`")
-}
-
-///
-pub fn piece_commitment_v1_to_cid(commitment: Commitment) -> Cid {
-    data_commitment_v1_to_cid(commitment)
-}
-
-///
+/// Converts a raw commitment to a CID given the multihash type.
 pub fn commitment_to_cid(
     commitment: Commitment,
     code: FilecoinMultihashCode,
@@ -47,26 +34,12 @@ pub fn commitment_to_cid(
     let hash = match code {
         FilecoinMultihashCode::FcUnsealedV1 => FilecoinUnsealedV1::digest(&commitment),
         FilecoinMultihashCode::FcSealedV1 => FilecoinSealedV1::digest(&commitment),
-        _ => return Err(CommCidErr::NotSupport(code)),
+        _ => return Err(CommCidErr::UnsupportedMultihashCode(code)),
     };
     Ok(Cid::new_v1(FILECOIN_CODEC_TYPE, hash))
 }
 
-///
-pub fn cid_to_piece_commitment_v1(cid: &Cid) -> Result<Commitment, CommCidErr> {
-    cid_to_data_commitment_v1(cid)
-}
-
-///
-pub fn cid_to_data_commitment_v1(cid: &Cid) -> Result<Commitment, CommCidErr> {
-    cid_to_commitment(cid, FilecoinMultihashCode::FcUnsealedV1)
-}
-
-///
-pub fn cid_to_replica_commitment_v1(cid: &Cid) -> Result<Commitment, CommCidErr> {
-    cid_to_commitment(cid, FilecoinMultihashCode::FcSealedV1)
-}
-
+/// Extracts the raw data commitment from a CID given the multihash type.
 fn cid_to_commitment(
     cid: &Cid,
     multihash_code: FilecoinMultihashCode,
@@ -87,11 +60,43 @@ fn cid_to_multihash(
     match code {
         ExtCode::FL(fl_code) => {
             if fl_code != expect {
-                Err(CommCidErr::UnexpectHash(expect, fl_code))
+                Err(CommCidErr::UnexpectedMultihashCode(expect, fl_code))
             } else {
                 Ok(hash)
             }
         }
         _ => Err(CommCidErr::InvalidHash(code)),
     }
+}
+
+///
+pub fn replica_commitment_v1_to_cid(commitment: Commitment) -> Cid {
+    commitment_to_cid(commitment, FilecoinMultihashCode::FcSealedV1)
+        .expect("`commitment_to_cid` must receive `FcSealedV1`")
+}
+
+///
+pub fn data_commitment_v1_to_cid(commitment: Commitment) -> Cid {
+    commitment_to_cid(commitment, FilecoinMultihashCode::FcUnsealedV1)
+        .expect("`commitment_to_cid` must receive `FcUnsealedV1`")
+}
+
+///
+pub fn piece_commitment_v1_to_cid(commitment: Commitment) -> Cid {
+    data_commitment_v1_to_cid(commitment)
+}
+
+///
+pub fn cid_to_replica_commitment_v1(cid: &Cid) -> Result<Commitment, CommCidErr> {
+    cid_to_commitment(cid, FilecoinMultihashCode::FcSealedV1)
+}
+
+///
+pub fn cid_to_data_commitment_v1(cid: &Cid) -> Result<Commitment, CommCidErr> {
+    cid_to_commitment(cid, FilecoinMultihashCode::FcUnsealedV1)
+}
+
+///
+pub fn cid_to_piece_commitment_v1(cid: &Cid) -> Result<Commitment, CommCidErr> {
+    cid_to_data_commitment_v1(cid)
 }
