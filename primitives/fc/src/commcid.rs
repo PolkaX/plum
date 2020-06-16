@@ -53,14 +53,14 @@ fn cid_to_commitment(
 
 fn cid_to_multihash(
     cid: &Cid,
-    expect: FilecoinMultihashCode,
+    expected: FilecoinMultihashCode,
 ) -> Result<ExtMultihashRef, CommCidErr> {
     let hash = cid.hash();
     let code = hash.algorithm();
     match code {
         ExtCode::FL(fl_code) => {
-            if fl_code != expect {
-                Err(CommCidErr::UnexpectedMultihashCode(expect, fl_code))
+            if fl_code != expected {
+                Err(CommCidErr::UnexpectedMultihashCode(expected, fl_code))
             } else {
                 Ok(hash)
             }
@@ -69,34 +69,34 @@ fn cid_to_multihash(
     }
 }
 
-///
+/// Converts a raw commitment to a CID with sealed hash type.
 pub fn replica_commitment_v1_to_cid(commitment: Commitment) -> Cid {
     commitment_to_cid(commitment, FilecoinMultihashCode::FcSealedV1)
         .expect("`commitment_to_cid` must receive `FcSealedV1`")
 }
 
-///
+/// Converts a raw commitment to a CID with unsealed hash type.
 pub fn data_commitment_v1_to_cid(commitment: Commitment) -> Cid {
     commitment_to_cid(commitment, FilecoinMultihashCode::FcUnsealedV1)
         .expect("`commitment_to_cid` must receive `FcUnsealedV1`")
 }
 
-///
+/// Converts a commP to a CID, equivalent to data_commitment_v1_to_cid().
 pub fn piece_commitment_v1_to_cid(commitment: Commitment) -> Cid {
     data_commitment_v1_to_cid(commitment)
 }
 
-///
+/// Extracts the raw commiment from a CID that uses sealed hashing function.
 pub fn cid_to_replica_commitment_v1(cid: &Cid) -> Result<Commitment, CommCidErr> {
     cid_to_commitment(cid, FilecoinMultihashCode::FcSealedV1)
 }
 
-///
+/// Extracts the raw commiment from a CID that uses unsealed hashing function.
 pub fn cid_to_data_commitment_v1(cid: &Cid) -> Result<Commitment, CommCidErr> {
     cid_to_commitment(cid, FilecoinMultihashCode::FcUnsealedV1)
 }
 
-///
+/// Converts a CID to a commP, equivalent to cid_to_data_commitment_v1()
 pub fn cid_to_piece_commitment_v1(cid: &Cid) -> Result<Commitment, CommCidErr> {
     cid_to_data_commitment_v1(cid)
 }
