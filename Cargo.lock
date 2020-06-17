@@ -903,6 +903,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ipfs-datastore-rocksdb"
+version = "0.1.0"
+dependencies = [
+ "ipfs-datastore",
+]
+
+[[package]]
 name = "ipld"
 version = "0.1.0"
 dependencies = [

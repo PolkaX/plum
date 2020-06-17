@@ -33,6 +33,7 @@ members = [
   "ipfs/blockstore",
   "ipfs/datastore",
   "ipfs/datastore-memory",
+  "ipfs/datastore-rocksdb",
   "ipld",
 
   # primitives
