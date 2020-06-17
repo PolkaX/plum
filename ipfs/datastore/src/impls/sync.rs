@@ -26,9 +26,9 @@ impl<DS: DataStore> SyncDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStore for SyncDataStore<DS> {
-    fn sync<K>(&mut self, prefix: K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
     where
-        K: Into<Key>,
+        K: Borrow<Key>,
     {
         self.datastore.lock().sync(prefix)
     }
@@ -106,9 +106,9 @@ impl<BDS: BatchDataStore> SyncBatchDataStore<BDS> {
 }
 
 impl<BDS: BatchDataStore> DataStore for SyncBatchDataStore<BDS> {
-    fn sync<K>(&mut self, prefix: K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
     where
-        K: Into<Key>,
+        K: Borrow<Key>,
     {
         self.datastore.lock().sync(prefix)
     }

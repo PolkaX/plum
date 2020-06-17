@@ -22,9 +22,9 @@ impl MapDataStore {
 }
 
 impl DataStore for MapDataStore {
-    fn sync<K>(&mut self, _prefix: K) -> Result<()>
+    fn sync<K>(&mut self, _prefix: &K) -> Result<()>
     where
-        K: Into<Key>,
+        K: Borrow<Key>,
     {
         Ok(())
     }
@@ -39,11 +39,10 @@ impl DataStoreRead for MapDataStore {
     where
         K: Borrow<Key>,
     {
-        let key = key.borrow();
         Ok(self
             .values
-            .get(key)
-            .ok_or_else(|| DataStoreError::NotFound(key.to_string()))?
+            .get(key.borrow())
+            .ok_or_else(|| DataStoreError::NotFound(key.borrow().to_string()))?
             .to_owned())
     }
 
@@ -58,11 +57,10 @@ impl DataStoreRead for MapDataStore {
     where
         K: Borrow<Key>,
     {
-        let key = key.borrow();
         Ok(self
             .values
-            .get(key)
-            .ok_or_else(|| DataStoreError::NotFound(key.to_string()))?
+            .get(key.borrow())
+            .ok_or_else(|| DataStoreError::NotFound(key.borrow().to_string()))?
             .len())
     }
 }

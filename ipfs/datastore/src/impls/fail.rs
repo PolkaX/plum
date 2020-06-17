@@ -26,9 +26,9 @@ impl<F: FailFn, DS: DataStore> FailDataStore<F, DS> {
 }
 
 impl<F: FailFn, DS: DataStore> DataStore for FailDataStore<F, DS> {
-    fn sync<K>(&mut self, prefix: K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
     where
-        K: Into<Key>,
+        K: Borrow<Key>,
     {
         (self.fail_fn)("sync")?;
         self.datastore.sync(prefix)
@@ -103,27 +103,24 @@ impl<F: FailFn, BDS: BatchDataStore> Batching for FailDataStore<F, BDS> {
 
 /// FailBatchDataStore implements batching operations on the FailDataStore.
 pub struct FailBatchDataStore<F: FailFn, BDS: BatchDataStore> {
-    err_func: F,
+    fail_fn: F,
     datastore: BDS,
 }
 
 impl<F: FailFn, BDS: BatchDataStore> FailBatchDataStore<F, BDS> {
     /// Create a new batching datastore with the given error function.
-    /// The `err_func` will be called with different strings depending on the datastore function.
-    pub fn new(err_func: F, datastore: BDS) -> Self {
-        Self {
-            err_func,
-            datastore,
-        }
+    /// The `fail_fn` will be called with different strings depending on the datastore function.
+    pub fn new(fail_fn: F, datastore: BDS) -> Self {
+        Self { fail_fn, datastore }
     }
 }
 
 impl<F: FailFn, BDS: BatchDataStore> DataStore for FailBatchDataStore<F, BDS> {
-    fn sync<K>(&mut self, prefix: K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
     where
-        K: Into<Key>,
+        K: Borrow<Key>,
     {
-        (self.err_func)("batch-sync")?;
+        (self.fail_fn)("batch-sync")?;
         self.datastore.sync(prefix)
     }
 
@@ -137,7 +134,7 @@ impl<F: FailFn, BDS: BatchDataStore> DataStoreRead for FailBatchDataStore<F, BDS
     where
         K: Borrow<Key>,
     {
-        (self.err_func)("batch-put")?;
+        (self.fail_fn)("batch-put")?;
         self.datastore.get(key)
     }
 
@@ -145,7 +142,7 @@ impl<F: FailFn, BDS: BatchDataStore> DataStoreRead for FailBatchDataStore<F, BDS
     where
         K: Borrow<Key>,
     {
-        (self.err_func)("batch-has")?;
+        (self.fail_fn)("batch-has")?;
         self.datastore.has(key)
     }
 
@@ -153,7 +150,7 @@ impl<F: FailFn, BDS: BatchDataStore> DataStoreRead for FailBatchDataStore<F, BDS
     where
         K: Borrow<Key>,
     {
-        (self.err_func)("batch-size")?;
+        (self.fail_fn)("batch-size")?;
         self.datastore.size(key)
     }
 }
@@ -164,7 +161,7 @@ impl<F: FailFn, BDS: BatchDataStore> DataStoreWrite for FailBatchDataStore<F, BD
         K: Into<Key>,
         V: Into<Vec<u8>>,
     {
-        (self.err_func)("batch-put")?;
+        (self.fail_fn)("batch-put")?;
         self.datastore.put(key, value)
     }
 
@@ -172,14 +169,14 @@ impl<F: FailFn, BDS: BatchDataStore> DataStoreWrite for FailBatchDataStore<F, BD
     where
         K: Borrow<Key>,
     {
-        (self.err_func)("batch-delete")?;
+        (self.fail_fn)("batch-delete")?;
         self.datastore.delete(key)
     }
 }
 
 impl<F: FailFn, BDS: BatchDataStore> Batch for FailBatchDataStore<F, BDS> {
     fn commit(&mut self) -> Result<()> {
-        (self.err_func)("batch-commit")?;
+        (self.fail_fn)("batch-commit")?;
         self.datastore.commit()
     }
 }

@@ -32,9 +32,9 @@ pub trait DataStore: DataStoreWrite + DataStoreRead {
     /// If `put/delete` operations already satisfy these requirements then Sync may be a no-op.
     ///
     ///  If the prefix fails to `sync` this method returns an error.
-    fn sync<K>(&mut self, prefix: K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
     where
-        K: Into<Key>;
+        K: Borrow<Key>;
 
     /// Close I/O.
     fn close(&mut self) -> Result<()>;

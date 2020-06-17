@@ -37,12 +37,12 @@ impl<KT: KeyTransform, DS: DataStore> TransformDataStore<KT, DS> {
 }
 
 impl<KT: KeyTransform, DS: DataStore> DataStore for TransformDataStore<KT, DS> {
-    fn sync<K>(&mut self, prefix: K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
     where
-        K: Into<Key>,
+        K: Borrow<Key>,
     {
-        let key = self.transform.convert_key(&prefix.into());
-        self.datastore.sync(key)
+        let key = self.transform.convert_key(prefix);
+        self.datastore.sync(&key)
     }
 
     fn close(&mut self) -> Result<()> {
@@ -82,8 +82,7 @@ impl<KT: KeyTransform, DS: DataStore> DataStoreWrite for TransformDataStore<KT, 
         K: Into<Key>,
         V: Into<Vec<u8>>,
     {
-        let key = key.into();
-        let key = self.transform.convert_key(&key);
+        let key = self.transform.convert_key(&key.into());
         self.datastore.put(key, value)
     }
 
@@ -147,12 +146,12 @@ impl<KT: KeyTransform, BDS: BatchDataStore> TransformBatchDataStore<KT, BDS> {
 }
 
 impl<KT: KeyTransform, BDS: BatchDataStore> DataStore for TransformBatchDataStore<KT, BDS> {
-    fn sync<K>(&mut self, prefix: K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
     where
-        K: Into<Key>,
+        K: Borrow<Key>,
     {
-        let key = self.transform.convert_key(&prefix.into());
-        self.datastore.sync(key)
+        let key = self.transform.convert_key(prefix);
+        self.datastore.sync(&key)
     }
 
     fn close(&mut self) -> Result<()> {
@@ -192,8 +191,7 @@ impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreWrite for TransformBatchDat
         K: Into<Key>,
         V: Into<Vec<u8>>,
     {
-        let key = key.into();
-        let key = self.transform.convert_key(&key);
+        let key = self.transform.convert_key(&key.into());
         self.datastore.put(key, value)
     }
 

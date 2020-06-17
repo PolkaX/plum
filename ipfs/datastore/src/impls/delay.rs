@@ -28,9 +28,9 @@ impl<DL: Delay, DS: DataStore> DelayDataStore<DL, DS> {
 }
 
 impl<DL: Delay, DS: DataStore> DataStore for DelayDataStore<DL, DS> {
-    fn sync<K>(&mut self, prefix: K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
     where
-        K: Into<Key>,
+        K: Borrow<Key>,
     {
         self.delay.wait();
         self.datastore.sync(prefix)
@@ -86,17 +86,17 @@ impl<DL: Delay, DS: DataStore> DataStoreWrite for DelayDataStore<DL, DS> {
     }
 }
 
+impl<DL: Delay, DS: PersistentDataStore> Persistent for DelayDataStore<DL, DS> {
+    fn disk_usage(&self) -> Result<u64> {
+        self.delay.wait();
+        self.datastore.disk_usage()
+    }
+}
+
 impl<DL: Delay, DS: DataStore> Batching for DelayDataStore<DL, DS> {
     type Batch = BasicBatchDataStore<DelayDataStore<DL, DS>>;
 
     fn batch(self) -> Result<Self::Batch> {
         Ok(BasicBatchDataStore::new(self))
-    }
-}
-
-impl<DL: Delay, DS: PersistentDataStore> Persistent for DelayDataStore<DL, DS> {
-    fn disk_usage(&self) -> Result<u64> {
-        self.delay.wait();
-        self.datastore.disk_usage()
     }
 }

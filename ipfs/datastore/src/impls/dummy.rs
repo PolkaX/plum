@@ -12,9 +12,9 @@ use crate::store::{Batching, DataStore, DataStoreRead, DataStoreWrite};
 pub struct DummyDataStore;
 
 impl DataStore for DummyDataStore {
-    fn sync<K>(&mut self, _prefix: K) -> Result<()>
+    fn sync<K>(&mut self, _prefix: &K) -> Result<()>
     where
-        K: Into<Key>,
+        K: Borrow<Key>,
     {
         Ok(())
     }

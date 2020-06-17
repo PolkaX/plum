@@ -31,12 +31,11 @@ impl<DS: DataStore> LogDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStore for LogDataStore<DS> {
-    fn sync<K>(&mut self, prefix: K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
     where
-        K: Into<Key>,
+        K: Borrow<Key>,
     {
-        let prefix = prefix.into();
-        info!("{}: sync {}", self.name, prefix);
+        info!("{}: sync {}", self.name, prefix.borrow());
         self.datastore.sync(prefix)
     }
 
@@ -149,12 +148,11 @@ impl<BDS: BatchDataStore> LogBatchDataStore<BDS> {
 }
 
 impl<BDS: BatchDataStore> DataStore for LogBatchDataStore<BDS> {
-    fn sync<K>(&mut self, prefix: K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
     where
-        K: Into<Key>,
+        K: Borrow<Key>,
     {
-        let prefix = prefix.into();
-        info!("{}: batch sync {}", self.name, prefix);
+        info!("{}: batch sync {}", self.name, prefix.borrow());
         self.datastore.sync(prefix)
     }
 
