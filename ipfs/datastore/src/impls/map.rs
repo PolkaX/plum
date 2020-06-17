@@ -4,8 +4,9 @@ use std::borrow::Borrow;
 use std::collections::HashMap;
 
 use crate::error::{DataStoreError, Result};
+use crate::impls::BasicBatchDataStore;
 use crate::key::Key;
-use crate::store::{DataStore, DataStoreRead, DataStoreWrite};
+use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
 
 /// MapDataStore use HashMap for internal storage.
 #[derive(Clone, Debug, Default)]
@@ -21,14 +22,14 @@ impl MapDataStore {
 }
 
 impl DataStore for MapDataStore {
-    fn sync<K>(&self, _prefix: K) -> Result<()>
+    fn sync<K>(&mut self, _prefix: &K) -> Result<()>
     where
-        K: Into<Key>,
+        K: Borrow<Key>,
     {
         Ok(())
     }
 
-    fn close(&self) -> Result<()> {
+    fn close(&mut self) -> Result<()> {
         Ok(())
     }
 }
@@ -38,11 +39,10 @@ impl DataStoreRead for MapDataStore {
     where
         K: Borrow<Key>,
     {
-        let key = key.borrow();
         Ok(self
             .values
-            .get(key)
-            .ok_or_else(|| DataStoreError::NotFound(key.to_string()))?
+            .get(key.borrow())
+            .ok_or_else(|| DataStoreError::NotFound(key.borrow().to_string()))?
             .to_owned())
     }
 
@@ -57,11 +57,10 @@ impl DataStoreRead for MapDataStore {
     where
         K: Borrow<Key>,
     {
-        let key = key.borrow();
         Ok(self
             .values
-            .get(key)
-            .ok_or_else(|| DataStoreError::NotFound(key.to_string()))?
+            .get(key.borrow())
+            .ok_or_else(|| DataStoreError::NotFound(key.borrow().to_string()))?
             .len())
     }
 }
@@ -82,5 +81,13 @@ impl DataStoreWrite for MapDataStore {
     {
         self.values.remove(key.borrow());
         Ok(())
+    }
+}
+
+impl ToBatch for MapDataStore {
+    type Batch = BasicBatchDataStore<MapDataStore>;
+
+    fn batch(self) -> Result<Self::Batch> {
+        Ok(BasicBatchDataStore::new(self))
     }
 }

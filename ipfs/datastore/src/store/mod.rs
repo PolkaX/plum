@@ -32,12 +32,12 @@ pub trait DataStore: DataStoreWrite + DataStoreRead {
     /// If `put/delete` operations already satisfy these requirements then Sync may be a no-op.
     ///
     ///  If the prefix fails to `sync` this method returns an error.
-    fn sync<K>(&self, prefix: K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
     where
-        K: Into<Key>;
+        K: Borrow<Key>;
 
     /// Close I/O.
-    fn close(&self) -> Result<()>;
+    fn close(&mut self) -> Result<()>;
 }
 
 /// DataStoreWrite is the write-side of the DataStore trait.
@@ -86,10 +86,44 @@ pub trait DataStoreRead {
 }
 
 // ============================================================================
+// *********************** DataStore to BatchDataStore ************************
+// ============================================================================
+
+/// Batching support deferred, grouped updates to the database.
+///
+/// `Batch`es do NOT have transactional semantics: updates to the underlying
+/// datastore are not guaranteed to occur in the same iota of time.
+/// Similarly, batched updates will not be flushed to the underlying datastore
+/// until `commit` has been called.
+///
+/// `Txn`s from a `TxnDataStore` have all the capabilities of a `Batch`,
+/// but the reverse is NOT true.
+pub trait ToBatch: DataStore {
+    /// The batching version of current data store.
+    type Batch: Batch;
+
+    /// Consume self, return a batching data store.
+    fn batch(self) -> Result<Self::Batch>;
+}
+
+// ============================================================================
+// ************************ DataStore to TxnDataStore *************************
+// ============================================================================
+
+/// ToTxnDataStore is an interface that should be implemented by data stores
+/// that support transactions.
+pub trait ToTxn: DataStore {
+    /// The txn version of current data store.
+    type Txn: Txn;
+
+    /// Consume self, return a txn data store.
+    fn new_txn(self, read_only: bool) -> Result<Self::Txn>;
+}
+
+// ============================================================================
 // ********************** Extended DataStore interfaces ***********************
 // ============================================================================
 
-// FIXME: batch???
 mod batch;
 mod check;
 mod gc;

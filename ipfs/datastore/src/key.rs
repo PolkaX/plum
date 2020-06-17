@@ -192,6 +192,19 @@ impl Key {
         self.0.as_str()
     }
 
+    /// Return whether the key is root.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use plum_ipfs_datastore::Key;
+    /// assert!(Key::new("/").is_root());
+    /// assert!(!Key::new("/Comedy").is_root());
+    /// ```
+    pub fn is_root(&self) -> bool {
+        self.as_str() == SLASH
+    }
+
     /// Return the reverse of this key.
     pub fn reverse(&self) -> Self {
         let mut namespaces = self.list();
@@ -211,7 +224,7 @@ impl Key {
     /// assert_eq!(key.list(), vec!["Comedy", "MontyPython", "Actor:JohnCleese"]);
     /// ```
     pub fn list(&self) -> Vec<&str> {
-        if self.0 == SLASH {
+        if self.is_root() {
             vec![]
         } else {
             self.0.split(SLASH).skip(1).collect::<Vec<_>>()
@@ -342,9 +355,9 @@ impl Key {
     /// ```
     pub fn child<K: Into<Key>>(&self, child: K) -> Self {
         let child = child.into();
-        if self.0 == SLASH {
+        if self.is_root() {
             Self::new(child)
-        } else if child.as_str() == SLASH {
+        } else if child.is_root() {
             self.clone()
         } else {
             unsafe { Key::new_unchecked(format!("{}{}", self.0, child)) }
@@ -365,7 +378,7 @@ impl Key {
         if descendant.as_str().len() <= self.as_str().len() {
             return false;
         }
-        if self.as_str() == SLASH {
+        if self.is_root() {
             return true;
         }
 

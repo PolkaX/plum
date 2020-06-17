@@ -1,5 +1,5 @@
 [package]
-name = "plum_ipld"
+name = "ipld"
 version = "0.1.0"
 authors = ["The PolkaX Authors"]
 edition = "2018"

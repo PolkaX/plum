@@ -9,7 +9,7 @@ pub trait Check {
     fn check(&self) -> Result<()>;
 }
 
-///  CheckedDataStore is an interface that should be implemented by data stores
+/// CheckedDataStore is an interface that should be implemented by data stores
 /// which may need checking on-disk data integrity.
 pub trait CheckedDataStore: Check + DataStore {}
 

@@ -3,23 +3,14 @@
 use crate::error::Result;
 use crate::store::{DataStore, DataStoreWrite};
 
-/// BatchDataStore support deferred, grouped updates to the database.
-/// `Batch`es do NOT have transactional semantics: updates to the underlying
-/// datastore are not guaranteed to occur in the same iota of time.
-/// Similarly, batched updates will not be flushed to the underlying datastore
-/// until `Commit` has been called.
-/// `Txn`s from a `TxnDataStore` have all the capabilities of a `Batch`,
-/// but the reverse is NOT true.
-pub trait BatchDataStore: DataStore {
-    ///
-    type Batch: Batch;
-
-    ///
-    fn batch(&self) -> Result<Self::Batch>;
-}
-
-///
+/// An interface that support batched update operations.
 pub trait Batch: DataStoreWrite {
-    ///
-    fn commit(&self) -> Result<()>;
+    /// Commit all update operations.
+    fn commit(&mut self) -> Result<()>;
 }
+
+/// BatchDataStore is an interface that should be implemented by data stores
+/// which need to support batched update operations.
+pub trait BatchDataStore: Batch + DataStore {}
+
+impl<T: Batch + DataStore> BatchDataStore for T {}
