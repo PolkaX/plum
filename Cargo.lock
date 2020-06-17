@@ -865,6 +865,49 @@ dependencies = [
 ]
 
 [[package]]
+name = "ipfs-block"
+version = "0.1.0"
+dependencies = [
+ "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "minicbor",
+ "multihash 0.11.2",
+]
+
+[[package]]
+name = "ipfs-blockstore"
+version = "0.1.0"
+dependencies = [
+ "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ipfs-block",
+ "thiserror",
+]
+
+[[package]]
+name = "ipfs-datastore"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "parking_lot",
+ "path-clean",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
+name = "ipld"
+version = "0.1.0"
+dependencies = [
+ "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "minicbor",
+ "multibase",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "itertools"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1626,49 +1669,6 @@ dependencies = [
  "sha-1",
  "sha2",
  "sha3",
-]
-
-[[package]]
-name = "plum_ipfs_block"
-version = "0.1.0"
-dependencies = [
- "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "minicbor",
- "multihash 0.11.2",
-]
-
-[[package]]
-name = "plum_ipfs_blockstore"
-version = "0.1.0"
-dependencies = [
- "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "plum_ipfs_block",
- "thiserror",
-]
-
-[[package]]
-name = "plum_ipfs_datastore"
-version = "0.1.0"
-dependencies = [
- "log",
- "parking_lot",
- "path-clean",
- "serde",
- "serde_json",
- "thiserror",
- "uuid",
-]
-
-[[package]]
-name = "plum_ipld"
-version = "0.1.0"
-dependencies = [
- "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "minicbor",
- "multibase",
- "serde",
- "serde_json",
- "thiserror",
 ]
 
 [[package]]
