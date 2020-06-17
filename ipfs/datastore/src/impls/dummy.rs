@@ -3,22 +3,23 @@
 use std::borrow::Borrow;
 
 use crate::error::{DataStoreError, Result};
+use crate::impls::BasicBatchDataStore;
 use crate::key::Key;
-use crate::store::{DataStore, DataStoreRead, DataStoreWrite};
+use crate::store::{Batching, DataStore, DataStoreRead, DataStoreWrite};
 
 /// DummyDataStore stores nothing, but conforms to the API.
 /// Useful to test with.
 pub struct DummyDataStore;
 
 impl DataStore for DummyDataStore {
-    fn sync<K>(&self, _prefix: K) -> Result<()>
+    fn sync<K>(&mut self, _prefix: K) -> Result<()>
     where
         K: Into<Key>,
     {
         Ok(())
     }
 
-    fn close(&self) -> Result<()> {
+    fn close(&mut self) -> Result<()> {
         Ok(())
     }
 }
@@ -60,5 +61,13 @@ impl DataStoreWrite for DummyDataStore {
         K: Borrow<Key>,
     {
         Ok(())
+    }
+}
+
+impl Batching for DummyDataStore {
+    type Batch = BasicBatchDataStore<DummyDataStore>;
+
+    fn batch(self) -> Result<Self::Batch> {
+        Ok(BasicBatchDataStore::new(self))
     }
 }

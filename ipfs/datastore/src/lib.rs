@@ -7,18 +7,21 @@
 mod error;
 mod impls;
 mod key;
-// TODO: query and mount
+// TODO: mount and query
 // mod mount;
 // mod query;
 mod store;
 
 pub use self::error::DataStoreError;
+pub use self::impls::BasicBatchDataStore;
 pub use self::impls::{Delay, DelayDataStore};
-pub use self::impls::{DummyDataStore, LogDataStore, MapDataStore, SyncDataStore};
-pub use self::impls::{FailDataStore, FailFunc};
-pub use self::impls::{KeyTransform, TransformDataStore};
+pub use self::impls::{DummyDataStore, LogBatchDataStore, LogDataStore, MapDataStore};
+pub use self::impls::{FailBatchDataStore, FailDataStore, FailFn};
+pub use self::impls::{KeyMapFn, KeyTransformPair, PrefixTransform};
+pub use self::impls::{KeyTransform, TransformBatchDataStore, TransformDataStore};
+pub use self::impls::{SyncBatchDataStore, SyncDataStore};
 pub use self::key::{namespace_type, namespace_value, Key};
-pub use self::store::{Batch, BatchDataStore};
+pub use self::store::{Batch, BatchDataStore, Batching};
 pub use self::store::{Check, CheckedDataStore};
 pub use self::store::{DataStore, DataStoreRead, DataStoreWrite};
 pub use self::store::{Gc, GcDataStore};

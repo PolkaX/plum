@@ -7,11 +7,12 @@ use parking_lot::Mutex;
 
 use crate::error::Result;
 use crate::key::Key;
-use crate::store::{DataStore, DataStoreRead, DataStoreWrite};
+use crate::store::{Batch, BatchDataStore};
+use crate::store::{Batching, DataStore, DataStoreRead, DataStoreWrite};
 
-/// SyncDataStore contains a child datastore wrapper using mutex.
+/// SyncDataStore contains a datastore wrapper using mutex.
 pub struct SyncDataStore<DS: DataStore> {
-    child: Arc<Mutex<DS>>,
+    datastore: Arc<Mutex<DS>>,
 }
 
 impl<DS: DataStore> SyncDataStore<DS> {
@@ -19,21 +20,21 @@ impl<DS: DataStore> SyncDataStore<DS> {
     /// for every single operation.
     pub fn new(datastore: DS) -> Self {
         Self {
-            child: Arc::new(Mutex::new(datastore)),
+            datastore: Arc::new(Mutex::new(datastore)),
         }
     }
 }
 
 impl<DS: DataStore> DataStore for SyncDataStore<DS> {
-    fn sync<K>(&self, prefix: K) -> Result<()>
+    fn sync<K>(&mut self, prefix: K) -> Result<()>
     where
         K: Into<Key>,
     {
-        self.child.lock().sync(prefix)
+        self.datastore.lock().sync(prefix)
     }
 
-    fn close(&self) -> Result<()> {
-        self.child.lock().close()
+    fn close(&mut self) -> Result<()> {
+        self.datastore.lock().close()
     }
 }
 
@@ -42,21 +43,21 @@ impl<DS: DataStore> DataStoreRead for SyncDataStore<DS> {
     where
         K: Borrow<Key>,
     {
-        self.child.lock().get(key)
+        self.datastore.lock().get(key)
     }
 
     fn has<K>(&self, key: &K) -> Result<bool>
     where
         K: Borrow<Key>,
     {
-        self.child.lock().has(key)
+        self.datastore.lock().has(key)
     }
 
     fn size<K>(&self, key: &K) -> Result<usize>
     where
         K: Borrow<Key>,
     {
-        self.child.lock().size(key)
+        self.datastore.lock().size(key)
     }
 }
 
@@ -66,13 +67,99 @@ impl<DS: DataStore> DataStoreWrite for SyncDataStore<DS> {
         K: Into<Key>,
         V: Into<Vec<u8>>,
     {
-        self.child.lock().put(key, value)
+        self.datastore.lock().put(key, value)
     }
 
     fn delete<K>(&mut self, key: &K) -> Result<()>
     where
         K: Borrow<Key>,
     {
-        self.child.lock().delete(key)
+        self.datastore.lock().delete(key)
+    }
+}
+
+impl<BDS: BatchDataStore> Batching for SyncDataStore<BDS> {
+    type Batch = SyncBatchDataStore<BDS>;
+
+    fn batch(self) -> Result<Self::Batch> {
+        Ok(SyncBatchDataStore {
+            datastore: self.datastore,
+        })
+    }
+}
+
+// ============================================================================
+
+/// SyncDataStore contains a datastore wrapper using mutex.
+pub struct SyncBatchDataStore<BDS: BatchDataStore> {
+    datastore: Arc<Mutex<BDS>>,
+}
+
+impl<BDS: BatchDataStore> SyncBatchDataStore<BDS> {
+    /// Create a new datastore with a coarse lock around the entire datastore,
+    /// for batching operations.
+    pub fn new(datastore: BDS) -> Self {
+        Self {
+            datastore: Arc::new(Mutex::new(datastore)),
+        }
+    }
+}
+
+impl<BDS: BatchDataStore> DataStore for SyncBatchDataStore<BDS> {
+    fn sync<K>(&mut self, prefix: K) -> Result<()>
+    where
+        K: Into<Key>,
+    {
+        self.datastore.lock().sync(prefix)
+    }
+
+    fn close(&mut self) -> Result<()> {
+        self.datastore.lock().close()
+    }
+}
+
+impl<BDS: BatchDataStore> DataStoreRead for SyncBatchDataStore<BDS> {
+    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    where
+        K: Borrow<Key>,
+    {
+        self.datastore.lock().get(key)
+    }
+
+    fn has<K>(&self, key: &K) -> Result<bool>
+    where
+        K: Borrow<Key>,
+    {
+        self.datastore.lock().has(key)
+    }
+
+    fn size<K>(&self, key: &K) -> Result<usize>
+    where
+        K: Borrow<Key>,
+    {
+        self.datastore.lock().size(key)
+    }
+}
+
+impl<BDS: BatchDataStore> DataStoreWrite for SyncBatchDataStore<BDS> {
+    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    where
+        K: Into<Key>,
+        V: Into<Vec<u8>>,
+    {
+        self.datastore.lock().put(key, value)
+    }
+
+    fn delete<K>(&mut self, key: &K) -> Result<()>
+    where
+        K: Borrow<Key>,
+    {
+        self.datastore.lock().delete(key)
+    }
+}
+
+impl<BDS: BatchDataStore> Batch for SyncBatchDataStore<BDS> {
+    fn commit(&mut self) -> Result<()> {
+        self.datastore.lock().commit()
     }
 }
