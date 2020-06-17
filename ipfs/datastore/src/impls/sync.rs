@@ -8,7 +8,7 @@ use parking_lot::Mutex;
 use crate::error::Result;
 use crate::key::Key;
 use crate::store::{Batch, BatchDataStore};
-use crate::store::{Batching, DataStore, DataStoreRead, DataStoreWrite};
+use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
 
 /// SyncDataStore contains a datastore wrapper using mutex.
 pub struct SyncDataStore<DS: DataStore> {
@@ -78,7 +78,7 @@ impl<DS: DataStore> DataStoreWrite for SyncDataStore<DS> {
     }
 }
 
-impl<BDS: BatchDataStore> Batching for SyncDataStore<BDS> {
+impl<BDS: BatchDataStore> ToBatch for SyncDataStore<BDS> {
     type Batch = SyncBatchDataStore<BDS>;
 
     fn batch(self) -> Result<Self::Batch> {

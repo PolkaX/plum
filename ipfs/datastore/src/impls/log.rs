@@ -7,8 +7,8 @@ use log::info;
 use crate::error::Result;
 use crate::key::Key;
 use crate::store::{Batch, BatchDataStore};
-use crate::store::{Batching, DataStore, DataStoreRead, DataStoreWrite};
 use crate::store::{Check, CheckedDataStore};
+use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
 use crate::store::{Gc, GcDataStore};
 use crate::store::{Persistent, PersistentDataStore};
 use crate::store::{Scrub, ScrubbedDataStore};
@@ -120,7 +120,7 @@ impl<DS: ScrubbedDataStore> Scrub for LogDataStore<DS> {
     }
 }
 
-impl<BDS: BatchDataStore> Batching for LogDataStore<BDS> {
+impl<BDS: BatchDataStore> ToBatch for LogDataStore<BDS> {
     type Batch = LogBatchDataStore<BDS>;
 
     fn batch(self) -> Result<Self::Batch> {

@@ -98,12 +98,26 @@ pub trait DataStoreRead {
 ///
 /// `Txn`s from a `TxnDataStore` have all the capabilities of a `Batch`,
 /// but the reverse is NOT true.
-pub trait Batching: DataStore {
+pub trait ToBatch: DataStore {
     /// The batching version of current data store.
     type Batch: Batch;
 
     /// Consume self, return a batching data store.
     fn batch(self) -> Result<Self::Batch>;
+}
+
+// ============================================================================
+// ************************ DataStore to TxnDataStore *************************
+// ============================================================================
+
+/// ToTxnDataStore is an interface that should be implemented by data stores
+/// that support transactions.
+pub trait ToTxn: DataStore {
+    /// The txn version of current data store.
+    type Txn: Txn;
+
+    /// Consume self, return a txn data store.
+    fn new_txn(self, read_only: bool) -> Result<Self::Txn>;
 }
 
 // ============================================================================

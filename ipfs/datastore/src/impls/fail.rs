@@ -5,7 +5,7 @@ use std::borrow::Borrow;
 use crate::error::Result;
 use crate::key::Key;
 use crate::store::{Batch, BatchDataStore};
-use crate::store::{Batching, DataStore, DataStoreRead, DataStoreWrite};
+use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
 use crate::store::{Persistent, PersistentDataStore};
 
 /// The user-provided fail function.
@@ -91,7 +91,7 @@ impl<F: FailFn, DS: PersistentDataStore> Persistent for FailDataStore<F, DS> {
     }
 }
 
-impl<F: FailFn, BDS: BatchDataStore> Batching for FailDataStore<F, BDS> {
+impl<F: FailFn, BDS: BatchDataStore> ToBatch for FailDataStore<F, BDS> {
     type Batch = FailBatchDataStore<F, BDS>;
 
     fn batch(self) -> Result<Self::Batch> {

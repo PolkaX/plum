@@ -5,8 +5,8 @@ use std::borrow::Borrow;
 use crate::error::Result;
 use crate::key::Key;
 use crate::store::{Batch, BatchDataStore};
-use crate::store::{Batching, DataStore, DataStoreRead, DataStoreWrite};
 use crate::store::{Check, CheckedDataStore};
+use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
 use crate::store::{Gc, GcDataStore};
 use crate::store::{Persistent, PersistentDataStore};
 use crate::store::{Scrub, ScrubbedDataStore};
@@ -119,7 +119,7 @@ impl<KT: KeyTransform, DS: ScrubbedDataStore> Scrub for TransformDataStore<KT, D
     }
 }
 
-impl<KT: KeyTransform + Send, BDS: BatchDataStore> Batching for TransformDataStore<KT, BDS> {
+impl<KT: KeyTransform + Send, BDS: BatchDataStore> ToBatch for TransformDataStore<KT, BDS> {
     type Batch = TransformBatchDataStore<KT, BDS>;
 
     fn batch(self) -> Result<Self::Batch> {

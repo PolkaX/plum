@@ -5,7 +5,7 @@ use std::borrow::Borrow;
 use crate::error::Result;
 use crate::impls::BasicBatchDataStore;
 use crate::key::Key;
-use crate::store::{Batching, DataStore, DataStoreRead, DataStoreWrite};
+use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
 use crate::store::{Persistent, PersistentDataStore};
 
 /// The delay interface for delay operation.
@@ -93,7 +93,7 @@ impl<DL: Delay, DS: PersistentDataStore> Persistent for DelayDataStore<DL, DS> {
     }
 }
 
-impl<DL: Delay, DS: DataStore> Batching for DelayDataStore<DL, DS> {
+impl<DL: Delay, DS: DataStore> ToBatch for DelayDataStore<DL, DS> {
     type Batch = BasicBatchDataStore<DelayDataStore<DL, DS>>;
 
     fn batch(self) -> Result<Self::Batch> {
