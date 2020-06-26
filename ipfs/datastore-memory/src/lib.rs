@@ -6,13 +6,13 @@
 
 use std::borrow::Borrow;
 
-use ipfs_datastore::{
-    DataStore, DataStoreError, DataStoreRead, DataStoreWrite, Key, MapDataStore, SyncDataStore,
-};
+use ipfs_datastore::{DataStore, DataStoreRead, DataStoreWrite};
+use ipfs_datastore::{DataStoreError, Key, MapDataStore, SyncDataStore};
 
 pub(crate) type Result<T> = std::result::Result<T, DataStoreError>;
 
 /// A thread-safe datastore living in memory, which is generally intended for tests.
+#[derive(Clone)]
 pub struct MemoryDataStore {
     datastore: SyncDataStore<MapDataStore>,
 }

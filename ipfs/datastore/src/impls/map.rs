@@ -4,9 +4,8 @@ use std::borrow::Borrow;
 use std::collections::HashMap;
 
 use crate::error::{DataStoreError, Result};
-use crate::impls::BasicBatchDataStore;
 use crate::key::Key;
-use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
+use crate::store::{DataStore, DataStoreRead, DataStoreWrite};
 
 /// MapDataStore use HashMap for internal storage.
 #[derive(Clone, Debug, Default)]
@@ -81,13 +80,5 @@ impl DataStoreWrite for MapDataStore {
     {
         self.values.remove(key.borrow());
         Ok(())
-    }
-}
-
-impl ToBatch for MapDataStore {
-    type Batch = BasicBatchDataStore<MapDataStore>;
-
-    fn batch(self) -> Result<Self::Batch> {
-        Ok(BasicBatchDataStore::new(self))
     }
 }

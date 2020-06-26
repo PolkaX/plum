@@ -3,12 +3,15 @@
 use std::borrow::Borrow;
 
 use crate::error::{DataStoreError, Result};
-use crate::impls::BasicBatchDataStore;
+use crate::impls::{BasicBatchDataStore, BasicTxnDataStore};
 use crate::key::Key;
-use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
+use crate::store::{Check, Gc, Persistent, Scrub};
+use crate::store::{DataStore, DataStoreRead, DataStoreWrite};
+use crate::store::{ToBatch, ToTxn};
 
 /// DummyDataStore stores nothing, but conforms to the API.
 /// Useful to test with.
+#[derive(Copy, Clone)]
 pub struct DummyDataStore;
 
 impl DataStore for DummyDataStore {
@@ -64,10 +67,42 @@ impl DataStoreWrite for DummyDataStore {
     }
 }
 
+impl Check for DummyDataStore {
+    fn check(&self) -> Result<()> {
+        Ok(())
+    }
+}
+
+impl Gc for DummyDataStore {
+    fn collect_garbage(&self) -> Result<()> {
+        Ok(())
+    }
+}
+
+impl Persistent for DummyDataStore {
+    fn disk_usage(&self) -> Result<u64> {
+        Ok(0)
+    }
+}
+
+impl Scrub for DummyDataStore {
+    fn scrub(&self) -> Result<()> {
+        Ok(())
+    }
+}
+
 impl ToBatch for DummyDataStore {
     type Batch = BasicBatchDataStore<DummyDataStore>;
 
-    fn batch(self) -> Result<Self::Batch> {
-        Ok(BasicBatchDataStore::new(self))
+    fn batch(&self) -> Result<Self::Batch> {
+        Ok(BasicBatchDataStore::new(DummyDataStore))
+    }
+}
+
+impl ToTxn for DummyDataStore {
+    type Txn = BasicTxnDataStore<DummyDataStore>;
+
+    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+        Ok(BasicTxnDataStore::new(DummyDataStore))
     }
 }
