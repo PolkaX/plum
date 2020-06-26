@@ -23,7 +23,7 @@ use rocksdb::{
 };
 
 pub use self::compact::CompactionProfile;
-pub use self::config::DatabaseConfig;
+pub use self::config::{DatabaseConfig, DEFAULT_COLUMN_NAME};
 use self::stats::{parse_rocksdb_stats, RunningDBStats};
 pub use self::stats::{IoStats, IoStatsKind, RocksDBStatsValue};
 pub use self::transaction::{DBKey, DBOp, DBTransaction, DBValue};
@@ -266,11 +266,11 @@ impl Database {
     }
 
     /// Commit transaction to database.
-    pub fn write(&self, txn: DBTransaction) -> io::Result<()> {
+    pub fn write(&self, txn: &DBTransaction) -> io::Result<()> {
         match *self.db.read() {
             Some(ref cfs) => {
                 let mut batch = WriteBatch::default();
-                let ops = txn.ops;
+                let ops = &txn.ops;
 
                 self.stats.tally_writes(ops.len() as u64);
                 self.stats.tally_transactions(1);

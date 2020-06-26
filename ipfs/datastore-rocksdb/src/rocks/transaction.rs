@@ -77,4 +77,9 @@ impl DBTransaction {
             key: DBKey::from_slice(key),
         });
     }
+
+    /// Clear all database operations.
+    pub fn clear(&mut self) {
+        self.ops.clear();
+    }
 }

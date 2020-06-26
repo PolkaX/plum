@@ -32,7 +32,7 @@ fn put_and_get() -> io::Result<()> {
 
     let mut transaction = db.transaction();
     transaction.put("0", key1, b"horse".to_vec());
-    db.write(transaction)?;
+    db.write(&transaction)?;
 
     assert_eq!(db.get("0", key1)?.unwrap(), b"horse");
     Ok(())
@@ -45,12 +45,12 @@ fn delete_and_get() -> io::Result<()> {
 
     let mut transaction = db.transaction();
     transaction.put("0", key1, b"horse".to_vec());
-    db.write(transaction)?;
+    db.write(&transaction)?;
     assert_eq!(&*db.get("0", key1)?.unwrap(), b"horse");
 
     let mut transaction = db.transaction();
     transaction.delete("0", key1);
-    db.write(transaction)?;
+    db.write(&transaction)?;
     assert!(db.get("0", key1)?.is_none());
     Ok(())
 }
@@ -71,7 +71,7 @@ fn complex() -> io::Result<()> {
     batch.put("0", key3, b"caterpillar".to_vec());
     batch.put("0", key4, b"beef".to_vec());
     batch.put("0", key5, b"fish".to_vec());
-    db.write(batch)?;
+    db.write(&batch)?;
 
     assert_eq!(&*db.get("0", key1)?.unwrap(), b"cat");
 
@@ -89,18 +89,18 @@ fn complex() -> io::Result<()> {
 
     let mut batch = db.transaction();
     batch.delete("0", key1);
-    db.write(batch)?;
+    db.write(&batch)?;
 
     assert!(db.get("0", key1)?.is_none());
 
     let mut batch = db.transaction();
     batch.put("0", key1, b"cat".to_vec());
-    db.write(batch)?;
+    db.write(&batch)?;
 
     let mut transaction = db.transaction();
     transaction.put("0", key3, b"elephant".to_vec());
     transaction.delete("0", key1);
-    db.write(transaction)?;
+    db.write(&transaction)?;
     assert!(db.get("0", key1)?.is_none());
     assert_eq!(&*db.get("0", key3)?.unwrap(), b"elephant");
 
@@ -110,7 +110,7 @@ fn complex() -> io::Result<()> {
     let mut transaction = db.transaction();
     transaction.put("0", key1, b"horse".to_vec());
     transaction.delete("0", key3);
-    db.write(transaction)?;
+    db.write(&transaction)?;
     assert!(db.get("0", key3)?.is_none());
     assert_eq!(&*db.get("0", key1)?.unwrap(), b"horse");
 
@@ -181,7 +181,7 @@ fn secondary_db_get() -> io::Result<()> {
     let key1 = b"key1";
     let mut transaction = db.transaction();
     transaction.put("0", key1, b"horse".to_vec());
-    db.write(transaction)?;
+    db.write(&transaction)?;
 
     let mut columns = HashSet::new();
     columns.insert("0".to_string());
@@ -300,7 +300,7 @@ fn test_num_keys() -> io::Result<()> {
     let key1 = b"beef";
     let mut batch = db.transaction();
     batch.put("0", key1, key1.to_vec());
-    db.write(batch)?;
+    db.write(&batch)?;
     assert_eq!(
         db.num_keys("0").unwrap(),
         1,

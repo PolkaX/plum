@@ -8,7 +8,7 @@ use crate::rocks::compact::CompactionProfile;
 use crate::rocks::{MiB, DB_DEFAULT_COLUMN_MEMORY_BUDGET_MB, MB};
 
 /// The default name pf a column.
-const DEFAULT_COLUMN_NAME: &str = "default";
+pub const DEFAULT_COLUMN_NAME: &str = "default";
 
 /// Database configuration
 #[derive(Clone)]
