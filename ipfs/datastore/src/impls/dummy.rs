@@ -5,10 +5,11 @@ use std::borrow::Borrow;
 use crate::error::{DataStoreError, Result};
 use crate::impls::BasicBatchDataStore;
 use crate::key::Key;
-use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
+use crate::store::{Batch, DataStore, DataStoreRead, DataStoreWrite};
 
 /// DummyDataStore stores nothing, but conforms to the API.
 /// Useful to test with.
+#[derive(Copy, Clone)]
 pub struct DummyDataStore;
 
 impl DataStore for DummyDataStore {
@@ -64,10 +65,10 @@ impl DataStoreWrite for DummyDataStore {
     }
 }
 
-impl ToBatch for DummyDataStore {
+impl Batch for DummyDataStore {
     type Batch = BasicBatchDataStore<DummyDataStore>;
 
-    fn batch(self) -> Result<Self::Batch> {
-        Ok(BasicBatchDataStore::new(self))
+    fn batch(&self) -> Result<Self::Batch> {
+        Ok(BasicBatchDataStore::new(DummyDataStore))
     }
 }

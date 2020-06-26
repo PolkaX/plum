@@ -5,13 +5,14 @@ use std::borrow::Borrow;
 use crate::error::Result;
 use crate::key::Key;
 use crate::store::{Batch, BatchDataStore};
-use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
+use crate::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreWrite};
 use crate::store::{Persistent, PersistentDataStore};
 
 /// The user-provided fail function.
-pub trait FailFn: Fn(&str) -> Result<()> {}
+pub trait FailFn: Clone + Fn(&str) -> Result<()> {}
 
 /// FailDataStore is a datastore which fails according to a user-provided function.
+#[derive(Clone)]
 pub struct FailDataStore<F: FailFn, DS: DataStore> {
     fail_fn: F,
     datastore: DS,
@@ -91,17 +92,21 @@ impl<F: FailFn, DS: PersistentDataStore> Persistent for FailDataStore<F, DS> {
     }
 }
 
-impl<F: FailFn, BDS: BatchDataStore> ToBatch for FailDataStore<F, BDS> {
+impl<F: FailFn, BDS: BatchDataStore> Batch for FailDataStore<F, BDS> {
     type Batch = FailBatchDataStore<F, BDS>;
 
-    fn batch(self) -> Result<Self::Batch> {
-        Ok(FailBatchDataStore::new(self.fail_fn, self.datastore))
+    fn batch(&self) -> Result<Self::Batch> {
+        Ok(FailBatchDataStore::new(
+            self.fail_fn.clone(),
+            self.datastore.clone(),
+        ))
     }
 }
 
 // ============================================================================
 
 /// FailBatchDataStore implements batching operations on the FailDataStore.
+#[derive(Clone)]
 pub struct FailBatchDataStore<F: FailFn, BDS: BatchDataStore> {
     fail_fn: F,
     datastore: BDS,
@@ -174,7 +179,7 @@ impl<F: FailFn, BDS: BatchDataStore> DataStoreWrite for FailBatchDataStore<F, BD
     }
 }
 
-impl<F: FailFn, BDS: BatchDataStore> Batch for FailBatchDataStore<F, BDS> {
+impl<F: FailFn, BDS: BatchDataStore> DataStoreBatch for FailBatchDataStore<F, BDS> {
     fn commit(&mut self) -> Result<()> {
         (self.fail_fn)("batch-commit")?;
         self.datastore.commit()

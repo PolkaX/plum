@@ -8,7 +8,7 @@ use crate::error::Result;
 use crate::key::Key;
 use crate::store::{Batch, BatchDataStore};
 use crate::store::{Check, CheckedDataStore};
-use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
+use crate::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreWrite};
 use crate::store::{Gc, GcDataStore};
 use crate::store::{Persistent, PersistentDataStore};
 use crate::store::{Scrub, ScrubbedDataStore};
@@ -120,18 +120,22 @@ impl<DS: ScrubbedDataStore> Scrub for LogDataStore<DS> {
     }
 }
 
-impl<BDS: BatchDataStore> ToBatch for LogDataStore<BDS> {
+impl<BDS: BatchDataStore> Batch for LogDataStore<BDS> {
     type Batch = LogBatchDataStore<BDS>;
 
-    fn batch(self) -> Result<Self::Batch> {
+    fn batch(&self) -> Result<Self::Batch> {
         info!("{}: batch", self.name);
-        Ok(LogBatchDataStore::new(self.name, self.datastore))
+        Ok(LogBatchDataStore::new(
+            self.name.clone(),
+            self.datastore.clone(),
+        ))
     }
 }
 
 // ============================================================================
 
 /// LogBatchDataStore logs all accesses through the batching data store.
+#[derive(Clone)]
 pub struct LogBatchDataStore<BDS: BatchDataStore> {
     name: String,
     datastore: BDS,
@@ -209,7 +213,7 @@ impl<BDS: BatchDataStore> DataStoreWrite for LogBatchDataStore<BDS> {
     }
 }
 
-impl<BDS: BatchDataStore> Batch for LogBatchDataStore<BDS> {
+impl<BDS: BatchDataStore> DataStoreBatch for LogBatchDataStore<BDS> {
     fn commit(&mut self) -> Result<()> {
         info!("{}: batch commit", self.name);
         self.commit()

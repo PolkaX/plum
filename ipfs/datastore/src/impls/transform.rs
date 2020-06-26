@@ -6,13 +6,13 @@ use crate::error::Result;
 use crate::key::Key;
 use crate::store::{Batch, BatchDataStore};
 use crate::store::{Check, CheckedDataStore};
-use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
+use crate::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreWrite};
 use crate::store::{Gc, GcDataStore};
 use crate::store::{Persistent, PersistentDataStore};
 use crate::store::{Scrub, ScrubbedDataStore};
 
 /// KeyTransform is an data store with a pair of functions for transforming keys invertibly.
-pub trait KeyTransform {
+pub trait KeyTransform: Clone {
     /// Convert `origin` key into `target` key.
     fn convert_key<K: Borrow<Key>>(&self, key: &K) -> Key;
 
@@ -21,6 +21,7 @@ pub trait KeyTransform {
 }
 
 /// TransformDataStore is a datastore with a pair of KeyTransform functions.
+#[derive(Clone)]
 pub struct TransformDataStore<KT: KeyTransform, DS: DataStore> {
     transform: KT,
     datastore: DS,
@@ -119,17 +120,21 @@ impl<KT: KeyTransform, DS: ScrubbedDataStore> Scrub for TransformDataStore<KT, D
     }
 }
 
-impl<KT: KeyTransform + Send, BDS: BatchDataStore> ToBatch for TransformDataStore<KT, BDS> {
+impl<KT: KeyTransform, BDS: BatchDataStore> Batch for TransformDataStore<KT, BDS> {
     type Batch = TransformBatchDataStore<KT, BDS>;
 
-    fn batch(self) -> Result<Self::Batch> {
-        Ok(TransformBatchDataStore::new(self.transform, self.datastore))
+    fn batch(&self) -> Result<Self::Batch> {
+        Ok(TransformBatchDataStore::new(
+            self.transform.clone(),
+            self.datastore.clone(),
+        ))
     }
 }
 
 // ============================================================================
 
 /// TransformBatchDataStore is a batching datastore with a KeyMap function.
+#[derive(Clone)]
 pub struct TransformBatchDataStore<KT: KeyTransform, BDS: BatchDataStore> {
     transform: KT,
     datastore: BDS,
@@ -204,7 +209,7 @@ impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreWrite for TransformBatchDat
     }
 }
 
-impl<KT: KeyTransform, BDS: BatchDataStore> Batch for TransformBatchDataStore<KT, BDS> {
+impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreBatch for TransformBatchDataStore<KT, BDS> {
     fn commit(&mut self) -> Result<()> {
         self.datastore.commit()
     }
@@ -213,10 +218,11 @@ impl<KT: KeyTransform, BDS: BatchDataStore> Batch for TransformBatchDataStore<KT
 // ============================================================================
 
 /// KeyMapFn is a function that maps one key to another.
-pub trait KeyMapFn: Fn(&Key) -> Key {}
+pub trait KeyMapFn: Clone + Fn(&Key) -> Key {}
 
 //// KeyTransformPair is a convince struct for constructing a key transform.
 #[doc(hidden)]
+#[derive(Clone)]
 pub struct KeyTransformPair<C: KeyMapFn, I: KeyMapFn> {
     pub convert: C,
     pub invert: I,
@@ -239,6 +245,7 @@ impl<C: KeyMapFn, I: KeyMapFn> KeyTransform for KeyTransformPair<C, I> {
 ///
 /// Inverting key will panic if prefix not found when it should be there.
 #[doc(hidden)]
+#[derive(Clone)]
 pub struct PrefixTransform {
     pub prefix: Key,
 }

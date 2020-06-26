@@ -1,16 +1,14 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use crate::error::Result;
-use crate::store::{DataStore, DataStoreWrite};
+use crate::store::DataStoreBatch;
 
-/// An interface that support batched update operations.
-pub trait Batch: DataStoreWrite {
-    /// Commit all update operations.
-    fn commit(&mut self) -> Result<()>;
+/// Batch is an interface that should be implemented by data stores that
+/// support deferred, grouped updates to the database.
+pub trait Batch {
+    /// The batch type returned by the `batch` method.
+    type Batch: DataStoreBatch;
+
+    /// Create a new batching data store.
+    fn batch(&self) -> Result<Self::Batch>;
 }
-
-/// BatchDataStore is an interface that should be implemented by data stores
-/// which need to support batched update operations.
-pub trait BatchDataStore: Batch + DataStore {}
-
-impl<T: Batch + DataStore> BatchDataStore for T {}

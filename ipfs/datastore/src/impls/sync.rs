@@ -8,9 +8,10 @@ use parking_lot::RwLock;
 use crate::error::Result;
 use crate::key::Key;
 use crate::store::{Batch, BatchDataStore};
-use crate::store::{DataStore, DataStoreRead, DataStoreWrite, ToBatch};
+use crate::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreWrite};
 
 /// SyncDataStore contains a datastore wrapper using mutex.
+#[derive(Clone)]
 pub struct SyncDataStore<DS: DataStore> {
     datastore: Arc<RwLock<DS>>,
 }
@@ -78,12 +79,12 @@ impl<DS: DataStore> DataStoreWrite for SyncDataStore<DS> {
     }
 }
 
-impl<BDS: BatchDataStore> ToBatch for SyncDataStore<BDS> {
+impl<BDS: BatchDataStore> Batch for SyncDataStore<BDS> {
     type Batch = SyncBatchDataStore<BDS>;
 
-    fn batch(self) -> Result<Self::Batch> {
+    fn batch(&self) -> Result<Self::Batch> {
         Ok(SyncBatchDataStore {
-            datastore: self.datastore,
+            datastore: self.datastore.clone(),
         })
     }
 }
@@ -91,6 +92,7 @@ impl<BDS: BatchDataStore> ToBatch for SyncDataStore<BDS> {
 // ============================================================================
 
 /// SyncDataStore contains a datastore wrapper using mutex.
+#[derive(Clone)]
 pub struct SyncBatchDataStore<BDS: BatchDataStore> {
     datastore: Arc<RwLock<BDS>>,
 }
@@ -158,7 +160,7 @@ impl<BDS: BatchDataStore> DataStoreWrite for SyncBatchDataStore<BDS> {
     }
 }
 
-impl<BDS: BatchDataStore> Batch for SyncBatchDataStore<BDS> {
+impl<BDS: BatchDataStore> DataStoreBatch for SyncBatchDataStore<BDS> {
     fn commit(&mut self) -> Result<()> {
         self.datastore.write().commit()
     }

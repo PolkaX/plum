@@ -26,7 +26,7 @@ use crate::key::Key;
 /// and thus it should behave predictably and handle exceptional conditions with
 /// proper error reporting. Thus, all DataStore calls may return errors, which
 /// should be checked by callers.
-pub trait DataStore: DataStoreWrite + DataStoreRead {
+pub trait DataStore: Clone + DataStoreWrite + DataStoreRead {
     /// Guarantees that any `put` or `delete` calls under prefix that returned before `sync(prefix)`
     /// was called will be observed after `sync(prefix)` returns, even if the program crashes.
     /// If `put/delete` operations already satisfy these requirements then Sync may be a no-op.
@@ -85,40 +85,52 @@ pub trait DataStoreRead {
     // TODO: query
 }
 
-// ============================================================================
-// *********************** DataStore to BatchDataStore ************************
-// ============================================================================
+/// DataStoreBatch is a interface that needs to be implemented by `BatchDataStore`
+/// to support batch write.
+pub trait DataStoreBatch: DataStoreWrite {
+    /*
+    /// Store the object `value` named by `key`,
+    /// but the operation is not committed to the data store yet.
+    fn batch_put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    where
+        K: Into<Key>,
+        V: Into<Vec<u8>>;
 
-/// Batching support deferred, grouped updates to the database.
-///
-/// `Batch`es do NOT have transactional semantics: updates to the underlying
-/// datastore are not guaranteed to occur in the same iota of time.
-/// Similarly, batched updates will not be flushed to the underlying datastore
-/// until `commit` has been called.
-///
-/// `Txn`s from a `TxnDataStore` have all the capabilities of a `Batch`,
-/// but the reverse is NOT true.
-pub trait ToBatch: DataStore {
-    /// The batching version of current data store.
-    type Batch: Batch;
-
-    /// Consume self, return a batching data store.
-    fn batch(self) -> Result<Self::Batch>;
+    /// Remove the value for given `key`, but the operation is not committed to the data store yet.
+    /// If the key is not in the datastore, this method returns no error.
+    fn batch_delete<K>(&mut self, key: &K) -> Result<()>
+    where
+        K: Borrow<Key>;
+    */
+    /// Commit all update operations.
+    fn commit(&mut self) -> Result<()>;
 }
 
-// ============================================================================
-// ************************ DataStore to TxnDataStore *************************
-// ============================================================================
+/// BatchDataStore is an interface that should be implemented by data stores that
+/// support deferred, grouped updates to the database.
+pub trait BatchDataStore: DataStoreBatch + DataStore {}
+impl<T: DataStoreBatch + DataStore> BatchDataStore for T {}
 
-/// ToTxnDataStore is an interface that should be implemented by data stores
-/// that support transactions.
-pub trait ToTxn: DataStore {
-    /// The txn version of current data store.
-    type Txn: Txn;
+/// DataStoreTxn is a interface that needs to be implemented by `TxnhDataStore`
+/// to support transactions.
+pub trait DataStoreTxn: DataStoreRead + DataStoreBatch {
+    /*
+    /// Commit finalizes a transaction, attempting to commit it to the Datastore.
+    /// May return an error if the transaction has gone stale. The presence of an
+    /// error is an indication that the data was not committed to the Datastore.
+    fn commit(&mut self) -> Result<()>;
+    */
 
-    /// Consume self, return a txn data store.
-    fn new_txn(self, read_only: bool) -> Result<Self::Txn>;
+    /// Discard throws away changes recorded in a transaction without committing
+    /// them to the underlying Datastore. Any calls made to Discard after Commit
+    /// has been successfully called will have no effect on the transaction and
+    /// state of the Datastore, making it safe to defer.
+    fn discard(&mut self);
 }
+
+/// TxnDataStore is an interface that should be implemented by data stores that support transactions.
+pub trait TxnDataStore: DataStoreTxn + DataStore {}
+impl<T: DataStoreTxn + DataStore> TxnDataStore for T {}
 
 // ============================================================================
 // ********************** Extended DataStore interfaces ***********************
@@ -132,10 +144,11 @@ mod scrub;
 mod ttl;
 mod txn;
 
-pub use self::batch::{Batch, BatchDataStore};
+pub use self::batch::Batch;
+pub use self::txn::Txn;
+
 pub use self::check::{Check, CheckedDataStore};
 pub use self::gc::{Gc, GcDataStore};
 pub use self::persistent::{Persistent, PersistentDataStore};
 pub use self::scrub::{Scrub, ScrubbedDataStore};
 pub use self::ttl::{Ttl, TtlDataStore};
-pub use self::txn::{Txn, TxnDataStore};

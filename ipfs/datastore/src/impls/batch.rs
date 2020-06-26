@@ -5,8 +5,9 @@ use std::collections::HashMap;
 
 use crate::error::Result;
 use crate::key::Key;
-use crate::store::{Batch, DataStore, DataStoreRead, DataStoreWrite};
+use crate::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreWrite};
 
+#[derive(Clone)]
 enum BatchOp {
     Put(Vec<u8>), // a single put operation of batched operations
     Delete,       // a single delete operation of batched operations.
@@ -14,6 +15,7 @@ enum BatchOp {
 
 /// BasicBatchDataStore implements the transaction interface for data stores
 /// who do not have any sort of underlying transactional support.
+#[derive(Clone)]
 pub struct BasicBatchDataStore<DS: DataStore> {
     ops: HashMap<Key, BatchOp>,
     datastore: DS,
@@ -71,7 +73,7 @@ impl<DS: DataStore> DataStoreWrite for BasicBatchDataStore<DS> {
     }
 }
 
-impl<DS: DataStore> Batch for BasicBatchDataStore<DS> {
+impl<DS: DataStore> DataStoreBatch for BasicBatchDataStore<DS> {
     fn commit(&mut self) -> Result<()> {
         for (key, op) in &self.ops {
             match op {
