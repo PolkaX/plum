@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-//!
+/// A datastore with RocksDB as backend.
 
 #![deny(missing_docs)]
 
