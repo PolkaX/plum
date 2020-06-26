@@ -6,8 +6,6 @@ mod dummy;
 mod fail;
 mod log;
 mod map;
-// TODO: retry
-// mod retry;
 mod sync;
 mod transform;
 
