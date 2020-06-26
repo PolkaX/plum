@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 
 use crate::error::Result;
 use crate::key::Key;
-use crate::store::DataStore;
+use crate::store::{BatchDataStore, DataStore, TxnDataStore};
 
 /// Ttl encapsulates the methods that deal with entries with time-to-live.
 pub trait Ttl {
@@ -27,5 +27,14 @@ pub trait Ttl {
 /// TtlDataStore is an interface that should be implemented by data stores
 /// that support expiring entries.
 pub trait TtlDataStore: Ttl + DataStore {}
-
 impl<T: Ttl + DataStore> TtlDataStore for T {}
+
+/// TtlBatchDataStore is an interface that should be implemented by batch data stores
+/// that support expiring entries.
+pub trait TtlBatchDataStore: Ttl + BatchDataStore {}
+impl<T: Ttl + BatchDataStore> TtlBatchDataStore for T {}
+
+/// TtlTxnDataStore is an interface that should be implemented by txn data stores
+/// that support expiring entries.
+pub trait TtlTxnDataStore: Ttl + TxnDataStore {}
+impl<T: Ttl + TxnDataStore> TtlTxnDataStore for T {}

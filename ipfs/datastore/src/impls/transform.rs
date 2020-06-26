@@ -4,12 +4,14 @@ use std::borrow::Borrow;
 
 use crate::error::Result;
 use crate::key::Key;
-use crate::store::{Batch, BatchDataStore};
-use crate::store::{Check, CheckedDataStore};
-use crate::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreWrite};
-use crate::store::{Gc, GcDataStore};
-use crate::store::{Persistent, PersistentDataStore};
-use crate::store::{Scrub, ScrubbedDataStore};
+use crate::store::{BatchDataStore, ToBatch, ToTxn, TxnDataStore};
+use crate::store::{Check, CheckedBatchDataStore, CheckedDataStore, CheckedTxnDataStore};
+use crate::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreTxn, DataStoreWrite};
+use crate::store::{Gc, GcBatchDataStore, GcDataStore, GcTxnDataStore};
+use crate::store::{
+    Persistent, PersistentBatchDataStore, PersistentDataStore, PersistentTxnDataStore,
+};
+use crate::store::{Scrub, ScrubbedBatchDataStore, ScrubbedDataStore, ScrubbedTxnDataStore};
 
 /// KeyTransform is an data store with a pair of functions for transforming keys invertibly.
 pub trait KeyTransform: Clone {
@@ -120,7 +122,7 @@ impl<KT: KeyTransform, DS: ScrubbedDataStore> Scrub for TransformDataStore<KT, D
     }
 }
 
-impl<KT: KeyTransform, BDS: BatchDataStore> Batch for TransformDataStore<KT, BDS> {
+impl<KT: KeyTransform, BDS: BatchDataStore> ToBatch for TransformDataStore<KT, BDS> {
     type Batch = TransformBatchDataStore<KT, BDS>;
 
     fn batch(&self) -> Result<Self::Batch> {
@@ -131,9 +133,20 @@ impl<KT: KeyTransform, BDS: BatchDataStore> Batch for TransformDataStore<KT, BDS
     }
 }
 
+impl<KT: KeyTransform, TDS: TxnDataStore> ToTxn for TransformTxnDataStore<KT, TDS> {
+    type Txn = TransformTxnDataStore<KT, TDS>;
+
+    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+        Ok(TransformTxnDataStore::new(
+            self.transform.clone(),
+            self.datastore.clone(),
+        ))
+    }
+}
+
 // ============================================================================
 
-/// TransformBatchDataStore is a batching datastore with a KeyMap function.
+/// TransformBatchDataStore is a batching datastore with key transform functions.
 #[derive(Clone)]
 pub struct TransformBatchDataStore<KT: KeyTransform, BDS: BatchDataStore> {
     transform: KT,
@@ -212,6 +225,157 @@ impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreWrite for TransformBatchDat
 impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreBatch for TransformBatchDataStore<KT, BDS> {
     fn commit(&mut self) -> Result<()> {
         self.datastore.commit()
+    }
+}
+
+impl<KT: KeyTransform, BDS: CheckedBatchDataStore> Check for TransformBatchDataStore<KT, BDS> {
+    fn check(&self) -> Result<()> {
+        self.datastore.check()
+    }
+}
+
+impl<KT: KeyTransform, BDS: GcBatchDataStore> Gc for TransformBatchDataStore<KT, BDS> {
+    fn collect_garbage(&self) -> Result<()> {
+        self.datastore.collect_garbage()
+    }
+}
+
+impl<KT: KeyTransform, BDS: PersistentBatchDataStore> Persistent
+    for TransformBatchDataStore<KT, BDS>
+{
+    fn disk_usage(&self) -> Result<u64> {
+        self.datastore.disk_usage()
+    }
+}
+
+impl<KT: KeyTransform, BDS: ScrubbedBatchDataStore> Scrub for TransformBatchDataStore<KT, BDS> {
+    fn scrub(&self) -> Result<()> {
+        self.datastore.scrub()
+    }
+}
+
+impl<KT: KeyTransform, TDS: TxnDataStore> ToTxn for TransformBatchDataStore<KT, TDS> {
+    type Txn = TransformTxnDataStore<KT, TDS>;
+
+    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+        Ok(TransformTxnDataStore::new(
+            self.transform.clone(),
+            self.datastore.clone(),
+        ))
+    }
+}
+
+// ============================================================================
+
+/// TransformTxnDataStore is a txn datastore with key transform functions.
+#[derive(Clone)]
+pub struct TransformTxnDataStore<KT: KeyTransform, TDS: TxnDataStore> {
+    transform: KT,
+    datastore: TDS,
+}
+
+impl<KT: KeyTransform, TDS: TxnDataStore> TransformTxnDataStore<KT, TDS> {
+    /// Create a new TransformTxnDataStore.
+    pub fn new(transform: KT, datastore: TDS) -> Self {
+        Self {
+            transform,
+            datastore,
+        }
+    }
+}
+
+impl<KT: KeyTransform, TDS: TxnDataStore> DataStore for TransformTxnDataStore<KT, TDS> {
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
+    where
+        K: Borrow<Key>,
+    {
+        let key = self.transform.convert_key(prefix);
+        self.datastore.sync(&key)
+    }
+
+    fn close(&mut self) -> Result<()> {
+        self.datastore.close()
+    }
+}
+
+impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreRead for TransformTxnDataStore<KT, TDS> {
+    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    where
+        K: Borrow<Key>,
+    {
+        let key = self.transform.convert_key(key);
+        self.datastore.get(&key)
+    }
+
+    fn has<K>(&self, key: &K) -> Result<bool>
+    where
+        K: Borrow<Key>,
+    {
+        let key = self.transform.convert_key(key);
+        self.datastore.has(&key)
+    }
+
+    fn size<K>(&self, key: &K) -> Result<usize>
+    where
+        K: Borrow<Key>,
+    {
+        let key = self.transform.convert_key(key);
+        self.datastore.size(&key)
+    }
+}
+
+impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreWrite for TransformTxnDataStore<KT, TDS> {
+    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    where
+        K: Into<Key>,
+        V: Into<Vec<u8>>,
+    {
+        let key = self.transform.convert_key(&key.into());
+        self.datastore.put(key, value)
+    }
+
+    fn delete<K>(&mut self, key: &K) -> Result<()>
+    where
+        K: Borrow<Key>,
+    {
+        let key = self.transform.convert_key(key);
+        self.datastore.delete(&key)
+    }
+}
+
+impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreBatch for TransformTxnDataStore<KT, TDS> {
+    fn commit(&mut self) -> Result<()> {
+        self.datastore.commit()
+    }
+}
+
+impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreTxn for TransformTxnDataStore<KT, TDS> {
+    fn discard(&mut self) -> Result<()> {
+        self.datastore.discard()
+    }
+}
+
+impl<KT: KeyTransform, TDS: CheckedTxnDataStore> Check for TransformTxnDataStore<KT, TDS> {
+    fn check(&self) -> Result<()> {
+        self.datastore.check()
+    }
+}
+
+impl<KT: KeyTransform, TDS: GcTxnDataStore> Gc for TransformTxnDataStore<KT, TDS> {
+    fn collect_garbage(&self) -> Result<()> {
+        self.datastore.collect_garbage()
+    }
+}
+
+impl<KT: KeyTransform, TDS: PersistentTxnDataStore> Persistent for TransformTxnDataStore<KT, TDS> {
+    fn disk_usage(&self) -> Result<u64> {
+        self.datastore.disk_usage()
+    }
+}
+
+impl<KT: KeyTransform, TDS: ScrubbedTxnDataStore> Scrub for TransformTxnDataStore<KT, TDS> {
+    fn scrub(&self) -> Result<()> {
+        self.datastore.scrub()
     }
 }
 

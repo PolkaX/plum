@@ -15,22 +15,25 @@ mod store;
 pub use self::error::DataStoreError;
 pub use self::key::{namespace_type, namespace_value, Key};
 
-pub use self::store::{BatchDataStore, DataStoreBatch};
-pub use self::store::{DataStore, DataStoreRead, DataStoreWrite};
-pub use self::store::{DataStoreTxn, TxnDataStore};
+pub use self::store::{BatchDataStore, ToBatch, ToTxn, TxnDataStore};
+pub use self::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreTxn, DataStoreWrite};
 
-pub use self::store::Batch;
-pub use self::store::Txn;
-pub use self::store::{Check, CheckedDataStore};
-pub use self::store::{Gc, GcDataStore};
-pub use self::store::{Persistent, PersistentDataStore};
-pub use self::store::{Scrub, ScrubbedDataStore};
-pub use self::store::{Ttl, TtlDataStore};
+pub use self::store::{Check, CheckedBatchDataStore, CheckedDataStore, CheckedTxnDataStore};
+pub use self::store::{Gc, GcBatchDataStore, GcDataStore, GcTxnDataStore};
+pub use self::store::{
+    Persistent, PersistentBatchDataStore, PersistentDataStore, PersistentTxnDataStore,
+};
+pub use self::store::{Scrub, ScrubbedBatchDataStore, ScrubbedDataStore, ScrubbedTxnDataStore};
+pub use self::store::{Ttl, TtlBatchDataStore, TtlDataStore, TtlTxnDataStore};
 
-pub use self::impls::BasicBatchDataStore;
+pub use self::impls::{BasicBatchDataStore, BasicTxnDataStore};
 pub use self::impls::{Delay, DelayDataStore};
-pub use self::impls::{DummyDataStore, LogBatchDataStore, LogDataStore, MapDataStore};
-pub use self::impls::{FailBatchDataStore, FailDataStore, FailFn};
-pub use self::impls::{KeyMapFn, KeyTransformPair, PrefixTransform};
-pub use self::impls::{KeyTransform, TransformBatchDataStore, TransformDataStore};
-pub use self::impls::{SyncBatchDataStore, SyncDataStore};
+pub use self::impls::{DummyDataStore, MapDataStore};
+
+pub use self::impls::{FailBatchDataStore, FailDataStore, FailFn, FailTxnDataStore};
+pub use self::impls::{
+    KeyMapFn, KeyTransform, KeyTransformPair, PrefixTransform, TransformBatchDataStore,
+    TransformDataStore, TransformTxnDataStore,
+};
+pub use self::impls::{LogBatchDataStore, LogDataStore, LogTxnDataStore};
+pub use self::impls::{SyncBatchDataStore, SyncDataStore, SyncTxnDataStore};

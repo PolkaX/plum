@@ -3,10 +3,11 @@
 use std::borrow::Borrow;
 
 use crate::error::Result;
-use crate::impls::BasicBatchDataStore;
+use crate::impls::{BasicBatchDataStore, BasicTxnDataStore};
 use crate::key::Key;
-use crate::store::{Batch, DataStore, DataStoreRead, DataStoreWrite};
+use crate::store::{DataStore, DataStoreRead, DataStoreWrite};
 use crate::store::{Persistent, PersistentDataStore};
+use crate::store::{ToBatch, ToTxn};
 
 /// The delay interface for delay operation.
 pub trait Delay: Clone {
@@ -94,10 +95,18 @@ impl<DL: Delay, DS: PersistentDataStore> Persistent for DelayDataStore<DL, DS> {
     }
 }
 
-impl<DL: Delay, DS: DataStore> Batch for DelayDataStore<DL, DS> {
+impl<DL: Delay, DS: DataStore> ToBatch for DelayDataStore<DL, DS> {
     type Batch = BasicBatchDataStore<DelayDataStore<DL, DS>>;
 
     fn batch(&self) -> Result<Self::Batch> {
         Ok(BasicBatchDataStore::new(self.clone()))
+    }
+}
+
+impl<DL: Delay, DS: DataStore> ToTxn for DelayDataStore<DL, DS> {
+    type Txn = BasicTxnDataStore<DelayDataStore<DL, DS>>;
+
+    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+        Ok(BasicTxnDataStore::new(self.clone()))
     }
 }

@@ -4,9 +4,14 @@ use std::borrow::Borrow;
 
 use crate::error::Result;
 use crate::key::Key;
-use crate::store::{Batch, BatchDataStore};
-use crate::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreWrite};
-use crate::store::{Persistent, PersistentDataStore};
+use crate::store::{BatchDataStore, ToBatch, ToTxn, TxnDataStore};
+use crate::store::{Check, CheckedBatchDataStore, CheckedDataStore, CheckedTxnDataStore};
+use crate::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreTxn, DataStoreWrite};
+use crate::store::{Gc, GcBatchDataStore, GcDataStore, GcTxnDataStore};
+use crate::store::{
+    Persistent, PersistentBatchDataStore, PersistentDataStore, PersistentTxnDataStore,
+};
+use crate::store::{Scrub, ScrubbedBatchDataStore, ScrubbedDataStore, ScrubbedTxnDataStore};
 
 /// The user-provided fail function.
 pub trait FailFn: Clone + Fn(&str) -> Result<()> {}
@@ -85,6 +90,20 @@ impl<F: FailFn, DS: DataStore> DataStoreWrite for FailDataStore<F, DS> {
     }
 }
 
+impl<F: FailFn, DS: CheckedDataStore> Check for FailDataStore<F, DS> {
+    fn check(&self) -> Result<()> {
+        (self.fail_fn)("check")?;
+        self.datastore.check()
+    }
+}
+
+impl<F: FailFn, DS: GcDataStore> Gc for FailDataStore<F, DS> {
+    fn collect_garbage(&self) -> Result<()> {
+        (self.fail_fn)("collect-garbage")?;
+        self.datastore.collect_garbage()
+    }
+}
+
 impl<F: FailFn, DS: PersistentDataStore> Persistent for FailDataStore<F, DS> {
     fn disk_usage(&self) -> Result<u64> {
         (self.fail_fn)("disk-usage")?;
@@ -92,11 +111,29 @@ impl<F: FailFn, DS: PersistentDataStore> Persistent for FailDataStore<F, DS> {
     }
 }
 
-impl<F: FailFn, BDS: BatchDataStore> Batch for FailDataStore<F, BDS> {
+impl<F: FailFn, DS: ScrubbedDataStore> Scrub for FailDataStore<F, DS> {
+    fn scrub(&self) -> Result<()> {
+        (self.fail_fn)("scrub")?;
+        self.datastore.scrub()
+    }
+}
+
+impl<F: FailFn, BDS: BatchDataStore> ToBatch for FailDataStore<F, BDS> {
     type Batch = FailBatchDataStore<F, BDS>;
 
     fn batch(&self) -> Result<Self::Batch> {
         Ok(FailBatchDataStore::new(
+            self.fail_fn.clone(),
+            self.datastore.clone(),
+        ))
+    }
+}
+
+impl<F: FailFn, TDS: TxnDataStore> ToTxn for FailDataStore<F, TDS> {
+    type Txn = FailTxnDataStore<F, TDS>;
+
+    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+        Ok(FailTxnDataStore::new(
             self.fail_fn.clone(),
             self.datastore.clone(),
         ))
@@ -183,5 +220,162 @@ impl<F: FailFn, BDS: BatchDataStore> DataStoreBatch for FailBatchDataStore<F, BD
     fn commit(&mut self) -> Result<()> {
         (self.fail_fn)("batch-commit")?;
         self.datastore.commit()
+    }
+}
+
+impl<F: FailFn, BDS: CheckedBatchDataStore> Check for FailBatchDataStore<F, BDS> {
+    fn check(&self) -> Result<()> {
+        (self.fail_fn)("check")?;
+        self.datastore.check()
+    }
+}
+
+impl<F: FailFn, BDS: GcBatchDataStore> Gc for FailBatchDataStore<F, BDS> {
+    fn collect_garbage(&self) -> Result<()> {
+        (self.fail_fn)("collect-garbage")?;
+        self.datastore.collect_garbage()
+    }
+}
+
+impl<F: FailFn, BDS: PersistentBatchDataStore> Persistent for FailBatchDataStore<F, BDS> {
+    fn disk_usage(&self) -> Result<u64> {
+        (self.fail_fn)("disk-usage")?;
+        self.datastore.disk_usage()
+    }
+}
+
+impl<F: FailFn, BDS: ScrubbedBatchDataStore> Scrub for FailBatchDataStore<F, BDS> {
+    fn scrub(&self) -> Result<()> {
+        (self.fail_fn)("scrub")?;
+        self.datastore.scrub()
+    }
+}
+
+impl<F: FailFn, TDS: TxnDataStore> ToTxn for FailBatchDataStore<F, TDS> {
+    type Txn = FailTxnDataStore<F, TDS>;
+
+    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+        Ok(FailTxnDataStore::new(
+            self.fail_fn.clone(),
+            self.datastore.clone(),
+        ))
+    }
+}
+
+// ============================================================================
+
+/// FailTxnDataStore implements transaction operations on the FailDataStore.
+#[derive(Clone)]
+pub struct FailTxnDataStore<F: FailFn, TDS: TxnDataStore> {
+    fail_fn: F,
+    datastore: TDS,
+}
+
+impl<F: FailFn, TDS: TxnDataStore> FailTxnDataStore<F, TDS> {
+    /// Create a new transaction datastore with the given error function.
+    /// The `fail_fn` will be called with different strings depending on the datastore function.
+    pub fn new(fail_fn: F, datastore: TDS) -> Self {
+        Self { fail_fn, datastore }
+    }
+}
+
+impl<F: FailFn, TDS: TxnDataStore> DataStore for FailTxnDataStore<F, TDS> {
+    fn sync<K>(&mut self, prefix: &K) -> Result<()>
+    where
+        K: Borrow<Key>,
+    {
+        (self.fail_fn)("txn-sync")?;
+        self.datastore.sync(prefix)
+    }
+
+    fn close(&mut self) -> Result<()> {
+        self.datastore.close()
+    }
+}
+
+impl<F: FailFn, TDS: TxnDataStore> DataStoreRead for FailTxnDataStore<F, TDS> {
+    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    where
+        K: Borrow<Key>,
+    {
+        (self.fail_fn)("txn-put")?;
+        self.datastore.get(key)
+    }
+
+    fn has<K>(&self, key: &K) -> Result<bool>
+    where
+        K: Borrow<Key>,
+    {
+        (self.fail_fn)("txn-has")?;
+        self.datastore.has(key)
+    }
+
+    fn size<K>(&self, key: &K) -> Result<usize>
+    where
+        K: Borrow<Key>,
+    {
+        (self.fail_fn)("txn-size")?;
+        self.datastore.size(key)
+    }
+}
+
+impl<F: FailFn, TDS: TxnDataStore> DataStoreWrite for FailTxnDataStore<F, TDS> {
+    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    where
+        K: Into<Key>,
+        V: Into<Vec<u8>>,
+    {
+        (self.fail_fn)("txn-put")?;
+        self.datastore.put(key, value)
+    }
+
+    fn delete<K>(&mut self, key: &K) -> Result<()>
+    where
+        K: Borrow<Key>,
+    {
+        (self.fail_fn)("txn-delete")?;
+        self.datastore.delete(key)
+    }
+}
+
+impl<F: FailFn, TDS: TxnDataStore> DataStoreBatch for FailTxnDataStore<F, TDS> {
+    fn commit(&mut self) -> Result<()> {
+        (self.fail_fn)("txn-commit")?;
+        self.datastore.commit()
+    }
+}
+
+impl<F: FailFn, TDS: TxnDataStore> DataStoreTxn for FailTxnDataStore<F, TDS> {
+    fn discard(&mut self) -> Result<()> {
+        (self.fail_fn)("txn-discard")?;
+        self.datastore.discard()
+    }
+}
+
+impl<F: FailFn, TDS: CheckedTxnDataStore> Check for FailTxnDataStore<F, TDS> {
+    fn check(&self) -> Result<()> {
+        (self.fail_fn)("check")?;
+        self.datastore.check()
+    }
+}
+
+impl<F: FailFn, TDS: GcTxnDataStore> Gc for FailTxnDataStore<F, TDS> {
+    fn collect_garbage(&self) -> Result<()> {
+        (self.fail_fn)("collect-garbage")?;
+        self.datastore.collect_garbage()
+    }
+}
+
+impl<F: FailFn, TDS: PersistentTxnDataStore> Persistent for FailTxnDataStore<F, TDS> {
+    fn disk_usage(&self) -> Result<u64> {
+        (self.fail_fn)("disk-usage")?;
+        self.datastore.disk_usage()
+    }
+}
+
+impl<F: FailFn, TDS: ScrubbedTxnDataStore> Scrub for FailTxnDataStore<F, TDS> {
+    fn scrub(&self) -> Result<()> {
+        (self.fail_fn)("scrub")?;
+        self.datastore.scrub()
     }
 }
