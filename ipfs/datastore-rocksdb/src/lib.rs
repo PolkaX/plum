@@ -264,7 +264,9 @@ impl DataStoreWrite for RocksDBBatchDataStore {
 
 impl DataStoreBatch for RocksDBBatchDataStore {
     fn commit(&mut self) -> Result<()> {
-        Ok(self.db.write(&self.txn)?)
+        self.db.write(&self.txn)?;
+        self.txn.clear();
+        Ok(())
     }
 }
 
@@ -370,7 +372,9 @@ impl DataStoreWrite for RocksDBTxnDataStore {
 
 impl DataStoreBatch for RocksDBTxnDataStore {
     fn commit(&mut self) -> Result<()> {
-        Ok(self.db.write(&self.txn)?)
+        self.db.write(&self.txn)?;
+        self.txn.clear();
+        Ok(())
     }
 }
 
