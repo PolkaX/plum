@@ -6,7 +6,7 @@
 
 use cid::Cid;
 
-use plum_ipfs_block::Block;
+use ipfs_block::Block;
 
 /// The error type used for block store.
 #[doc(hidden)]
