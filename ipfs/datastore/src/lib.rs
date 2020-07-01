@@ -7,13 +7,14 @@
 mod error;
 mod impls;
 mod key;
-// TODO: mount and query
+// TODO: mount
 // mod mount;
-// mod query;
+mod query;
 mod store;
 
 pub use self::error::DataStoreError;
 pub use self::key::{namespace_type, namespace_value, Key};
+pub use self::query::*;
 
 pub use self::store::{BatchDataStore, ToBatch, ToTxn, TxnDataStore};
 pub use self::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreTxn, DataStoreWrite};
