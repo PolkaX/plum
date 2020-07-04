@@ -3,8 +3,8 @@
 const SMALL_BLOCK_LENGTH: usize = 0x04;
 
 ///
-#[derive(Default)]
-pub struct BitStreamEncoder {
+#[derive(Clone, Debug, Default)]
+pub struct RlePlusEncoder {
     /// The buffer that is written to.
     bytes: Vec<u8>,
     /// The most recently written bits. Whenever this exceeds 8 bits, one byte is written to `bytes`.
@@ -13,7 +13,7 @@ pub struct BitStreamEncoder {
     num_bits: u32,
 }
 
-impl BitStreamEncoder {
+impl RlePlusEncoder {
     ///
     pub fn new() -> Self {
         Self::default()
@@ -28,4 +28,6 @@ impl BitStreamEncoder {
     pub fn encode_len(&mut self, len: usize) {
         todo!()
     }
+
+
 }

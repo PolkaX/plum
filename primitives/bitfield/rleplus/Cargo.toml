@@ -6,6 +6,5 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-bitvec = "0.17"
 serde = "1.0"
 unsigned-varint = "0.4"

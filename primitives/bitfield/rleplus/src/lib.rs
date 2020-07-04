@@ -67,17 +67,14 @@ mod encoder;
 
 pub use self::error::Error;
 
-/// An internal RLE+ encoded bit field.
-pub type BitVec = bitvec::vec::BitVec<bitvec::order::Lsb0, u8>;
-
 /// An RLE+ encoded bit field wrapper.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Default)]
-pub struct RlePlus(BitVec);
+pub struct RlePlus(Vec<u8>);
 
 impl RlePlus {
     /// Create a new `RlePlus` with the encoded bitvec.
     /// Return an error if the given bitvec is not RLE+ encoded correctly.
-    pub fn new(encoded: BitVec) -> Result<Self, Error> {
+    pub fn new(encoded: Vec<u8>) -> Result<Self, Error> {
         todo!()
     }
 

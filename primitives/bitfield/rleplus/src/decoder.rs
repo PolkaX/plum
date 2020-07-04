@@ -2,14 +2,14 @@
 
 use crate::error::Error;
 
-pub struct BitStreamDecoder<'a> {
+pub struct RlePlusDecoder<'a> {
     bytes: &'a [u8],
     next_byte: u8,
     bits: u16,
     num_bits: u32,
 }
 
-impl<'a> BitStreamDecoder<'a> {
+impl<'a> RlePlusDecoder<'a> {
     ///
     pub fn new(bytes: &'a [u8]) -> Self {
         todo!()
