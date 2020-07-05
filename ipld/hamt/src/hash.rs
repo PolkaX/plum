@@ -18,7 +18,6 @@ pub(crate) fn hash<T: AsRef<[u8]>>(bytes: T) -> [u8; 32] {
     hash
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

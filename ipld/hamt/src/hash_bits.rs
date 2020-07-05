@@ -41,15 +41,15 @@ impl<'a> HashBits<'a> {
                 let out = mkmask(i) & cur_byte;
                 self.consumed += i;
                 out as usize
-            },
+            }
             Ordering::Less => {
                 // return the n bits that (consumed % 8 <= n < consumed % 8 + i) of current byte as a integer.
                 let a = cur_byte & mkmask(left_bit); // mask out the high bits of current byte we don't want
-                let b = a & !mkmask(left_bit - i);   // mask out the low bits of current byte we don't want
-                let c = b >> (left_bit - i) as u8;       // shift whats left down
+                let b = a & !mkmask(left_bit - i); // mask out the low bits of current byte we don't want
+                let c = b >> (left_bit - i) as u8; // shift whats left down
                 self.consumed += i;
                 c as usize
-            },
+            }
             Ordering::Greater => {
                 // return the all left bit of current byte and remaining (i - left_bit) bits as a integer.
                 let mut out = (cur_byte & mkmask(left_bit)) as usize; // mask out the high bits of current byte we don't want
@@ -57,7 +57,7 @@ impl<'a> HashBits<'a> {
                 self.consumed += left_bit;
                 out += self.next_bits(i - left_bit);
                 out
-            },
+            }
         }
     }
 }
