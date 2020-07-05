@@ -2,7 +2,11 @@
 
 use minicbor::{decode, encode, Decoder, Encoder};
 
+use ipfs_blockstore::BlockStore;
+use ipld::IpldValue;
+
 use crate::bitfield::U256;
+use crate::error::HamtError;
 use crate::pointer::Pointer;
 
 ///
@@ -15,15 +19,104 @@ pub struct Node {
 // Implement CBOR serialization for Node.
 impl encode::Encode for Node {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
-        todo!()
+        e.array(2)?
+            .encode(&self.bitfield)?
+            .encode(&self.pointers)?
+            .ok()
     }
 }
 
 // Implement CBOR deserialization for Node.
 impl<'b> decode::Decode<'b> for Node {
     fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
-        todo!()
+        let array_len = d.array()?;
+        assert_eq!(array_len, Some(2));
+        Ok(Node {
+            bitfield: d.decode()?,
+            pointers: d.decode()?,
+        })
     }
 }
 
-impl Node {}
+impl Node {
+    ///
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    ///
+    pub fn set<'a, BS>(
+        &mut self,
+        key: &str,
+        value: IpldValue,
+        store: &'a BS,
+        bit_width: usize,
+    ) -> Result<(), HamtError>
+    where
+        BS: BlockStore,
+    {
+        todo!()
+    }
+
+    ///
+    pub fn get<'a, BS>(
+        &self,
+        key: &str,
+        store: &'a BS,
+        bit_width: usize,
+    ) -> Result<Option<IpldValue>, HamtError>
+    where
+        BS: BlockStore,
+    {
+        todo!()
+    }
+
+    ///
+    pub fn remove<'a, BS>(
+        &mut self,
+        key: &str,
+        store: &'a BS,
+        bit_width: usize,
+    ) -> Result<Option<(String, IpldValue)>, HamtError>
+    where
+        BS: BlockStore,
+    {
+        todo!()
+    }
+
+    ///
+    pub fn contains(&self, key: &str) -> Result<bool, HamtError> {
+        todo!()
+    }
+
+    ///
+    pub fn flush<BS: BlockStore>(&mut self, store: &BS) -> Result<(), HamtError> {
+        todo!()
+    }
+
+    ///
+    pub fn for_each<BS, F, V>(&self, store: &BS, f: &mut F) -> Result<(), HamtError>
+    where
+        BS: BlockStore,
+        F: FnMut(&str, V) -> Result<(), HamtError>,
+        V: for<'b> minicbor::Decode<'b>,
+    {
+        todo!()
+    }
+
+    fn insert_child(&mut self, idx: usize, key: &[u8], value: IpldValue) {
+        todo!()
+    }
+
+    fn remove_child(&mut self, idx: usize) -> Pointer {
+        todo!()
+    }
+
+    fn get_child(&self, idx: usize) -> &Pointer {
+        &self.pointers[idx]
+    }
+
+    fn get_child_mut(&mut self, idx: usize) -> &mut Pointer {
+        &mut self.pointers[idx]
+    }
+}

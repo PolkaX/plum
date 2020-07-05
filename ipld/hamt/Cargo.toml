@@ -9,6 +9,7 @@ license = "GPL-3.0"
 cid = { version = "0.5" , features = ["cbor", "json"] }
 multihash = "0.11"
 murmur3 = "0.5"
+thiserror = "1.0"
 uint = "0.8"
 
 minicbor = { version = "0.4", features = ["std"] }

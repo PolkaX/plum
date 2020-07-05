@@ -239,7 +239,10 @@
 #![deny(missing_docs)]
 
 mod bitfield;
+mod error;
 mod hamt;
 mod hash_bits;
 mod node;
 mod pointer;
+
+pub

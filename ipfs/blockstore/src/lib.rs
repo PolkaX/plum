@@ -4,27 +4,10 @@
 
 #![deny(missing_docs)]
 
+use anyhow::Result;
 use cid::Cid;
 
 use ipfs_block::Block;
-
-/// The error type used for block store.
-#[doc(hidden)]
-#[derive(Clone, Debug, thiserror::Error)]
-pub enum BlockStoreError {
-    #[error("block '{0}' not found")]
-    NotFound(Cid),
-    #[error("{0}")]
-    Custom(String),
-}
-
-impl From<Box<dyn std::error::Error + Send + Sync>> for BlockStoreError {
-    fn from(err: Box<dyn std::error::Error + Send + Sync>) -> Self {
-        BlockStoreError::Custom(err.to_string())
-    }
-}
-
-pub(crate) type Result<T> = std::result::Result<T, BlockStoreError>;
 
 /// BlockStore wraps a DataStore block-centered methods and provides a layer
 /// of abstraction which allows to add different caching strategies.
@@ -37,7 +20,7 @@ pub trait BlockStore {
     fn has(&self, cid: &Cid) -> Result<bool>;
 
     /// Retrieve the `block` named by `cid`.
-    fn get<B: Block>(&self, cid: &Cid) -> Result<B>;
+    fn get<B: Block>(&self, cid: &Cid) -> Result<Option<B>>;
 
     /// Return the CIDs mapped BlockSize.
     fn get_size(&self, cid: &Cid) -> Result<usize>;
