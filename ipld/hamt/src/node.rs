@@ -95,7 +95,7 @@ impl Node {
     }
 
     ///
-    pub fn for_each<BS, F, V>(&self, store: &BS, f: &mut F) -> Result<(), HamtError>
+    pub fn for_each<BS, F, V>(&self,  f: &mut F, store: &BS) -> Result<(), HamtError>
     where
         BS: BlockStore,
         F: FnMut(&str, V) -> Result<(), HamtError>,
@@ -104,8 +104,10 @@ impl Node {
         todo!()
     }
 
+    // fn modify_value<'a, BS: BlockStore>(&mut self, )
+
     fn insert_child(&mut self, idx: usize, key: &[u8], value: IpldValue) {
-        todo!()
+
     }
 
     fn remove_child(&mut self, idx: usize) -> Pointer {
@@ -119,4 +121,11 @@ impl Node {
     fn get_child_mut(&mut self, idx: usize) -> &mut Pointer {
         &mut self.pointers[idx]
     }
+}
+
+// Returns the index within the collapsed array corresponding to the given bit in the bitset.
+// The collapsed array contains only one entry per bit set in the bitfield,
+// and this function is used to map the indices.
+fn index_for_bit_pos(bitfield: &U256, bit_pos: u8) -> usize {
+
 }
