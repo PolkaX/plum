@@ -26,7 +26,7 @@ use crate::key::Key;
 /// and thus it should behave predictably and handle exceptional conditions with
 /// proper error reporting. Thus, all DataStore calls may return errors, which
 /// should be checked by callers.
-pub trait DataStore: Clone + DataStoreRead + DataStoreWrite {
+pub trait DataStore: DataStoreRead + DataStoreWrite + Clone + Sync + Send + 'static {
     /// Guarantees that any `put` or `delete` calls under prefix that returned before `sync(prefix)`
     /// was called will be observed after `sync(prefix)` returns, even if the program crashes.
     /// If `put/delete` operations already satisfy these requirements then Sync may be a no-op.
@@ -107,6 +107,11 @@ pub trait ToBatch {
     fn batch(&self) -> Result<Self::Batch>;
 }
 
+/// ToBatchDataStore is an interface that describe a database have batch feature, it
+/// could generate a database which is implemented by DataStoreBatch
+pub trait ToBatchDataStore: ToBatch + DataStore {}
+impl<T: ToBatch + DataStore> ToBatchDataStore for T {}
+
 /// DataStoreTxn is a interface that needs to be implemented by `TxnhDataStore`
 /// to support transactions.
 pub trait DataStoreTxn: DataStoreRead + DataStoreBatch {
@@ -129,6 +134,11 @@ pub trait ToTxn {
     /// Create a new txn data store.
     fn txn(&self, read_only: bool) -> Result<Self::Txn>;
 }
+
+/// ToTxnDataStore is an interface that describe a database have totxn feature, it
+/// could generate a database which is implemented by DataStoreTxn
+pub trait ToTxnDataStore: ToTxn + DataStore {}
+impl<T: ToTxn + DataStore> ToTxnDataStore for T {}
 
 // ============================================================================
 // ********************** Extended DataStore interfaces ***********************

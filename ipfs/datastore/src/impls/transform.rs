@@ -14,7 +14,7 @@ use crate::store::{
 use crate::store::{Scrub, ScrubbedBatchDataStore, ScrubbedDataStore, ScrubbedTxnDataStore};
 
 /// KeyTransform is an data store with a pair of functions for transforming keys invertibly.
-pub trait KeyTransform: Clone {
+pub trait KeyTransform: Clone + Sync + Send + 'static {
     /// Convert `origin` key into `target` key.
     fn convert_key<K: Borrow<Key>>(&self, key: &K) -> Key;
 
@@ -382,7 +382,7 @@ impl<KT: KeyTransform, TDS: ScrubbedTxnDataStore> Scrub for TransformTxnDataStor
 // ============================================================================
 
 /// KeyMapFn is a function that maps one key to another.
-pub trait KeyMapFn: Clone + Fn(&Key) -> Key {}
+pub trait KeyMapFn: Fn(&Key) -> Key + Clone + Sync + Send + 'static {}
 
 //// KeyTransformPair is a convince struct for constructing a key transform.
 #[doc(hidden)]
