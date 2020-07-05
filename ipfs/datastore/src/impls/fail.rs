@@ -14,7 +14,7 @@ use crate::store::{
 use crate::store::{Scrub, ScrubbedBatchDataStore, ScrubbedDataStore, ScrubbedTxnDataStore};
 
 /// The user-provided fail function.
-pub trait FailFn: Clone + Fn(&str) -> Result<()> {}
+pub trait FailFn: Fn(&str) -> Result<()> + Clone + Sync + Send + 'static {}
 
 /// FailDataStore is a datastore which fails according to a user-provided function.
 #[derive(Clone)]

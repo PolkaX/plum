@@ -10,7 +10,7 @@ use crate::store::{Persistent, PersistentDataStore};
 use crate::store::{ToBatch, ToTxn};
 
 /// The delay interface for delay operation.
-pub trait Delay: Clone {
+pub trait Delay: Clone + Sync + Send + 'static {
     /// Wait for a period of time duration util time out before applying the operation.
     fn wait(&self);
 }
