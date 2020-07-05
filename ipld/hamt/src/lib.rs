@@ -238,10 +238,10 @@
 
 #![deny(missing_docs)]
 
-// mod bitfield;
-// mod error;
-// mod hamt;
+mod bitfield;
+mod error;
+mod hamt;
 mod hash;
-// mod hash_bits;
-// mod node;
-// mod pointer;
+mod hash_bits;
+mod node;
+mod pointer;
