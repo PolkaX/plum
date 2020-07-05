@@ -5,6 +5,9 @@ authors = ["The PolkaX Authors"]
 edition = "2018"
 license = "GPL-3.0"
 
+[features]
+identity-hash = []
+
 [dependencies]
 cid = { version = "0.5" , features = ["cbor", "json"] }
 multihash = "0.11"
