@@ -151,7 +151,7 @@ impl Key {
     ///
     /// ```
     /// use std::collections::HashSet;
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     ///  let mut keys = HashSet::with_capacity(1000);
     ///  for _ in 0..1000 {
     ///     keys.insert(Key::random());
@@ -192,6 +192,19 @@ impl Key {
         self.0.as_str()
     }
 
+    /// Return whether the key is root.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use ipfs_datastore::Key;
+    /// assert!(Key::new("/").is_root());
+    /// assert!(!Key::new("/Comedy").is_root());
+    /// ```
+    pub fn is_root(&self) -> bool {
+        self.as_str() == SLASH
+    }
+
     /// Return the reverse of this key.
     pub fn reverse(&self) -> Self {
         let mut namespaces = self.list();
@@ -204,14 +217,14 @@ impl Key {
     /// # Example
     ///
     /// ```
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     /// let key = Key::new("/");
     /// assert_eq!(key.list(), Vec::<&str>::new());
     /// let key = Key::new("/Comedy/MontyPython/Actor:JohnCleese");
     /// assert_eq!(key.list(), vec!["Comedy", "MontyPython", "Actor:JohnCleese"]);
     /// ```
     pub fn list(&self) -> Vec<&str> {
-        if self.0 == SLASH {
+        if self.is_root() {
             vec![]
         } else {
             self.0.split(SLASH).skip(1).collect::<Vec<_>>()
@@ -224,7 +237,7 @@ impl Key {
     /// # Example
     ///
     /// ```
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     /// let key = Key::new("/");
     /// assert_eq!(key.namespaces(), Vec::<&str>::new());
     /// let key = Key::new("/Comedy/MontyPython/Actor:JohnCleese");
@@ -239,7 +252,7 @@ impl Key {
     /// # Example
     ///
     /// ```
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     /// let key = Key::new("/");
     /// assert_eq!(key.base_namespace(), "");
     /// let key = Key::new("/Comedy/MontyPython/Actor:JohnCleese");
@@ -254,7 +267,7 @@ impl Key {
     /// # Example
     ///
     /// ```
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     /// let key = Key::new("/");
     /// assert_eq!(key.r#type(), "");
     /// let key = Key::new("/Comedy/MontyPython/Actor:JohnCleese");
@@ -269,7 +282,7 @@ impl Key {
     /// # Example
     ///
     /// ```
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     /// let key = Key::new("/");
     /// assert_eq!(key.name(), "");
     /// let key = Key::new("/Comedy/MontyPython/Actor:JohnCleese");
@@ -284,7 +297,7 @@ impl Key {
     /// # Example
     ///
     /// ```
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     /// let instance = Key::new("/Comedy/MontyPython/Actor").instance("JohnCleese");
     /// assert_eq!(instance, Key::new("/Comedy/MontyPython/Actor:JohnCleese"));
     /// ```
@@ -298,7 +311,7 @@ impl Key {
     /// # Example
     ///
     /// ```
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     /// let path = Key::new("/Comedy/MontyPython/Actor:JohnCleese").path();
     /// assert_eq!(path, Key::new("/Comedy/MontyPython/Actor"));
     /// ```
@@ -312,7 +325,7 @@ impl Key {
     /// # Example
     ///
     /// ```
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     /// let parent = Key::new("/").parent();
     /// assert_eq!(parent, Key::new("/"));
     /// let parent = Key::new("/Comedy/MontyPython/Actor:JohnCleese").parent();
@@ -334,7 +347,7 @@ impl Key {
     /// # Example
     ///
     /// ```
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     /// let child = Key::new("/").child("Child");
     /// assert_eq!(child, Key::new("/Child"));
     /// let child = Key::new("/Comedy/MontyPython").child("Actor:JohnCleese");
@@ -342,9 +355,9 @@ impl Key {
     /// ```
     pub fn child<K: Into<Key>>(&self, child: K) -> Self {
         let child = child.into();
-        if self.0 == SLASH {
+        if self.is_root() {
             Self::new(child)
-        } else if child.as_str() == SLASH {
+        } else if child.is_root() {
             self.clone()
         } else {
             unsafe { Key::new_unchecked(format!("{}{}", self.0, child)) }
@@ -356,7 +369,7 @@ impl Key {
     /// # Example
     ///
     /// ```
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     /// assert!(Key::new("/Comedy").is_ancestor_of("/Comedy/MontyPython"));
     /// assert!(!Key::new("/A").is_ancestor_of("/AB"));
     /// ```
@@ -365,7 +378,7 @@ impl Key {
         if descendant.as_str().len() <= self.as_str().len() {
             return false;
         }
-        if self.as_str() == SLASH {
+        if self.is_root() {
             return true;
         }
 
@@ -379,7 +392,7 @@ impl Key {
     /// # Example
     ///
     /// ```
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     /// assert!(Key::new("/Comedy/MontyPython").is_descendant_of("/Comedy"));
     /// assert!(!Key::new("/AB").is_descendant_of("/A"));
     /// ```
@@ -392,7 +405,7 @@ impl Key {
     /// # Example
     ///
     /// ```
-    /// use plum_ipfs_datastore::Key;
+    /// use ipfs_datastore::Key;
     /// assert!(Key::new("/").is_top_level());
     /// assert!(Key::new("/Comedy").is_top_level());
     /// assert!(!Key::new("/Comedy/MontyPython").is_top_level());
@@ -407,7 +420,7 @@ impl Key {
 /// # Example
 ///
 /// ```
-/// use plum_ipfs_datastore::namespace_type;
+/// use ipfs_datastore::namespace_type;
 /// assert_eq!(namespace_type("foo:bar"), "foo");
 /// ```
 pub fn namespace_type(namespace: &str) -> &str {
@@ -422,7 +435,7 @@ pub fn namespace_type(namespace: &str) -> &str {
 /// # Example
 ///
 /// ```
-/// use plum_ipfs_datastore::namespace_value;
+/// use ipfs_datastore::namespace_value;
 /// assert_eq!(namespace_value("f:b:baz"), "baz");
 /// ```
 pub fn namespace_value(namespace: &str) -> &str {

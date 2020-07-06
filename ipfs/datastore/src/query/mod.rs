@@ -3,12 +3,17 @@
 mod filter;
 mod order;
 
-pub use self::filter::Filter;
-pub use self::order::Order;
+pub use self::filter::{Filter, FilterKeyCompare, FilterKeyPrefix, FilterOp, FilterValueCompare};
+pub use self::order::{
+    Order, OrderByFunction, OrderByKey, OrderByKeyDescending, OrderByValue, OrderByValueDescending,
+};
 
 use std::error;
 use std::fmt;
+use std::future::Future;
 use std::time::Instant;
+
+use crate::key::Key;
 
 /// Query represents storage for any key-value pair.
 ///
@@ -65,19 +70,72 @@ pub struct Query {
 
 impl fmt::Display for Query {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
+        let mut result = String::with_capacity(128);
+
+        result.push_str("SELECT keys");
+        if !self.keys_only {
+            result.push_str(",vals");
+        }
+        if self.return_expirations {
+            result.push_str(",exps");
+        }
+        result.push_str(" ");
+
+        if !self.prefix.is_empty() {
+            result.push_str(&format!("FROM {} ", self.prefix));
+        }
+        if !self.filters.is_empty() {
+            result.push_str(&format!("FILTER [{}", self.filters[0]));
+            for filter in &self.filters[1..] {
+                result.push_str(&format!(", {}", filter));
+            }
+            result.push_str("] ");
+        }
+        if !self.orders.is_empty() {
+            result.push_str(&format!("ORDER [{}", self.orders[0]));
+            for order in &self.orders[1..] {
+                result.push_str(&format!(", {}", order));
+            }
+            result.push_str("] ");
+        }
+        if self.offset > 0 {
+            result.push_str(&format!("OFFSET {} ", self.offset));
+        }
+        if self.limit > 0 {
+            result.push_str(&format!("LIMIT {} ", self.limit));
+        }
+
+        f.write_str(&result)
     }
 }
 
-///
+/// The query result entry.
 #[doc(hidden)]
 #[derive(Clone, Debug)]
 pub struct Entry {
-    pub key: String,
+    pub key: Key,
     pub value: Vec<u8>,
     pub expiration: Instant,
     pub size: usize,
 }
 
-///
+/// The query result.
 pub type QueryResult = Result<Entry, Box<dyn error::Error>>;
+
+///
+pub trait QueryResults {
+    ///
+    fn query(&self) -> Query;
+
+    ///
+    fn next(&self) -> Box<dyn Future<Output = QueryResult>>;
+
+    ///
+    fn next_sync(&self) -> (QueryResult, bool);
+
+    ///
+    fn reset(&self) -> Result<Vec<Entry>, Box<dyn error::Error>>;
+
+    ///
+    fn close(&self) -> Result<(), Box<dyn error::Error>>;
+}

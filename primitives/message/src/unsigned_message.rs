@@ -1,12 +1,13 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use anyhow::{anyhow, Result};
 use cid::{Cid, Codec, IntoExt};
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
 use plum_address::Address;
 use plum_bigint::{bigint_json, BigInt, BigIntRefWrapper, BigIntWrapper};
-use plum_types::MethodNum;
+use plum_types::{Gas, MethodNum};
 
 /// The unsigned message.
 #[derive(Eq, PartialEq, Clone, Debug, Hash, Serialize, Deserialize)]
@@ -59,6 +60,42 @@ impl UnsignedMessage {
     /// Return the required funds.
     pub fn required_funds(&self) -> BigInt {
         self.value.clone() + (&self.gas_price * &self.gas_limit)
+    }
+
+    /// Returns true if this message is valid to be include in a block.
+    pub fn validate_for_block_inclusion(&self, min_gas: Gas) -> Result<()> {
+        if self.version != 0 {
+            return Err(anyhow!("version unsupported"));
+        }
+
+        if self.value < 0.into() {
+            return Err(anyhow!("value field cannot be negative"));
+        }
+
+        if self.value > *plum_types::TOTAL_FILECOIN {
+            return Err(anyhow!(
+                "value field cannot be greater than total filecoin supply"
+            ));
+        }
+
+        if self.gas_price < 0.into() {
+            return Err(anyhow!("gas_price field cannot be negative"));
+        }
+
+        if self.gas_limit > plum_types::BLOCK_GAS_LIMIT.into() {
+            return Err(anyhow!(
+                "gas_limit field cannot be greater than a block's gas limit"
+            ));
+        }
+
+        // since prices might vary with time, this is technically semantic validation
+        if self.gas_limit < min_gas.into() {
+            return Err(anyhow!(
+                "gas_limit field cannot be less than the cost of storing a message on chain",
+            ));
+        }
+
+        Ok(())
     }
 }
 

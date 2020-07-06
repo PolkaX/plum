@@ -2,7 +2,7 @@
 
 pub(crate) type Result<T> = std::result::Result<T, DataStoreError>;
 
-/// The error type used for data store
+/// The error type used for data store.
 #[doc(hidden)]
 #[derive(Clone, Debug, thiserror::Error)]
 pub enum DataStoreError {
@@ -18,8 +18,8 @@ impl From<std::io::Error> for DataStoreError {
     }
 }
 
-impl From<Box<dyn std::error::Error + Send + Sync>> for DataStoreError {
-    fn from(err: Box<dyn std::error::Error + Send + Sync>) -> Self {
+impl From<Box<dyn std::error::Error + Send + 'static + Sync>> for DataStoreError {
+    fn from(err: Box<dyn std::error::Error + Send + 'static + Sync>) -> Self {
         DataStoreError::Custom(err.to_string())
     }
 }

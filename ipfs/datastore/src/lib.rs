@@ -7,19 +7,34 @@
 mod error;
 mod impls;
 mod key;
-// TODO: query and mount
+// TODO: mount
 // mod mount;
-// mod query;
+mod query;
 mod store;
 
 pub use self::error::DataStoreError;
-pub use self::impls::{Delay, DelayDataStore};
-pub use self::impls::{DummyDataStore, LogDataStore, MapDataStore, SyncDataStore};
-pub use self::impls::{FailDataStore, FailFunc};
-pub use self::impls::{KeyTransform, TransformDataStore};
 pub use self::key::{namespace_type, namespace_value, Key};
-pub use self::store::{Batch, BatchDataStore};
-pub use self::store::{CheckedDataStore, GcDataStore, PersistentDataStore, ScrubbedDataStore};
-pub use self::store::{DataStore, DataStoreRead, DataStoreWrite};
-pub use self::store::{Ttl, TtlDataStore};
-pub use self::store::{Txn, TxnDataStore};
+pub use self::query::*;
+
+pub use self::store::{BatchDataStore, ToBatch, ToTxn, TxnDataStore};
+pub use self::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreTxn, DataStoreWrite};
+
+pub use self::store::{Check, CheckedBatchDataStore, CheckedDataStore, CheckedTxnDataStore};
+pub use self::store::{Gc, GcBatchDataStore, GcDataStore, GcTxnDataStore};
+pub use self::store::{
+    Persistent, PersistentBatchDataStore, PersistentDataStore, PersistentTxnDataStore,
+};
+pub use self::store::{Scrub, ScrubbedBatchDataStore, ScrubbedDataStore, ScrubbedTxnDataStore};
+pub use self::store::{Ttl, TtlBatchDataStore, TtlDataStore, TtlTxnDataStore};
+
+pub use self::impls::{BasicBatchDataStore, BasicTxnDataStore};
+pub use self::impls::{Delay, DelayDataStore};
+pub use self::impls::{DummyDataStore, MapDataStore};
+
+pub use self::impls::{FailBatchDataStore, FailDataStore, FailFn, FailTxnDataStore};
+pub use self::impls::{
+    KeyMapFn, KeyTransform, KeyTransformPair, PrefixTransform, TransformBatchDataStore,
+    TransformDataStore, TransformTxnDataStore,
+};
+pub use self::impls::{LogBatchDataStore, LogDataStore, LogTxnDataStore};
+pub use self::impls::{SyncBatchDataStore, SyncDataStore, SyncTxnDataStore};

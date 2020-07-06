@@ -97,3 +97,6 @@ pub type DealId = u64;
 /// and from types in order to manipulate values. We give up some type safety for ergonomics.
 /// units: byte-epochs
 pub type DealWeight = BigInt;
+
+///
+pub type Gas = BigInt;

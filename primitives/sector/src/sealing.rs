@@ -4,20 +4,25 @@ use cid::Cid;
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
-use plum_types::{ChainEpoch, DealId, Randomness};
+use plum_types::{DealId, Randomness};
 
-use crate::sector::{RegisteredProof, SectorId, SectorNumber};
+use crate::sector::{RegisteredProof, SectorId};
 
 /// Information needed to verify a seal proof.
 #[doc(hidden)]
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SealVerifyInfo {
+    pub registered_proof: RegisteredProof,
     #[serde(flatten)]
     pub sector_id: SectorId,
-    pub on_chain: OnChainSealVerifyInfo,
+    #[serde(rename = "DealIDs")]
+    pub deal_ids: Vec<DealId>,
     pub randomness: Randomness,
     pub interactive_randomness: Randomness,
+    pub proof: Vec<u8>,
+    #[serde(rename = "SealedCID")]
+    pub sealed_cid: Cid,
     #[serde(rename = "UnsealedCID")]
     pub unsealed_cid: Cid,
 }
@@ -25,11 +30,14 @@ pub struct SealVerifyInfo {
 // Implement CBOR serialization for SealVerifyInfo.
 impl encode::Encode for SealVerifyInfo {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
-        e.array(5)?
+        e.array(8)?
+            .encode(&self.registered_proof)?
             .encode(&self.sector_id)?
-            .encode(&self.on_chain)?
+            .encode(&self.deal_ids)?
             .encode(&self.randomness)?
             .encode(&self.interactive_randomness)?
+            .bytes(&self.proof)?
+            .encode(&self.sealed_cid)?
             .encode(&self.unsealed_cid)?
             .ok()
     }
@@ -39,62 +47,65 @@ impl encode::Encode for SealVerifyInfo {
 impl<'b> decode::Decode<'b> for SealVerifyInfo {
     fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
         let array_len = d.array()?;
-        assert_eq!(array_len, Some(5));
+        assert_eq!(array_len, Some(8));
         Ok(SealVerifyInfo {
+            registered_proof: d.decode::<RegisteredProof>()?,
             sector_id: d.decode::<SectorId>()?,
-            on_chain: d.decode::<OnChainSealVerifyInfo>()?,
+            deal_ids: d.decode::<Vec<DealId>>()?,
             randomness: d.decode::<Randomness>()?,
             interactive_randomness: d.decode::<Randomness>()?,
+            proof: d.bytes()?.to_vec(),
+            sealed_cid: d.decode::<Cid>()?,
             unsealed_cid: d.decode::<Cid>()?,
         })
     }
 }
 
-///
-#[doc(hidden)]
-#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct OnChainSealVerifyInfo {
-    #[serde(rename = "SealedCID")]
-    pub sealed_cid: Cid,
-    pub interactive_epoch: ChainEpoch,
-    pub registered_proof: RegisteredProof,
-    #[serde(with = "plum_bytes")]
-    pub proof: Vec<u8>,
-    #[serde(rename = "DealIDs")]
-    pub deal_ids: Vec<DealId>,
-    pub sector_number: SectorNumber,
-    pub seal_rand_epoch: ChainEpoch, // Used to tie the seal to a chain.
-}
+// ///
+// #[doc(hidden)]
+// #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
+// #[serde(rename_all = "PascalCase")]
+// pub struct OnChainSealVerifyInfo {
+//     #[serde(rename = "SealedCID")]
+//     pub sealed_cid: Cid,
+//     pub interactive_epoch: ChainEpoch,
+//     pub registered_proof: RegisteredProof,
+//     #[serde(with = "plum_bytes")]
+//     pub proof: Vec<u8>,
+//     #[serde(rename = "DealIDs")]
+//     pub deal_ids: Vec<DealId>,
+//     pub sector_number: SectorNumber,
+//     pub seal_rand_epoch: ChainEpoch, // Used to tie the seal to a chain.
+// }
 
-// Implement CBOR serialization for OnChainSealVerifyInfo.
-impl encode::Encode for OnChainSealVerifyInfo {
-    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
-        e.array(7)?
-            .encode(&self.sealed_cid)?
-            .i64(self.interactive_epoch)?
-            .encode(&self.registered_proof)?
-            .bytes(&self.proof)?
-            .encode(&self.deal_ids)?
-            .u64(self.sector_number)?
-            .i64(self.seal_rand_epoch)?
-            .ok()
-    }
-}
-
-// Implement CBOR deserialization for OnChainSealVerifyInfo.
-impl<'b> decode::Decode<'b> for OnChainSealVerifyInfo {
-    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
-        let array_len = d.array()?;
-        assert_eq!(array_len, Some(7));
-        Ok(OnChainSealVerifyInfo {
-            sealed_cid: d.decode::<Cid>()?,
-            interactive_epoch: d.i64()?,
-            registered_proof: d.decode::<RegisteredProof>()?,
-            proof: d.bytes()?.to_vec(),
-            deal_ids: d.decode::<Vec<DealId>>()?,
-            sector_number: d.u64()?,
-            seal_rand_epoch: d.i64()?,
-        })
-    }
-}
+// // Implement CBOR serialization for OnChainSealVerifyInfo.
+// impl encode::Encode for OnChainSealVerifyInfo {
+//     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+//         e.array(7)?
+//             .encode(&self.sealed_cid)?
+//             .i64(self.interactive_epoch)?
+//             .encode(&self.registered_proof)?
+//             .bytes(&self.proof)?
+//             .encode(&self.deal_ids)?
+//             .u64(self.sector_number)?
+//             .i64(self.seal_rand_epoch)?
+//             .ok()
+//     }
+// }
+//
+// // Implement CBOR deserialization for OnChainSealVerifyInfo.
+// impl<'b> decode::Decode<'b> for OnChainSealVerifyInfo {
+//     fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+//         let array_len = d.array()?;
+//         assert_eq!(array_len, Some(7));
+//         Ok(OnChainSealVerifyInfo {
+//             sealed_cid: d.decode::<Cid>()?,
+//             interactive_epoch: d.i64()?,
+//             registered_proof: d.decode::<RegisteredProof>()?,
+//             proof: d.bytes()?.to_vec(),
+//             deal_ids: d.decode::<Vec<DealId>>()?,
+//             sector_number: d.u64()?,
+//             seal_rand_epoch: d.i64()?,
+//         })
+//     }
+// }
