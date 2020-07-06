@@ -3,5 +3,6 @@
 ///
 #[derive(Debug, thiserror::Error)]
 pub enum HamtError {
+    #[error("{0}")]
     CidNotFound(String),
 }

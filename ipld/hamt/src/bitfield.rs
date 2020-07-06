@@ -42,7 +42,11 @@ impl U256 {
 impl std::fmt::Binary for U256 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let value = self.0;
-        write!(f, "{:064b}_{:064b}_{:064b}_{:064b}", value[0], value[1], value[2], value[3])
+        write!(
+            f,
+            "{:064b}_{:064b}_{:064b}_{:064b}",
+            value[0], value[1], value[2], value[3]
+        )
     }
 }
 

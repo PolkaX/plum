@@ -239,9 +239,9 @@
 #![deny(missing_docs)]
 
 mod bitfield;
-// mod error;
+mod error;
 // mod hamt;
 mod hash;
 mod hash_bits;
-// mod node;
-// mod pointer;
+mod node;
+mod pointer;

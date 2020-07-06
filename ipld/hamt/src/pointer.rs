@@ -3,16 +3,35 @@
 use cid::Cid;
 use minicbor::{decode, encode, Decoder, Encoder};
 
-use ipfs_blockstore::BlockStore;
 use ipld::IpldValue;
 
 use crate::node::Node;
 
 ///
+#[derive(Clone, PartialEq, Debug)]
 pub struct KeyValuePair(Vec<u8>, IpldValue);
 
+// Implement CBOR serialization for KeyValuePair.
+impl encode::Encode for KeyValuePair {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        e.array(2)?
+            .bytes(&self.0)?
+            .encode(&self.1)?
+            .ok()
+    }
+}
+
+// Implement CBOR deserialization for KeyValuePair.
+impl<'b> decode::Decode<'b> for KeyValuePair {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let array_len = d.array()?;
+        assert_eq!(array_len, Some(2));
+        Ok(Self(d.bytes()?.to_vec(), d.decode()?))
+    }
+}
+
 ///
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Pointer {
     KVs(Vec<KeyValuePair>),
     Link(Cid),
