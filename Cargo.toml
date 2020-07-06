@@ -22,9 +22,7 @@ members = [
   "chain",
 #  "cli",
   "hashing",
-  "libp2p",
-#  "network",
-#  "peermgr",
+  "p2p",
   "params",
   "wallet",
 
