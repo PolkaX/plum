@@ -10,7 +10,7 @@ bytes = "0.5"
 cid = { version = "0.5" , features = ["cbor", "json"] }
 fnv = "1.0.6"
 futures = "0.3"
-futures_codec = "0.3"
+futures_codec = "0.4"
 log = "0.4.8"
 multihash = "0.11"
 serde = { version = "1.0", features = ["derive"] }
@@ -23,7 +23,7 @@ plum_block = { path = "../primitives/block" }
 plum_message = { path = "../primitives/message" }
 
 [dependencies.libp2p]
-version = "0.18"
+version = "0.21"
 default-features = false
 features = [
     "dns",
@@ -33,8 +33,9 @@ features = [
     "mdns",
     "mplex",
     "ping",
+    "request-response",
     "secio",
     "secp256k1",
-    "tcp",
+    "tcp-async-std",
     "yamux",
 ]

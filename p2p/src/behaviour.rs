@@ -12,7 +12,7 @@ use libp2p::{
     NetworkBehaviour,
 };
 
-use crate::new_rpc::{Rpc, RpcEvent, RpcMessage};
+// use crate::new_rpc::{Rpc, RpcEvent, RpcMessage};
 
 #[derive(NetworkBehaviour)]
 #[behaviour(out_event = "BehaviourEvent", poll_method = "poll")]
@@ -21,7 +21,7 @@ pub struct Behaviour {
     pub identify: Identify,
     pub mdns: Mdns,
     pub gossipsub: Gossipsub,
-    pub rpc: Rpc,
+    // pub rpc: Rpc,
     #[behaviour(ignore)]
     events: Vec<BehaviourEvent>,
 }
@@ -51,9 +51,9 @@ pub enum BehaviourEvent {
         /// The topic it has subscribed to.
         topic: TopicHash,
     },
-    RpcPeerDialed(PeerId),
-    RpcPeerDisconnected(PeerId),
-    RpcMessage(PeerId, RpcMessage),
+    // RpcPeerDialed(PeerId),
+    // RpcPeerDisconnected(PeerId),
+    // RpcMessage(PeerId, RpcMessage),
 }
 
 impl NetworkBehaviourEventProcess<PingEvent> for Behaviour {
@@ -141,6 +141,7 @@ impl NetworkBehaviourEventProcess<GossipsubEvent> for Behaviour {
     }
 }
 
+/*
 impl NetworkBehaviourEventProcess<RpcEvent> for Behaviour {
     fn inject_event(&mut self, event: RpcEvent) {
         match event {
@@ -157,6 +158,7 @@ impl NetworkBehaviourEventProcess<RpcEvent> for Behaviour {
         }
     }
 }
+*/
 
 impl Behaviour {
     /// Consumes the event list when polled.
@@ -181,7 +183,7 @@ impl Behaviour {
             identify: Identify::new("plum/libp2p".into(), "0.0.1".into(), local_key.public()),
             mdns: Mdns::new().expect("Failed to create mDNS service"),
             gossipsub: Gossipsub::new(local_peer_id, GossipsubConfig::default()),
-            rpc: Rpc::default(),
+            // rpc: Rpc::default(),
             events: vec![],
         }
     }
@@ -201,8 +203,9 @@ impl Behaviour {
         self.gossipsub.unsubscribe(topic)
     }
 
+    /*
     /// Sends an RPC message (Request/Response) via the RPC protocol.
     pub fn send_rpc(&mut self, peer_id: PeerId, message: RpcMessage) {
         self.rpc.send_rpc(peer_id, message);
-    }
+    }*/
 }
