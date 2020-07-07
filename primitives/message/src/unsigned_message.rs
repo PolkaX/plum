@@ -89,7 +89,7 @@ impl UnsignedMessage {
         }
 
         // since prices might vary with time, this is technically semantic validation
-        if self.gas_limit < min_gas.into() {
+        if self.gas_limit < min_gas {
             return Err(anyhow!(
                 "gas_limit field cannot be less than the cost of storing a message on chain",
             ));

@@ -99,7 +99,7 @@ impl<'b> decode::Decode<'b> for BlockSyncResponse {
     }
 }
 
-///
+/// A tipset contains block and messages for blocksync.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BlockSyncTipset {
     /// The blocks in the tipset

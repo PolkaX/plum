@@ -4,21 +4,23 @@ use std::collections::HashSet;
 use std::task::{Context, Poll};
 
 use libp2p::{
-    core::{identity, PeerId},
-    gossipsub::{Gossipsub, GossipsubEvent, Topic, TopicHash},
+    core::{identity::Keypair, PeerId},
+    gossipsub::{Gossipsub, GossipsubConfig, GossipsubEvent, Topic, TopicHash},
     identify::{Identify, IdentifyEvent},
     kad::{record::store::MemoryStore, Kademlia, KademliaEvent},
     mdns::{Mdns, MdnsEvent},
     ping::{Ping, PingEvent, PingFailure, PingSuccess},
     request_response::{
-        RequestId, RequestResponse, RequestResponseEvent, RequestResponseMessage, ResponseChannel,
+        ProtocolSupport, RequestId, RequestResponse, RequestResponseConfig, RequestResponseEvent,
+        RequestResponseMessage, ResponseChannel,
     },
     swarm::{NetworkBehaviourAction, NetworkBehaviourEventProcess, PollParameters},
     NetworkBehaviour,
 };
 
-use crate::protocol::{BlockSyncCodec, BlockSyncRequest, BlockSyncResponse};
-use crate::protocol::{HelloCodec, HelloRequest, HelloResponse};
+use crate::config::Libp2pConfig;
+use crate::protocol::{BlockSyncCodec, BlockSyncProtocolName, BlockSyncRequest, BlockSyncResponse};
+use crate::protocol::{HelloCodec, HelloProtocolName, HelloRequest, HelloResponse};
 
 /// The behaviour for the network. Allows customizing the swarm.
 #[derive(NetworkBehaviour)]
@@ -27,7 +29,7 @@ pub struct Behaviour {
     ping: Ping,
     identify: Identify,
     mdns: Mdns,
-    kad: Kademlia<MemoryStore>,
+    kademlia: Kademlia<MemoryStore>,
     gossipsub: Gossipsub,
     hello: RequestResponse<HelloCodec>,
     blocksync: RequestResponse<BlockSyncCodec>,
@@ -307,18 +309,41 @@ impl Behaviour {
 
 impl Behaviour {
     /// Create a new network behaviour.
-    pub fn new(_local_key: &identity::Keypair) -> Self {
-        todo!()
-        /*
-        let local_peer_id = local_key.public().into_peer_id();
+    pub fn new(local_key_pair: &Keypair, config: &Libp2pConfig, network_name: &str) -> Self {
+        let local_public = local_key_pair.public();
+        let local_peer_id = local_public.clone().into_peer_id();
+
+        // Create the Kademlia DHT service with the bootnodes from the config.
+        let mut kademlia = config.build_kademlia(local_peer_id.clone(), network_name);
+        if let Err(err) = kademlia.bootstrap() {
+            warn!("Kademlia bootstrap error: {}", err);
+        }
+
+        // Create hello request-response service.
+        let hello = RequestResponse::new(
+            HelloCodec,
+            vec![(HelloProtocolName, ProtocolSupport::Full)],
+            RequestResponseConfig::default(),
+        );
+
+        // Create blocksync request-response service.
+        let blocksync = RequestResponse::new(
+            BlockSyncCodec,
+            vec![(BlockSyncProtocolName, ProtocolSupport::Full)],
+            RequestResponseConfig::default(),
+        );
+
         Self {
             ping: Ping::default(),
-            identify: Identify::new("plum/libp2p".into(), "0.0.1".into(), local_key.public()),
+            identify: Identify::new("ipfs/0.1.0".into(), "plum/0.1.0".into(), local_public),
             mdns: Mdns::new().expect("Failed to create mDNS service"),
-            kad: unimplemented!(),
+            kademlia,
             gossipsub: Gossipsub::new(local_peer_id, GossipsubConfig::default()),
+            hello,
+            blocksync,
             events: vec![],
-        }*/
+            peers: HashSet::default(),
+        }
     }
 
     /// Publish message to the network over gossipsub protocol.

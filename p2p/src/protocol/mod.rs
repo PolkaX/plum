@@ -4,7 +4,7 @@ mod blocksync;
 mod hello;
 
 pub use self::blocksync::{
-    BlockSyncCodec, BlockSyncProtocolName, BlockSyncRequest, BlockSyncResponse,
+    BlockSyncCodec, BlockSyncProtocolName, BlockSyncRequest, BlockSyncResponse, BlockSyncTipset,
     BLOCKSYNC_PROTOCOL_ID,
 };
 pub use self::hello::{
