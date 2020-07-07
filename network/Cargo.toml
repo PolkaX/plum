@@ -6,9 +6,3 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-anyhow = "1.0"
-async-std = "1.5"
-futures = "0.3"
-log = "0.4.8"
-plum_p2p = { path = "../p2p", package = "plum_p2p" }
-thiserror = "1.0"

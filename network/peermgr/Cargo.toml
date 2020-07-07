@@ -1,11 +1,8 @@
 [package]
-name = "peermgr"
+name = "plum_peermgr"
 version = "0.1.0"
 authors = ["The PolkaX Authors"]
 edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-log = "0.4"
-libp2p-core = "0.20"
-futures = "0.3"

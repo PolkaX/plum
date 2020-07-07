@@ -2456,6 +2456,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "plum_network"
+version = "0.1.0"
+
+[[package]]
 name = "plum_p2p"
 version = "0.1.0"
 dependencies = [
@@ -2488,6 +2492,10 @@ dependencies = [
  "minicbor",
  "serde",
 ]
+
+[[package]]
+name = "plum_peermgr"
+version = "0.1.0"
 
 [[package]]
 name = "plum_piece"
