@@ -6,9 +6,3 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-anyhow = "1.0"
-futures = "0.1.29"
-libp2p =  { git = "https://github.com/SigP/rust-libp2p", rev = "776d13ef046358964c7d64cda3295a3a3cb24743" }
-log = "0.4.8"
-plum_libp2p = { path = "../libp2p", package = "plum_libp2p" }
-tokio = "0.1.22"

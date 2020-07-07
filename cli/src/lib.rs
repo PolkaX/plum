@@ -1,21 +1,19 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+#[macro_use]
+extern crate log;
+
 pub mod cmd;
 
 use std::io::Write;
 
 use ansi_term::Colour;
 use lazy_static::lazy_static;
-use log::info;
 use regex::Regex;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
-use tokio::runtime::Runtime;
 
-use plum_libp2p::Multiaddr;
-use plum_network::service::Service;
-
-use crate::cmd::Command;
+use self::cmd::Command;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(name = "plum")]
@@ -32,7 +30,7 @@ pub struct Plum {
 impl Plum {
     pub fn execute(&self) {
         match &self.cmd {
-            Command::Network(network) => network.execute(),
+            /*Command::Network(network) => network.execute(),*/
             /*Command::Wallet(wallet) => wallet.execute(),*/
             _ => unimplemented!(),
         }
@@ -41,6 +39,7 @@ impl Plum {
 
 pub struct Client;
 
+/*
 pub fn run_lp2p(peer_ip: Option<Multiaddr>) {
     let (exit_send, exit) = exit_future::signal();
     let mut runtime = Runtime::new().expect("failed to start runtime on current thread");
@@ -59,6 +58,7 @@ pub fn run_lp2p(peer_ip: Option<Multiaddr>) {
     let _ = runtime.block_on(exit);
     exit_send.fire();
 }
+*/
 
 fn kill_color(s: &str) -> String {
     lazy_static! {
@@ -143,7 +143,7 @@ pub fn run() {
 
     if args.len() == 1 {
         init_logger(None);
-        run_lp2p(None);
+        //run_lp2p(None);
     } else {
         let plum = Plum::from_iter(args.iter());
         init_logger(plum.log.clone());

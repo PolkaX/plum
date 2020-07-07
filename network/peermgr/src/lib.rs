@@ -1,5 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+/*
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -102,3 +103,4 @@ impl PeerMgr {
         }
     }
 }
+*/

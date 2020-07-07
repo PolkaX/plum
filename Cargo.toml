@@ -22,9 +22,6 @@ members = [
   "chain",
 #  "cli",
   "hashing",
-#  "libp2p",
-#  "network",
-#  "peermgr",
   "params",
   "wallet",
 
@@ -36,7 +33,12 @@ members = [
   "ipfs/datastore-rocksdb",
   "ipld",
 
-  # primitives
+  # Network
+  "network",
+  "network/p2p",
+  "network/peermgr",
+
+  # Primitives
   "primitives/address",
   "primitives/bigint",
   "primitives/bitfield",
@@ -57,7 +59,7 @@ members = [
   "vm",
   "actor",
 
-  # tools
+  # Tools
   "api-client/jsonrpc-client",
   "api-client"
 ]
