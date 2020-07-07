@@ -8,10 +8,10 @@
 extern crate log;
 
 mod behaviour;
-mod config;
+// mod config;
 mod protocol;
-mod service;
-mod transport;
+// mod service;
+// mod transport;
 
 pub use self::behaviour::{Behaviour, BehaviourEvent};
-pub use self::config::Libp2pConfig;
+// pub use self::config::Libp2pConfig;

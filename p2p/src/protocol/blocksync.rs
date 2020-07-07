@@ -7,7 +7,6 @@ use futures::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use libp2p::request_response::{ProtocolName, RequestResponseCodec};
 use minicbor::{decode, encode, Decoder, Encoder};
 
-use plum_bigint::{BigInt, BigIntRefWrapper};
 use plum_block::BlockHeader;
 use plum_message::{SignedMessage, UnsignedMessage};
 
@@ -140,7 +139,7 @@ impl<'b> decode::Decode<'b> for BlockSyncTipset {
             bls_msgs: d.decode()?,
             bls_msg_includes: d.decode()?,
             secp_msgs: d.decode()?,
-            secp_msg_includes: d.decode()?
+            secp_msg_includes: d.decode()?,
         })
     }
 }

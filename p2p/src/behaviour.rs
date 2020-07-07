@@ -5,14 +5,13 @@ use std::task::{Context, Poll};
 
 use libp2p::{
     core::{identity, PeerId},
-    gossipsub::{Gossipsub, GossipsubConfig, GossipsubEvent, MessageId, Topic, TopicHash},
+    gossipsub::{Gossipsub, GossipsubEvent, Topic, TopicHash},
     identify::{Identify, IdentifyEvent},
-    kad::{record::store::MemoryStore, Kademlia, KademliaConfig, KademliaEvent},
+    kad::{record::store::MemoryStore, Kademlia, KademliaEvent},
     mdns::{Mdns, MdnsEvent},
     ping::{Ping, PingEvent, PingFailure, PingSuccess},
     request_response::{
-        ProtocolSupport, RequestId, RequestResponse, RequestResponseEvent, RequestResponseMessage,
-        ResponseChannel,
+        RequestId, RequestResponse, RequestResponseEvent, RequestResponseMessage, ResponseChannel,
     },
     swarm::{NetworkBehaviourAction, NetworkBehaviourEventProcess, PollParameters},
     NetworkBehaviour,
@@ -84,22 +83,18 @@ impl NetworkBehaviourEventProcess<PingEvent> for Behaviour {
             Ok(PingSuccess::Ping { rtt }) => {
                 debug!(
                     "[ping] PingSuccess::Ping rtt to {} is {} ms",
-                    event.peer.to_base58(),
+                    event.peer,
                     rtt.as_millis()
                 );
             }
             Ok(PingSuccess::Pong) => {
-                debug!("[ping] PingSuccess::Pong from {}", event.peer.to_base58());
+                debug!("[ping] PingSuccess::Pong from peer: {}", event.peer);
             }
             Err(PingFailure::Timeout) => {
-                debug!("[ping] PingFailure::Timeout {}", event.peer.to_base58());
+                debug!("[ping] PingFailure::Timeout from peer: {}", event.peer);
             }
             Err(PingFailure::Other { error }) => {
-                debug!(
-                    "[ping] PingFailure::Other {}: {}",
-                    event.peer.to_base58(),
-                    error
-                );
+                debug!("[ping] PingFailure::Other from {}: {}", event.peer, error);
             }
         }
     }
@@ -113,7 +108,7 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for Behaviour {
                 info,
                 observed_addr,
             } => {
-                debug!("[identify] Identified Peer {}", peer_id.to_base58());
+                debug!("[identify] Identified Peer {}", peer_id);
                 debug!("[identify] protocol_version {}", info.protocol_version);
                 debug!("[identify] agent_version {}", info.agent_version);
                 debug!("[identify] listening_ addresses {:?}", info.listen_addrs);
@@ -131,14 +126,14 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for Behaviour {
         match event {
             MdnsEvent::Discovered(discovered_addrs) => {
                 for (peer_id, _addr) in discovered_addrs {
-                    debug!("[mdns] Discovered (peer: {})", peer_id.to_base58());
+                    debug!("[mdns] Discovered (peer: {})", peer_id);
                     self.peers.insert(peer_id);
                 }
             }
             MdnsEvent::Expired(expired_addrs) => {
                 for (peer_id, _addr) in expired_addrs {
                     if !self.mdns.has_node(&peer_id) {
-                        debug!("[mdns] Expired (peer: {})", peer_id.to_base58());
+                        debug!("[mdns] Expired (peer: {})", peer_id);
                         self.peers.remove(&peer_id);
                     }
                 }
@@ -151,7 +146,7 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for Behaviour {
     fn inject_event(&mut self, event: KademliaEvent) {
         match event {
             KademliaEvent::RoutingUpdated { peer, .. } => {
-                debug!("[kad] RoutingUpdated (peer: {})", peer.to_base58());
+                debug!("[kad] RoutingUpdated (peer: {})", peer);
                 self.peers.insert(peer);
             }
             event => debug!("[kad] {:?}", event),
@@ -164,10 +159,8 @@ impl NetworkBehaviourEventProcess<GossipsubEvent> for Behaviour {
         match event {
             GossipsubEvent::Message(peer_id, message_id, message) => {
                 debug!(
-                    "[gossipsub] Message (peer: {:?}, message_id: {:?}): {:?}",
-                    peer_id.to_base58(),
-                    message_id,
-                    message
+                    "[gossipsub] Message (peer: {}, message_id: {:?}): {:?}",
+                    peer_id, message_id, message
                 );
                 self.events.push(BehaviourEvent::GossipsubMessage {
                     source: message.source,
@@ -177,18 +170,16 @@ impl NetworkBehaviourEventProcess<GossipsubEvent> for Behaviour {
             }
             GossipsubEvent::Subscribed { peer_id, topic } => {
                 debug!(
-                    "[gossipsub]: Subscribed topic (peer: {}): {}",
-                    peer_id.to_base58(),
-                    topic
+                    "[gossipsub] Subscribed topic (peer: {}): {}",
+                    peer_id, topic
                 );
                 self.events
                     .push(BehaviourEvent::GossipsubSubscribed { peer_id, topic });
             }
             GossipsubEvent::Unsubscribed { peer_id, topic } => {
                 debug!(
-                    "[gossipsub]: Unsubscribed topic (peer: {}): {}",
-                    peer_id.to_base58(),
-                    topic
+                    "[gossipsub] Unsubscribed topic (peer: {}): {}",
+                    peer_id, topic
                 );
                 self.events
                     .push(BehaviourEvent::GossipsubUnsubscribed { peer_id, topic });
@@ -203,7 +194,7 @@ impl NetworkBehaviourEventProcess<RequestResponseEvent<HelloRequest, HelloRespon
             RequestResponseEvent::Message { peer, message } => match message {
                 RequestResponseMessage::Request { request, channel } => {
                     debug!(
-                        "[request-response] hello request (peer: {:?}): {:?}",
+                        "[request-response] hello request (peer: {}): {:?}",
                         peer, request
                     );
                     self.events.push(BehaviourEvent::HelloRequest {
@@ -217,7 +208,7 @@ impl NetworkBehaviourEventProcess<RequestResponseEvent<HelloRequest, HelloRespon
                     response,
                 } => {
                     debug!(
-                        "[request-response] hello response (peer: {:?}, request_id: {:?}): {:?}",
+                        "[request-response] hello response (peer: {}, request_id: {:?}): {:?}",
                         peer, request_id, response
                     );
                     self.events.push(BehaviourEvent::HelloResponse {
@@ -233,13 +224,13 @@ impl NetworkBehaviourEventProcess<RequestResponseEvent<HelloRequest, HelloRespon
                 error,
             } => {
                 warn!(
-                    "[request-response] hello outbound failure (peer: {:?}, request id: {:?}): {:?}",
+                    "[request-response] hello outbound failure (peer: {}, request id: {:?}): {:?}",
                     peer, request_id, error
                 );
             }
             RequestResponseEvent::InboundFailure { peer, error } => {
                 warn!(
-                    "[request-response] hello inbound failure (peer: {:?}): {:?}",
+                    "[request-response] hello inbound failure (peer: {}): {:?}",
                     peer, error
                 );
             }
@@ -255,7 +246,7 @@ impl NetworkBehaviourEventProcess<RequestResponseEvent<BlockSyncRequest, BlockSy
             RequestResponseEvent::Message { peer, message } => match message {
                 RequestResponseMessage::Request { request, channel } => {
                     debug!(
-                        "[request-response] blocksync request (peer: {:?}): {:?}",
+                        "[request-response] blocksync request (peer: {}): {:?}",
                         peer, request
                     );
                     self.events.push(BehaviourEvent::BlockSyncRequest {
@@ -269,7 +260,7 @@ impl NetworkBehaviourEventProcess<RequestResponseEvent<BlockSyncRequest, BlockSy
                     response,
                 } => {
                     debug!(
-                        "[request-response] blocksync response (peer: {:?}, request_id: {:?}): {:?}",
+                        "[request-response] blocksync response (peer: {}, request_id: {:?}): {:?}",
                         peer, request_id, response
                     );
                     self.events.push(BehaviourEvent::BlockSyncResponse {
@@ -285,13 +276,13 @@ impl NetworkBehaviourEventProcess<RequestResponseEvent<BlockSyncRequest, BlockSy
                 error,
             } => {
                 warn!(
-                    "[request-response] blocksync outbound failure (peer: {:?}, request id: {:?}): {:?}",
+                    "[request-response] blocksync outbound failure (peer: {}, request id: {:?}): {:?}",
                     peer, request_id, error
                 );
             }
             RequestResponseEvent::InboundFailure { peer, error } => {
                 warn!(
-                    "[request-response] blocksync inbound failure (peer: {:?}): {:?}",
+                    "[request-response] blocksync inbound failure (peer: {}): {:?}",
                     peer, error
                 );
             }
@@ -316,7 +307,7 @@ impl Behaviour {
 
 impl Behaviour {
     /// Create a new network behaviour.
-    pub fn new(local_key: &identity::Keypair) -> Self {
+    pub fn new(_local_key: &identity::Keypair) -> Self {
         todo!()
         /*
         let local_peer_id = local_key.public().into_peer_id();
