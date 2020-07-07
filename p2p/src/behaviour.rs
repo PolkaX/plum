@@ -41,7 +41,10 @@ pub struct Behaviour {
 
 /// Event that can happen on the behaviour.
 #[doc(hidden)]
+#[derive(Debug)]
 pub enum BehaviourEvent {
+    PeerDialed(PeerId),
+    PeerDisconnected(PeerId),
     MdnsDiscoveredPeer(PeerId),
     MdnsExpiredPeer(PeerId),
     GossipsubMessage {
@@ -129,7 +132,9 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for Behaviour {
             MdnsEvent::Discovered(discovered_addrs) => {
                 for (peer_id, _addr) in discovered_addrs {
                     debug!("[mdns] Discovered (peer: {})", peer_id);
-                    self.peers.insert(peer_id);
+                    self.peers.insert(peer_id.clone());
+                    self.events
+                        .push(BehaviourEvent::MdnsDiscoveredPeer(peer_id));
                 }
             }
             MdnsEvent::Expired(expired_addrs) => {
@@ -137,6 +142,7 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for Behaviour {
                     if !self.mdns.has_node(&peer_id) {
                         debug!("[mdns] Expired (peer: {})", peer_id);
                         self.peers.remove(&peer_id);
+                        self.events.push(BehaviourEvent::MdnsExpiredPeer(peer_id));
                     }
                 }
             }
@@ -309,12 +315,12 @@ impl Behaviour {
 
 impl Behaviour {
     /// Create a new network behaviour.
-    pub fn new(local_key_pair: &Keypair, config: &Libp2pConfig, network_name: &str) -> Self {
+    pub fn new(local_key_pair: &Keypair, config: &Libp2pConfig) -> Self {
         let local_public = local_key_pair.public();
         let local_peer_id = local_public.clone().into_peer_id();
 
         // Create the Kademlia DHT service with the bootnodes from the config.
-        let mut kademlia = config.build_kademlia(local_peer_id.clone(), network_name);
+        let mut kademlia = config.build_kademlia(local_peer_id.clone(), &config.network_name);
         if let Err(err) = kademlia.bootstrap() {
             warn!("Kademlia bootstrap error: {}", err);
         }
@@ -366,6 +372,15 @@ impl Behaviour {
         self.hello.send_request(peer, request)
     }
 
+    /// Initiates sending a hello response to an inbound hello request.
+    pub fn send_hello_response(
+        &mut self,
+        channel: ResponseChannel<HelloResponse>,
+        response: HelloResponse,
+    ) {
+        self.hello.send_response(channel, response)
+    }
+
     /// Initiates sending a blocksync request.
     pub fn send_blocksync_request(
         &mut self,
@@ -373,6 +388,15 @@ impl Behaviour {
         request: BlockSyncRequest,
     ) -> RequestId {
         self.blocksync.send_request(peer, request)
+    }
+
+    /// Initiates sending a blocksync response to an inbound blocksync request.
+    pub fn send_blocksync_response(
+        &mut self,
+        channel: ResponseChannel<BlockSyncResponse>,
+        response: BlockSyncResponse,
+    ) {
+        self.blocksync.send_response(channel, response)
     }
 
     /// Return the peer set.
