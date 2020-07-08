@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-/// Construct a `plum_ipld::IpldValue` from a JSON-like literal.
+/// Construct a `ipld::IpldValue` from a JSON-like literal.
 /// The macro is a modified version of `serde_json::json` macro, with extensions
 /// for representing Ipld links and Ipld bytes.
 #[macro_export(local_inner_macros)]

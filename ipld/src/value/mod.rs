@@ -23,14 +23,14 @@ pub enum IpldValue {
     /// Null value.
     ///
     /// ```
-    /// # use plum_ipld::{ipld, IpldValue};
+    /// # use ipld::{ipld, IpldValue};
     /// assert_eq!(IpldValue::Null, ipld!(null));
     /// ```
     Null,
     /// Boolean value.
     ///
     /// ```
-    /// # use plum_ipld::{ipld, IpldValue};
+    /// # use ipld::{ipld, IpldValue};
     /// assert_eq!(IpldValue::Bool(true), ipld!(true));
     /// assert_eq!(IpldValue::Bool(false), ipld!(false));
     /// ```
@@ -38,7 +38,7 @@ pub enum IpldValue {
     /// Integer value.
     ///
     /// ```
-    /// # use plum_ipld::{ipld, IpldValue, Integer};
+    /// # use ipld::{ipld, IpldValue, Integer};
     /// assert_eq!(IpldValue::Integer(Integer::from(123)), ipld!(123));
     /// assert_eq!(IpldValue::Integer(Integer::from(-123)), ipld!(-123));
     /// ```
@@ -46,7 +46,7 @@ pub enum IpldValue {
     /// Floating point value.
     ///
     /// ```
-    /// # use plum_ipld::{ipld, IpldValue};
+    /// # use ipld::{ipld, IpldValue};
     /// assert_eq!(IpldValue::Float(123.0), ipld!(123.0));
     /// assert_eq!(IpldValue::Float(-123.0), ipld!(-123.0));
     /// ```
@@ -54,14 +54,14 @@ pub enum IpldValue {
     /// UTF-8 string value.
     ///
     /// ```
-    /// # use plum_ipld::{ipld, IpldValue};
+    /// # use ipld::{ipld, IpldValue};
     /// assert_eq!(IpldValue::String("string".into()), ipld!("string"));
     /// ```
     String(String),
     /// Byte string value.
     ///
     /// ```
-    /// # use plum_ipld::{ipld, IpldValue};
+    /// # use ipld::{ipld, IpldValue};
     /// assert_eq!(IpldValue::Bytes(vec![0, 1, 100, 255].into()), ipld!(bytes![0, 1, 100, 255]));
     /// assert_eq!(IpldValue::Bytes(vec![100; 3].into()), ipld!(bytes![100; 3]));
     /// assert_eq!(IpldValue::Bytes(vec![100; 3].into()), ipld!(bytes![100, 100, 100]));
@@ -71,7 +71,7 @@ pub enum IpldValue {
     ///
     /// ```
     /// # use cid::Cid;
-    /// # use plum_ipld::{ipld, IpldValue};
+    /// # use ipld::{ipld, IpldValue};
     /// # use std::collections::BTreeMap;
     /// assert_eq!(
     ///     IpldValue::List(vec![
@@ -93,7 +93,7 @@ pub enum IpldValue {
     ///
     /// ```
     /// # use cid::Cid;
-    /// # use plum_ipld::{ipld, IpldValue, MapKey};
+    /// # use ipld::{ipld, IpldValue, MapKey};
     /// # use std::collections::BTreeMap;
     /// let mut map = BTreeMap::<MapKey, IpldValue>::new();
     /// map.insert("null".into(), IpldValue::Null);
@@ -125,7 +125,7 @@ pub enum IpldValue {
     ///
     /// ```
     /// # use cid::Cid;
-    /// # use plum_ipld::{ipld, IpldValue};
+    /// # use ipld::{ipld, IpldValue};
     /// let cid = "QmRgutAxd8t7oGkSm4wmeuByG6M51wcTso6cubDdQtuEfL".parse::<Cid>().unwrap();
     /// assert_eq!(IpldValue::Link(cid), ipld!(link!("QmRgutAxd8t7oGkSm4wmeuByG6M51wcTso6cubDdQtuEfL")));
     /// ```
