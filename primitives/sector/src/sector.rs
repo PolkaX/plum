@@ -69,6 +69,12 @@ pub type SpaceTime = BigInt;
 /// ```
 pub type SectorSize = u64;
 
+const _2_KB: SectorSize = 2 << 10;
+const _8_MB: SectorSize = 8 << 20;
+const _512_MB: SectorSize = 512 << 20;
+const _32_GB: SectorSize = 32 << 30;
+const _64_GB: SectorSize = 2 * (_32_GB);
+
 /// Abbreviates the size as a human-scale number.
 /// This approximates (truncates) the size unless it is a power of 1024.
 pub fn readable_sector_size(mut size: SectorSize) -> String {
@@ -80,6 +86,18 @@ pub fn readable_sector_size(mut size: SectorSize) -> String {
     }
     format!("{}{}", size, UNITS[unit])
 }
+
+/// `SectorSize` to `RegisteredSealProof` meet unknown sector size
+#[derive(Debug, Clone)]
+pub struct UnknownSectorSizeErr(SectorSize);
+
+impl fmt::Display for UnknownSectorSizeErr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "unknown sector size:{:}", self.0)
+    }
+}
+
+impl error::Error for UnknownSectorSizeErr {}
 
 // This ordering, defines mappings to UInt in a way which MUST never change.
 /// define `RegisteredSealProof` same as `ffi::RegisteredSealProof` in filecoin-proofs-api
@@ -138,6 +156,79 @@ impl<'b> decode::Decode<'b> for RegisteredSealProof {
         let proof = d.u64()?;
         Ok(RegisteredSealProof::try_from(proof)
             .map_err(|e| decode::Error::TypeMismatch(proof as u8, e))?)
+    }
+}
+
+impl RegisteredSealProof {
+    /// Return the sector size of Seal Proof.
+    pub fn sector_size(&self) -> SectorSize {
+        match self {
+            RegisteredSealProof::StackedDrg2KiBV1 => _2_KB,
+            RegisteredSealProof::StackedDrg8MiBV1 => _8_MB,
+            RegisteredSealProof::StackedDrg512MiBV1 => _512_MB,
+            RegisteredSealProof::StackedDrg32GiBV1 => _32_GB,
+            RegisteredSealProof::StackedDrg64GiBV1 => _64_GB,
+        }
+    }
+
+    /// Create SealProof from a number(Should be SectorSize).
+    /// If the number is not a valid SectorSize, it would return an error.
+    pub fn from_sector_size(ssize: SectorSize) -> Result<Self, UnknownSectorSizeErr> {
+        match ssize {
+            _2_KB => Ok(RegisteredSealProof::StackedDrg2KiBV1),
+            _8_MB => Ok(RegisteredSealProof::StackedDrg8MiBV1),
+            _512_MB => Ok(RegisteredSealProof::StackedDrg512MiBV1),
+            _32_GB => Ok(RegisteredSealProof::StackedDrg32GiBV1),
+            _64_GB => Ok(RegisteredSealProof::StackedDrg64GiBV1),
+            _ => Err(UnknownSectorSizeErr(ssize)),
+        }
+    }
+
+    /// Returns the partition size, in sectors, associated with a proof type.
+    /// The partition size is the number of sectors proven in a single PoSt proof.
+    pub fn window_post_partition_sectors(self) -> u64 {
+        match self {
+            // These numbers must match those used by the proofs library.
+            // See https://github.com/filecoin-project/rust-fil-proofs/blob/master/filecoin-proofs/src/constants.rs#L85
+            RegisteredSealProof::StackedDrg64GiBV1 => 2300,
+            RegisteredSealProof::StackedDrg32GiBV1 => 2349,
+            RegisteredSealProof::StackedDrg2KiBV1
+            | RegisteredSealProof::StackedDrg8MiBV1
+            | RegisteredSealProof::StackedDrg512MiBV1 => 2,
+        }
+    }
+
+    /// Return the PoSt-specific RegisteredSealProof corresponding to the receiving RegisteredSealProof.
+    pub fn registered_winning_post_proof(&self) -> RegisteredPoStProof {
+        match self {
+            RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWinning64GiBV1,
+            RegisteredSealProof::StackedDrg32GiBV1 => RegisteredPoStProof::StackedDrgWinning32GiBV1,
+            RegisteredSealProof::StackedDrg2KiBV1 => RegisteredPoStProof::StackedDrgWinning2KiBV1,
+            RegisteredSealProof::StackedDrg8MiBV1 => RegisteredPoStProof::StackedDrgWinning8MiBV1,
+            RegisteredSealProof::StackedDrg512MiBV1 => {
+                RegisteredPoStProof::StackedDrgWinning512MiBV1
+            }
+        }
+    }
+
+    /// Return the PoSt-specific RegisteredSealProof corresponding to the receiving RegisteredSealProof.
+    pub fn registered_window_post_proof(self) -> RegisteredPoStProof {
+        match self {
+            RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWindow64GiBV1,
+            RegisteredSealProof::StackedDrg32GiBV1 => RegisteredPoStProof::StackedDrgWindow32GiBV1,
+            RegisteredSealProof::StackedDrg2KiBV1 => RegisteredPoStProof::StackedDrgWindow2KiBV1,
+            RegisteredSealProof::StackedDrg8MiBV1 => RegisteredPoStProof::StackedDrgWindow8MiBV1,
+            RegisteredSealProof::StackedDrg512MiBV1 => {
+                RegisteredPoStProof::StackedDrgWindow512MiBV1
+            }
+        }
+    }
+
+    /// Return the maximum duration a sector sealed with this proof may exist between activation and expiration.
+    pub const fn sector_maximum_lifetime(self) -> ChainEpoch {
+        // For all Stacked DRG sectors, the max is 5 years
+        const EPOCHS_PER_YEAR: ChainEpoch = 1_262_277;
+        5 * EPOCHS_PER_YEAR
     }
 }
 
@@ -247,97 +338,6 @@ impl RegisteredPoStProof {
     /// The partition size is the number of sectors proven in a single PoSt proof.
     pub fn window_post_partition_sectors(&self) -> u64 {
         self.registered_seal_proof().window_post_partition_sectors()
-    }
-}
-
-const TWO_KB: SectorSize = 2 << 10;
-const EIGHT_MB: SectorSize = 8 << 20;
-const FIVE_ONE_TWO_MB: SectorSize = 512 << 20;
-const THIRD_TWO_GB: SectorSize = 32 << 30;
-const SIXTY_TWO_GB: SectorSize = 2 * (THIRD_TWO_GB);
-
-/// `SectorSize` to `RegisteredSealProof` meet unknown sector size
-#[derive(Debug, Clone)]
-pub struct UnknownSectorSizeErr(SectorSize);
-
-impl fmt::Display for UnknownSectorSizeErr {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "unknown sector size:{:}", self.0)
-    }
-}
-
-impl error::Error for UnknownSectorSizeErr {}
-
-impl RegisteredSealProof {
-    /// Return the sector size of Seal Proof.
-    pub fn sector_size(&self) -> SectorSize {
-        match self {
-            RegisteredSealProof::StackedDrg2KiBV1 => TWO_KB,
-            RegisteredSealProof::StackedDrg8MiBV1 => EIGHT_MB,
-            RegisteredSealProof::StackedDrg512MiBV1 => FIVE_ONE_TWO_MB,
-            RegisteredSealProof::StackedDrg32GiBV1 => THIRD_TWO_GB,
-            RegisteredSealProof::StackedDrg64GiBV1 => SIXTY_TWO_GB,
-        }
-    }
-
-    /// Create SealProof from a number(Should be SectorSize).
-    /// If the number is not a valid SectorSize, it would return an error.
-    pub fn from_sector_size(ssize: SectorSize) -> Result<Self, UnknownSectorSizeErr> {
-        match ssize {
-            TWO_KB => Ok(RegisteredSealProof::StackedDrg2KiBV1),
-            EIGHT_MB => Ok(RegisteredSealProof::StackedDrg8MiBV1),
-            FIVE_ONE_TWO_MB => Ok(RegisteredSealProof::StackedDrg512MiBV1),
-            THIRD_TWO_GB => Ok(RegisteredSealProof::StackedDrg32GiBV1),
-            SIXTY_TWO_GB => Ok(RegisteredSealProof::StackedDrg64GiBV1),
-            _ => Err(UnknownSectorSizeErr(ssize)),
-        }
-    }
-
-    /// Returns the partition size, in sectors, associated with a proof type.
-    /// The partition size is the number of sectors proven in a single PoSt proof.
-    pub fn window_post_partition_sectors(self) -> u64 {
-        match self {
-            // These numbers must match those used by the proofs library.
-            // See https://github.com/filecoin-project/rust-fil-proofs/blob/master/filecoin-proofs/src/constants.rs#L85
-            RegisteredSealProof::StackedDrg64GiBV1 => 2300,
-            RegisteredSealProof::StackedDrg32GiBV1 => 2349,
-            RegisteredSealProof::StackedDrg2KiBV1
-            | RegisteredSealProof::StackedDrg8MiBV1
-            | RegisteredSealProof::StackedDrg512MiBV1 => 2,
-        }
-    }
-
-    /// Return the PoSt-specific RegisteredSealProof corresponding to the receiving RegisteredSealProof.
-    pub fn registered_winning_post_proof(&self) -> RegisteredPoStProof {
-        match self {
-            RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWinning64GiBV1,
-            RegisteredSealProof::StackedDrg32GiBV1 => RegisteredPoStProof::StackedDrgWinning32GiBV1,
-            RegisteredSealProof::StackedDrg2KiBV1 => RegisteredPoStProof::StackedDrgWinning2KiBV1,
-            RegisteredSealProof::StackedDrg8MiBV1 => RegisteredPoStProof::StackedDrgWinning8MiBV1,
-            RegisteredSealProof::StackedDrg512MiBV1 => {
-                RegisteredPoStProof::StackedDrgWinning512MiBV1
-            }
-        }
-    }
-
-    /// Return the PoSt-specific RegisteredSealProof corresponding to the receiving RegisteredSealProof.
-    pub fn registered_window_post_proof(self) -> RegisteredPoStProof {
-        match self {
-            RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWindow64GiBV1,
-            RegisteredSealProof::StackedDrg32GiBV1 => RegisteredPoStProof::StackedDrgWindow32GiBV1,
-            RegisteredSealProof::StackedDrg2KiBV1 => RegisteredPoStProof::StackedDrgWindow2KiBV1,
-            RegisteredSealProof::StackedDrg8MiBV1 => RegisteredPoStProof::StackedDrgWindow8MiBV1,
-            RegisteredSealProof::StackedDrg512MiBV1 => {
-                RegisteredPoStProof::StackedDrgWindow512MiBV1
-            }
-        }
-    }
-
-    /// Return the maximum duration a sector sealed with this proof may exist between activation and expiration.
-    pub const fn sector_maximum_lifetime(self) -> ChainEpoch {
-        // For all Stacked DRG sectors, the max is 5 years
-        const EPOCHS_PER_YEAR: ChainEpoch = 1_262_277;
-        5 * EPOCHS_PER_YEAR
     }
 }
 
