@@ -26,7 +26,9 @@ pub enum Link {
     Cache(Box<Node>),
 }
 
-///
+/// Each node in an IPLD vector stores the width, the height of the node,
+/// starting from 0 where values are stored,
+/// and a data array to contain values (for height 0), or child node CIDs (for heights above 1).
 #[derive(Clone, PartialEq, Debug)]
 pub enum Node {
     ///
