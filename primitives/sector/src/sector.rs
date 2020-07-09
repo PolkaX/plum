@@ -201,26 +201,26 @@ impl RegisteredSealProof {
     /// Return the PoSt-specific RegisteredSealProof corresponding to the receiving RegisteredSealProof.
     pub fn registered_winning_post_proof(self) -> RegisteredPoStProof {
         match self {
-            RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWinning64GiBV1,
-            RegisteredSealProof::StackedDrg32GiBV1 => RegisteredPoStProof::StackedDrgWinning32GiBV1,
             RegisteredSealProof::StackedDrg2KiBV1 => RegisteredPoStProof::StackedDrgWinning2KiBV1,
             RegisteredSealProof::StackedDrg8MiBV1 => RegisteredPoStProof::StackedDrgWinning8MiBV1,
             RegisteredSealProof::StackedDrg512MiBV1 => {
                 RegisteredPoStProof::StackedDrgWinning512MiBV1
             }
+            RegisteredSealProof::StackedDrg32GiBV1 => RegisteredPoStProof::StackedDrgWinning32GiBV1,
+            RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWinning64GiBV1,
         }
     }
 
     /// Return the PoSt-specific RegisteredSealProof corresponding to the receiving RegisteredSealProof.
     pub fn registered_window_post_proof(self) -> RegisteredPoStProof {
         match self {
-            RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWindow64GiBV1,
-            RegisteredSealProof::StackedDrg32GiBV1 => RegisteredPoStProof::StackedDrgWindow32GiBV1,
             RegisteredSealProof::StackedDrg2KiBV1 => RegisteredPoStProof::StackedDrgWindow2KiBV1,
             RegisteredSealProof::StackedDrg8MiBV1 => RegisteredPoStProof::StackedDrgWindow8MiBV1,
             RegisteredSealProof::StackedDrg512MiBV1 => {
                 RegisteredPoStProof::StackedDrgWindow512MiBV1
             }
+            RegisteredSealProof::StackedDrg32GiBV1 => RegisteredPoStProof::StackedDrgWindow32GiBV1,
+            RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWindow64GiBV1,
         }
     }
 
