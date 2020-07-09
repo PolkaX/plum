@@ -216,7 +216,7 @@ impl<'b> decode::Decode<'b> for RegisteredPoStProof {
 }
 
 impl RegisteredPoStProof {
-    /// convert PostProof to SealProof
+    /// Convert PostProof to SealProof
     pub fn registered_seal_proof(self) -> RegisteredSealProof {
         match self {
             RegisteredPoStProof::StackedDrgWinning2KiBV1
