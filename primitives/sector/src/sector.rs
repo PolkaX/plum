@@ -1,9 +1,9 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use std::convert::TryFrom;
 use std::{error, fmt};
 
 use cid::Cid;
-use enumn::N;
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -86,9 +86,9 @@ pub fn readable_sector_size(mut size: SectorSize) -> String {
 /// we use our local type for isolate bounds for `filecoin-proofs-api` to reduce influence.
 /// And other hand, this type provide cbor encode/decode
 #[doc(hidden)]
-#[repr(i64)]
+#[repr(u64)]
 #[derive(
-    Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize_repr, Deserialize_repr, N,
+    Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize_repr, Deserialize_repr,
 )]
 pub enum RegisteredSealProof {
     StackedDrg2KiBV1 = 0,
@@ -98,13 +98,40 @@ pub enum RegisteredSealProof {
     StackedDrg64GiBV1 = 4,
 }
 
+impl From<RegisteredSealProof> for u64 {
+    fn from(proof: RegisteredSealProof) -> Self {
+        match proof {
+            RegisteredSealProof::StackedDrg2KiBV1 => 0,
+            RegisteredSealProof::StackedDrg8MiBV1 => 1,
+            RegisteredSealProof::StackedDrg512MiBV1 => 2,
+            RegisteredSealProof::StackedDrg32GiBV1 => 3,
+            RegisteredSealProof::StackedDrg64GiBV1 => 4,
+        }
+    }
+}
+
+impl TryFrom<u64> for RegisteredSealProof {
+    type Error = &'static str;
+
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        Ok(match value {
+            0 => RegisteredSealProof::StackedDrg2KiBV1,
+            1 => RegisteredSealProof::StackedDrg8MiBV1,
+            2 => RegisteredSealProof::StackedDrg512MiBV1,
+            3 => RegisteredSealProof::StackedDrg32GiBV1,
+            4 => RegisteredSealProof::StackedDrg64GiBV1,
+            _ => return Err("unexpected registered seal proof"),
+        })
+    }
+}
+
 /// define `StackedDrgWinning2KiBV1` same as `ffi::StackedDrgWinning2KiBV1` in filecoin-proofs-api
 /// we use our local type for isolate bounds for `filecoin-proofs-api` to reduce influence.
 /// And other hand, this type provide cbor encode/decode
 #[doc(hidden)]
-#[repr(i64)]
+#[repr(u64)]
 #[derive(
-    Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize_repr, Deserialize_repr, N,
+    Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize_repr, Deserialize_repr,
 )]
 pub enum RegisteredPoStProof {
     StackedDrgWinning2KiBV1 = 0,
@@ -119,26 +146,65 @@ pub enum RegisteredPoStProof {
     StackedDrgWindow64GiBV1 = 9,
 }
 
-macro_rules! impl_cbor {
-    ($($ProofName:tt),+) => {
-$(
-/// Implement CBOR serialization for $ProofName.
-impl encode::Encode for $ProofName {
-    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
-        e.i64(*self as i64)?.ok()
+impl From<RegisteredPoStProof> for u64 {
+    fn from(proof: RegisteredPoStProof) -> Self {
+        match proof {
+            RegisteredPoStProof::StackedDrgWinning2KiBV1 => 0,
+            RegisteredPoStProof::StackedDrgWinning8MiBV1 => 1,
+            RegisteredPoStProof::StackedDrgWinning512MiBV1 => 2,
+            RegisteredPoStProof::StackedDrgWinning32GiBV1 => 3,
+            RegisteredPoStProof::StackedDrgWinning64GiBV1 => 4,
+            RegisteredPoStProof::StackedDrgWindow2KiBV1 => 5,
+            RegisteredPoStProof::StackedDrgWindow8MiBV1 => 6,
+            RegisteredPoStProof::StackedDrgWindow512MiBV1 => 7,
+            RegisteredPoStProof::StackedDrgWindow32GiBV1 => 8,
+            RegisteredPoStProof::StackedDrgWindow64GiBV1 => 9,
+        }
     }
 }
 
-/// Implement CBOR deserialization for $ProofName.
-impl<'b> decode::Decode<'b> for $ProofName {
-    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
-        let proof = d.i64()?;
-        $ProofName::n(proof).ok_or(decode::Error::TypeMismatch(proof as u8, concat!("unexpected ", stringify!($ProofName))))
+impl TryFrom<u64> for RegisteredPoStProof {
+    type Error = &'static str;
+
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        Ok(match value {
+            0 => RegisteredPoStProof::StackedDrgWinning2KiBV1,
+            1 => RegisteredPoStProof::StackedDrgWinning8MiBV1,
+            2 => RegisteredPoStProof::StackedDrgWinning512MiBV1,
+            3 => RegisteredPoStProof::StackedDrgWinning32GiBV1,
+            4 => RegisteredPoStProof::StackedDrgWinning64GiBV1,
+            5 => RegisteredPoStProof::StackedDrgWindow2KiBV1,
+            6 => RegisteredPoStProof::StackedDrgWindow8MiBV1,
+            7 => RegisteredPoStProof::StackedDrgWindow512MiBV1,
+            8 => RegisteredPoStProof::StackedDrgWindow32GiBV1,
+            9 => RegisteredPoStProof::StackedDrgWindow64GiBV1,
+            _ => return Err("unexpected registered post proof"),
+        })
     }
 }
-)+
+
+macro_rules! impl_cbor {
+    ($($ProofName:tt),+) => {
+        $(
+            /// Implement CBOR serialization for $ProofName.
+            impl encode::Encode for $ProofName {
+                fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+                    e.u64(u64::from(*self))?.ok()
+                }
+            }
+
+            /// Implement CBOR deserialization for $ProofName.
+            impl<'b> decode::Decode<'b> for $ProofName {
+                fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+                    let proof = d.u64()?;
+                    Ok($ProofName::try_from(proof)
+                        .map_err(|e| decode::Error::TypeMismatch(proof as u8, e))?)
+                }
+            }
+        )+
     };
 }
+
 impl_cbor!(RegisteredSealProof, RegisteredPoStProof);
 
 impl RegisteredPoStProof {

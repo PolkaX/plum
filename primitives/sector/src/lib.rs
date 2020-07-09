@@ -6,7 +6,6 @@
 
 mod posting;
 mod sealing;
-#[allow(missing_docs)]
 mod sector;
 
 pub use self::posting::{PoStProof, WindowPoStVerifyInfo, WinningPoStVerifyInfo};
