@@ -259,6 +259,7 @@ const SIXTY_TWO_GB: SectorSize = 2 * (THIRD_TWO_GB);
 /// `SectorSize` to `RegisteredSealProof` meet unknown sector size
 #[derive(Debug, Clone)]
 pub struct UnknownSectorSizeErr(SectorSize);
+
 impl fmt::Display for UnknownSectorSizeErr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "unknown sector size:{:}", self.0)
@@ -268,7 +269,7 @@ impl fmt::Display for UnknownSectorSizeErr {
 impl error::Error for UnknownSectorSizeErr {}
 
 impl RegisteredSealProof {
-    /// Return SectorSize for Seal Proof
+    /// Return the sector size of Seal Proof.
     pub fn sector_size(&self) -> SectorSize {
         match self {
             RegisteredSealProof::StackedDrg2KiBV1 => TWO_KB,
@@ -278,8 +279,9 @@ impl RegisteredSealProof {
             RegisteredSealProof::StackedDrg64GiBV1 => SIXTY_TWO_GB,
         }
     }
-    /// Create SealProof from a number(Should be SectorSize), if not a valid SectorSize,
-    /// would return an error
+
+    /// Create SealProof from a number(Should be SectorSize).
+    /// If the number is not a valid SectorSize, it would return an error.
     pub fn from_sector_size(ssize: SectorSize) -> Result<Self, UnknownSectorSizeErr> {
         match ssize {
             TWO_KB => Ok(RegisteredSealProof::StackedDrg2KiBV1),
@@ -305,8 +307,7 @@ impl RegisteredSealProof {
         }
     }
 
-    /// RegisteredWinningPoStProof produces the PoSt-specific RegisteredSealProof
-    /// corresponding to the receiving RegisteredSealProof.
+    /// Return the PoSt-specific RegisteredSealProof corresponding to the receiving RegisteredSealProof.
     pub fn registered_winning_post_proof(&self) -> RegisteredPoStProof {
         match self {
             RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWinning64GiBV1,
@@ -318,8 +319,8 @@ impl RegisteredSealProof {
             }
         }
     }
-    /// RegisteredWindowPoStProof produces the PoSt-specific RegisteredSealProof
-    /// corresponding to the receiving RegisteredSealProof.
+
+    /// Return the PoSt-specific RegisteredSealProof corresponding to the receiving RegisteredSealProof.
     pub fn registered_window_post_proof(self) -> RegisteredPoStProof {
         match self {
             RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWindow64GiBV1,
@@ -331,12 +332,12 @@ impl RegisteredSealProof {
             }
         }
     }
-    /// SectorMaximumLifetime is the maximum duration a sector sealed with this proof may exist between activation and expiration
-    pub fn sector_maximum_lifetime(&self) -> ChainEpoch {
+
+    /// Return the maximum duration a sector sealed with this proof may exist between activation and expiration.
+    pub const fn sector_maximum_lifetime(self) -> ChainEpoch {
         // For all Stacked DRG sectors, the max is 5 years
         const EPOCHS_PER_YEAR: ChainEpoch = 1_262_277;
-        const FIVE_YEARS: ChainEpoch = 5 * EPOCHS_PER_YEAR;
-        FIVE_YEARS
+        5 * EPOCHS_PER_YEAR
     }
 }
 
