@@ -19,7 +19,6 @@ pub use self::sector::{
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::RegisteredPoStProof;
 
     #[test]
     fn test_readable_sector_size() {
