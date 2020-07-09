@@ -6,14 +6,14 @@ use serde::{Deserialize, Serialize};
 
 use plum_types::{DealId, Randomness};
 
-use crate::sector::{RegisteredProof, SectorId};
+use crate::sector::{RegisteredSealProof, SectorId};
 
 /// Information needed to verify a seal proof.
 #[doc(hidden)]
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SealVerifyInfo {
-    pub registered_proof: RegisteredProof,
+    pub seal_proof: RegisteredSealProof,
     #[serde(flatten)]
     pub sector_id: SectorId,
     #[serde(rename = "DealIDs")]
@@ -31,7 +31,7 @@ pub struct SealVerifyInfo {
 impl encode::Encode for SealVerifyInfo {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
         e.array(8)?
-            .encode(&self.registered_proof)?
+            .encode(&self.seal_proof)?
             .encode(&self.sector_id)?
             .encode(&self.deal_ids)?
             .encode(&self.randomness)?
@@ -49,7 +49,7 @@ impl<'b> decode::Decode<'b> for SealVerifyInfo {
         let array_len = d.array()?;
         assert_eq!(array_len, Some(8));
         Ok(SealVerifyInfo {
-            registered_proof: d.decode::<RegisteredProof>()?,
+            seal_proof: d.decode::<RegisteredSealProof>()?,
             sector_id: d.decode::<SectorId>()?,
             deal_ids: d.decode::<Vec<DealId>>()?,
             randomness: d.decode::<Randomness>()?,
@@ -69,7 +69,7 @@ impl<'b> decode::Decode<'b> for SealVerifyInfo {
 //     #[serde(rename = "SealedCID")]
 //     pub sealed_cid: Cid,
 //     pub interactive_epoch: ChainEpoch,
-//     pub registered_proof: RegisteredProof,
+//     pub registered_proof: RegisteredSealProof,
 //     #[serde(with = "plum_bytes")]
 //     pub proof: Vec<u8>,
 //     #[serde(rename = "DealIDs")]
@@ -101,7 +101,7 @@ impl<'b> decode::Decode<'b> for SealVerifyInfo {
 //         Ok(OnChainSealVerifyInfo {
 //             sealed_cid: d.decode::<Cid>()?,
 //             interactive_epoch: d.i64()?,
-//             registered_proof: d.decode::<RegisteredProof>()?,
+//             registered_proof: d.decode::<RegisteredSealProof>()?,
 //             proof: d.bytes()?.to_vec(),
 //             deal_ids: d.decode::<Vec<DealId>>()?,
 //             sector_number: d.u64()?,
