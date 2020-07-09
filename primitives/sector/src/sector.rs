@@ -125,6 +125,22 @@ impl TryFrom<u64> for RegisteredSealProof {
     }
 }
 
+/// Implement CBOR serialization for RegisteredSealProof.
+impl encode::Encode for RegisteredSealProof {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        e.u64(u64::from(*self))?.ok()
+    }
+}
+
+/// Implement CBOR deserialization for RegisteredSealProof.
+impl<'b> decode::Decode<'b> for RegisteredSealProof {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let proof = d.u64()?;
+        Ok(RegisteredSealProof::try_from(proof)
+            .map_err(|e| decode::Error::TypeMismatch(proof as u8, e))?)
+    }
+}
+
 /// define `StackedDrgWinning2KiBV1` same as `ffi::StackedDrgWinning2KiBV1` in filecoin-proofs-api
 /// we use our local type for isolate bounds for `filecoin-proofs-api` to reduce influence.
 /// And other hand, this type provide cbor encode/decode
@@ -183,29 +199,21 @@ impl TryFrom<u64> for RegisteredPoStProof {
     }
 }
 
-macro_rules! impl_cbor {
-    ($($ProofName:tt),+) => {
-        $(
-            /// Implement CBOR serialization for $ProofName.
-            impl encode::Encode for $ProofName {
-                fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
-                    e.u64(u64::from(*self))?.ok()
-                }
-            }
-
-            /// Implement CBOR deserialization for $ProofName.
-            impl<'b> decode::Decode<'b> for $ProofName {
-                fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
-                    let proof = d.u64()?;
-                    Ok($ProofName::try_from(proof)
-                        .map_err(|e| decode::Error::TypeMismatch(proof as u8, e))?)
-                }
-            }
-        )+
-    };
+/// Implement CBOR serialization for RegisteredPoStProof.
+impl encode::Encode for RegisteredPoStProof {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        e.u64(u64::from(*self))?.ok()
+    }
 }
 
-impl_cbor!(RegisteredSealProof, RegisteredPoStProof);
+/// Implement CBOR deserialization for RegisteredPoStProof.
+impl<'b> decode::Decode<'b> for RegisteredPoStProof {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let proof = d.u64()?;
+        Ok(RegisteredPoStProof::try_from(proof)
+            .map_err(|e| decode::Error::TypeMismatch(proof as u8, e))?)
+    }
+}
 
 impl RegisteredPoStProof {
     /// convert PostProof to SealProof
