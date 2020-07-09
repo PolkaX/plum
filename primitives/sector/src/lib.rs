@@ -11,8 +11,8 @@ mod sector;
 pub use self::posting::{PoStProof, WindowPoStVerifyInfo, WinningPoStVerifyInfo};
 pub use self::sealing::SealVerifyInfo;
 pub use self::sector::{
-    readable_sector_size, RegisteredProof, SectorId, SectorInfo, SectorNumber, SectorQuality,
-    SectorSize, SpaceTime, StoragePower, UnknownSectorSizeErr,
+    readable_sector_size, RegisteredPoStProof, RegisteredSealProof, SectorId, SectorInfo,
+    SectorNumber, SectorQuality, SectorSize, SpaceTime, StoragePower, UnknownSectorSizeErr,
 };
 
 #[cfg(test)]
@@ -77,24 +77,24 @@ mod tests {
         asset_cbor(&sector_id, vec![130, 24, 100, 24, 100]);
         assert_json(&sector_id, "{\"Miner\":100,\"Number\":100}");
 
-        // RegisteredProof
-        let registered_proof = RegisteredProof::StackedDRG512MiBSeal;
-        asset_cbor(&registered_proof, vec![7]);
-        assert_json(&registered_proof, "7");
+        // RegisteredSealProof
+        let seal_proof = RegisteredSealProof::StackedDrg512MiBV1;
+        asset_cbor(&seal_proof, vec![2]);
+        assert_json(&seal_proof, "2");
 
         // SectorInfo
         let cid: Cid = "bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i"
             .parse()
             .unwrap();
         let sector_info = SectorInfo {
-            registered_proof,
+            seal_proof,
             sector_number: 1111,
             sealed_cid: cid.clone(),
         };
         asset_cbor(
             &sector_info,
             vec![
-                131, 7, 25, 4, 87, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29,
+                131, 2, 25, 4, 87, 216, 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29,
                 97, 161, 80, 48, 167, 49, 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225,
                 217, 73, 55, 160, 199, 184, 78, 250,
             ],
@@ -102,7 +102,7 @@ mod tests {
         assert_json(
             &sector_info,
             "{\
-                \"RegisteredProof\":7,\
+                \"SealProof\":2,\
                 \"SectorNumber\":1111,\
                 \"SealedCID\":{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"}\
             }",
@@ -110,7 +110,7 @@ mod tests {
 
         // SealVerifyInfo
         let _info = SealVerifyInfo {
-            registered_proof,
+            seal_proof,
             sector_id,
             randomness: [1; 32].into(),
             interactive_randomness: [2; 32].into(),
@@ -121,16 +121,17 @@ mod tests {
         };
         // TODO need check
 
+        // RegisteredSealProof
+        let post_proof = RegisteredPoStProof::StackedDrgWinning64GiBV1;
+        asset_cbor(&post_proof, vec![4]);
+        assert_json(&post_proof, "4");
         // PoStProof
         let post_proof = PoStProof {
-            registered_proof,
+            post_proof,
             proof_bytes: vec![1, 2, 3],
         };
-        asset_cbor(&post_proof, vec![130, 7, 67, 1, 2, 3]);
-        assert_json(
-            &post_proof,
-            "{\"RegisteredProof\":7,\"ProofBytes\":\"AQID\"}",
-        );
+        asset_cbor(&post_proof, vec![130, 4, 67, 1, 2, 3]);
+        assert_json(&post_proof, "{\"PoStProof\":4,\"ProofBytes\":\"AQID\"}");
 
         // WinningPoStVerifyInfo and WindowPoStVerifyInfo
         let post_verify_info = WinningPoStVerifyInfo {
@@ -143,7 +144,7 @@ mod tests {
             &post_verify_info,
             vec![
                 132, 88, 32, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 129, 130, 7, 67, 1, 2, 3, 129, 131, 7, 25, 4, 87, 216,
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 129, 130, 4, 67, 1, 2, 3, 129, 131, 2, 25, 4, 87, 216,
                 42, 88, 37, 0, 1, 113, 18, 32, 76, 2, 122, 115, 187, 29, 97, 161, 80, 48, 167, 49,
                 47, 124, 18, 38, 183, 206, 50, 72, 232, 201, 142, 225, 217, 73, 55, 160, 199, 184,
                 78, 250, 0,
@@ -154,11 +155,11 @@ mod tests {
             "{\
                 \"Randomness\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=\",\
                 \"Proofs\":[\
-                    {\"RegisteredProof\":7,\"ProofBytes\":\"AQID\"}\
+                    {\"PoStProof\":4,\"ProofBytes\":\"AQID\"}\
                 ],\
                 \"ChallengedSectors\":[\
                     {\
-                        \"RegisteredProof\":7,\
+                        \"SealProof\":2,\
                         \"SectorNumber\":1111,\
                         \"SealedCID\":{\"/\":\"bafyreicmaj5hhoy5mgqvamfhgexxyergw7hdeshizghodwkjg6qmpoco7i\"}\
                     }\

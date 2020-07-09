@@ -5,14 +5,15 @@ use serde::{Deserialize, Serialize};
 
 use plum_types::{ActorId, Randomness};
 
-use crate::sector::{RegisteredProof, SectorInfo};
+use crate::sector::{RegisteredPoStProof, SectorInfo};
 
 /// The PoSt proof.
 #[doc(hidden)]
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PoStProof {
-    pub registered_proof: RegisteredProof,
+    #[serde(rename = "PoStProof")]
+    pub post_proof: RegisteredPoStProof,
     #[serde(with = "plum_bytes")]
     pub proof_bytes: Vec<u8>,
 }
@@ -21,7 +22,7 @@ pub struct PoStProof {
 impl encode::Encode for PoStProof {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
         e.array(2)?
-            .encode(&self.registered_proof)?
+            .encode(&self.post_proof)?
             .bytes(&self.proof_bytes)?
             .ok()
     }
@@ -33,7 +34,7 @@ impl<'b> decode::Decode<'b> for PoStProof {
         let array_len = d.array()?;
         assert_eq!(array_len, Some(2));
         Ok(PoStProof {
-            registered_proof: d.decode::<RegisteredProof>()?,
+            post_proof: d.decode::<RegisteredPoStProof>()?,
             proof_bytes: d.bytes()?.to_vec(),
         })
     }

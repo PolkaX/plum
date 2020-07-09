@@ -5,7 +5,7 @@ use plum_actor::MethodSend;
 use plum_bigint::BigInt;
 use plum_crypto::SignatureType;
 use plum_piece::PieceInfo;
-use plum_sector::{RegisteredProof, SealVerifyInfo, WindowPoStVerifyInfo};
+use plum_sector::{RegisteredSealProof, SealVerifyInfo, WindowPoStVerifyInfo};
 use plum_types::{Gas, MethodNum, TokenAmount};
 
 ///
@@ -134,7 +134,7 @@ impl Pricelist for PricelistV0 {
 
     fn on_compute_unsealed_sector_cid(
         &self,
-        _proof_type: RegisteredProof,
+        _proof_type: RegisteredSealProof,
         _pieces: Vec<PieceInfo>,
     ) -> Gas {
         // TODO: this needs more cost tunning, check with @lotus

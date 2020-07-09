@@ -4,7 +4,7 @@ use crate::gas_v0::PricelistV0;
 use lazy_static::lazy_static;
 use plum_crypto::SignatureType;
 use plum_piece::PieceInfo;
-use plum_sector::{RegisteredProof, SealVerifyInfo, WindowPoStVerifyInfo};
+use plum_sector::{RegisteredSealProof, SealVerifyInfo, WindowPoStVerifyInfo};
 use plum_types::{ChainEpoch, Gas, MethodNum, TokenAmount};
 use std::collections::HashMap;
 
@@ -40,7 +40,7 @@ pub trait Pricelist {
     ///
     fn on_compute_unsealed_sector_cid(
         &self,
-        proof_type: RegisteredProof,
+        proof_type: RegisteredSealProof,
         pieces: Vec<PieceInfo>,
     ) -> Gas;
     ///

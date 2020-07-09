@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use plum_bigint::BigInt;
-use plum_types::ActorId;
+use plum_types::{ActorId, ChainEpoch};
 
 /// SectorNumber is a numeric identifier for a sector. It is usually relative to a miner.
 pub type SectorNumber = u64;
@@ -69,6 +69,12 @@ pub type SpaceTime = BigInt;
 /// ```
 pub type SectorSize = u64;
 
+const _2_KB: SectorSize = 2 << 10;
+const _8_MB: SectorSize = 8 << 20;
+const _512_MB: SectorSize = 512 << 20;
+const _32_GB: SectorSize = 32 << 30;
+const _64_GB: SectorSize = 2 * (_32_GB);
+
 /// Abbreviates the size as a human-scale number.
 /// This approximates (truncates) the size unless it is a power of 1024.
 pub fn readable_sector_size(mut size: SectorSize) -> String {
@@ -81,96 +87,7 @@ pub fn readable_sector_size(mut size: SectorSize) -> String {
     format!("{}{}", size, UNITS[unit])
 }
 
-/// This ordering, defines mappings to u64 in a way which MUST never change.
-#[doc(hidden)]
-#[repr(u64)]
-#[derive(
-    Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize_repr, Deserialize_repr,
-)]
-pub enum RegisteredProof {
-    StackedDRG32GiBSeal = 1,
-    // StackedDRG32GiBPoSt = 2, // No longer used
-    StackedDRG2KiBSeal = 3,
-    // StackedDRG2KiBPoSt = 4, // No longer used
-    StackedDRG8MiBSeal = 5,
-    // StackedDRG8MiBPoSt = 6, // No longer used
-    StackedDRG512MiBSeal = 7,
-    // StackedDRG512MiBPoSt = 8, // No longer used
-    StackedDRG2KiBWinningPoSt = 9,
-    StackedDRG2KiBWindowPoSt = 10,
-    StackedDRG8MiBWinningPoSt = 11,
-    StackedDRG8MiBWindowPoSt = 12,
-    StackedDRG512MiBWinningPoSt = 13,
-    StackedDRG512MiBWindowPoSt = 14,
-    StackedDRG32GiBWinningPoSt = 15,
-    StackedDRG32GiBWindowPoSt = 16,
-    StackedDRG64GiBSeal = 17,
-    StackedDRG64GiBWinningPoSt = 18,
-    StackedDRG64GiBWindowPoSt = 19,
-}
-
-impl From<RegisteredProof> for u64 {
-    fn from(proof: RegisteredProof) -> Self {
-        match proof {
-            RegisteredProof::StackedDRG32GiBSeal => 1,
-            // RegisteredProof::StackedDRG32GiBPoSt => 2,  // No longer used
-            RegisteredProof::StackedDRG2KiBSeal => 3,
-            // RegisteredProof::StackedDRG2KiBPoSt => 4,  // No longer used
-            RegisteredProof::StackedDRG8MiBSeal => 5,
-            // RegisteredProof::StackedDRG8MiBPoSt => 6,  // No longer used
-            RegisteredProof::StackedDRG512MiBSeal => 7,
-            // RegisteredProof::StackedDRG512MiBPoSt => 8,  // No longer used
-            RegisteredProof::StackedDRG2KiBWinningPoSt => 9,
-            RegisteredProof::StackedDRG2KiBWindowPoSt => 10,
-            RegisteredProof::StackedDRG8MiBWinningPoSt => 11,
-            RegisteredProof::StackedDRG8MiBWindowPoSt => 12,
-            RegisteredProof::StackedDRG512MiBWinningPoSt => 13,
-            RegisteredProof::StackedDRG512MiBWindowPoSt => 14,
-            RegisteredProof::StackedDRG32GiBWinningPoSt => 15,
-            RegisteredProof::StackedDRG32GiBWindowPoSt => 16,
-            RegisteredProof::StackedDRG64GiBSeal => 17,
-            RegisteredProof::StackedDRG64GiBWinningPoSt => 18,
-            RegisteredProof::StackedDRG64GiBWindowPoSt => 19,
-        }
-    }
-}
-
-impl TryFrom<u64> for RegisteredProof {
-    type Error = &'static str;
-
-    fn try_from(value: u64) -> Result<Self, Self::Error> {
-        Ok(match value {
-            1 => RegisteredProof::StackedDRG32GiBSeal,
-            // 2 => RegisteredProof::StackedDRG32GiBPoSt,
-            3 => RegisteredProof::StackedDRG2KiBSeal,
-            // 4 => RegisteredProof::StackedDRG2KiBPoSt,
-            5 => RegisteredProof::StackedDRG8MiBSeal,
-            // 6 => RegisteredProof::StackedDRG8MiBPoSt,
-            7 => RegisteredProof::StackedDRG512MiBSeal,
-            // 8 => RegisteredProof::StackedDRG512MiBPoSt,
-            9 => RegisteredProof::StackedDRG2KiBWinningPoSt,
-            10 => RegisteredProof::StackedDRG2KiBWindowPoSt,
-            11 => RegisteredProof::StackedDRG8MiBWinningPoSt,
-            12 => RegisteredProof::StackedDRG8MiBWindowPoSt,
-            13 => RegisteredProof::StackedDRG512MiBWinningPoSt,
-            14 => RegisteredProof::StackedDRG512MiBWindowPoSt,
-            15 => RegisteredProof::StackedDRG32GiBWinningPoSt,
-            16 => RegisteredProof::StackedDRG32GiBWindowPoSt,
-            17 => RegisteredProof::StackedDRG64GiBSeal,
-            18 => RegisteredProof::StackedDRG64GiBWinningPoSt,
-            19 => RegisteredProof::StackedDRG64GiBWindowPoSt,
-            _ => return Err("unexpected registered proof"),
-        })
-    }
-}
-
-const TWO_KB: SectorSize = 2 << 10;
-const EIGHT_MB: SectorSize = 8 << 20;
-const FIVE_ONE_TWO_MB: SectorSize = 512 << 20;
-const THIRD_TWO_GB: SectorSize = 32 << 30;
-const SIXTY_TWO_GB: SectorSize = 2 * (THIRD_TWO_GB);
-
-/// `SectorSize` to `RegisteredProof` meet unknown sector size
+/// `SectorSize` to `RegisteredSealProof` meet unknown sector size
 #[derive(Debug, Clone)]
 pub struct UnknownSectorSizeErr(SectorSize);
 
@@ -182,29 +99,87 @@ impl fmt::Display for UnknownSectorSizeErr {
 
 impl error::Error for UnknownSectorSizeErr {}
 
-impl RegisteredProof {
-    /// return the sector size of proof
+// This ordering, defines mappings to UInt in a way which MUST never change.
+/// define `RegisteredSealProof` same as `ffi::RegisteredSealProof` in filecoin-proofs-api
+/// we use our local type for isolate bounds for `filecoin-proofs-api` to reduce influence.
+/// And other hand, this type provide cbor encode/decode
+#[doc(hidden)]
+#[repr(u64)]
+#[derive(
+    Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize_repr, Deserialize_repr,
+)]
+pub enum RegisteredSealProof {
+    StackedDrg2KiBV1 = 0,
+    StackedDrg8MiBV1 = 1,
+    StackedDrg512MiBV1 = 2,
+    StackedDrg32GiBV1 = 3,
+    StackedDrg64GiBV1 = 4,
+}
+
+impl From<RegisteredSealProof> for u64 {
+    fn from(proof: RegisteredSealProof) -> Self {
+        match proof {
+            RegisteredSealProof::StackedDrg2KiBV1 => 0,
+            RegisteredSealProof::StackedDrg8MiBV1 => 1,
+            RegisteredSealProof::StackedDrg512MiBV1 => 2,
+            RegisteredSealProof::StackedDrg32GiBV1 => 3,
+            RegisteredSealProof::StackedDrg64GiBV1 => 4,
+        }
+    }
+}
+
+impl TryFrom<u64> for RegisteredSealProof {
+    type Error = &'static str;
+
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        Ok(match value {
+            0 => RegisteredSealProof::StackedDrg2KiBV1,
+            1 => RegisteredSealProof::StackedDrg8MiBV1,
+            2 => RegisteredSealProof::StackedDrg512MiBV1,
+            3 => RegisteredSealProof::StackedDrg32GiBV1,
+            4 => RegisteredSealProof::StackedDrg64GiBV1,
+            _ => return Err("unexpected registered seal proof"),
+        })
+    }
+}
+
+/// Implement CBOR serialization for RegisteredSealProof.
+impl encode::Encode for RegisteredSealProof {
+    fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
+        e.u64(u64::from(*self))?.ok()
+    }
+}
+
+/// Implement CBOR deserialization for RegisteredSealProof.
+impl<'b> decode::Decode<'b> for RegisteredSealProof {
+    fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        let proof = d.u64()?;
+        Ok(RegisteredSealProof::try_from(proof)
+            .map_err(|e| decode::Error::TypeMismatch(proof as u8, e))?)
+    }
+}
+
+impl RegisteredSealProof {
+    /// Return the sector size of Seal Proof.
     pub fn sector_size(self) -> SectorSize {
-        // Resolve to seal proof and then compute size from that.
-        let seal_proof = self.registered_seal_proof();
-        match seal_proof {
-            RegisteredProof::StackedDRG64GiBSeal => SIXTY_TWO_GB,
-            RegisteredProof::StackedDRG32GiBSeal => THIRD_TWO_GB,
-            RegisteredProof::StackedDRG2KiBSeal => TWO_KB,
-            RegisteredProof::StackedDRG8MiBSeal => EIGHT_MB,
-            RegisteredProof::StackedDRG512MiBSeal => FIVE_ONE_TWO_MB,
-            _ => unreachable!("registered_seal_proof must in above 4 types"),
+        match self {
+            RegisteredSealProof::StackedDrg2KiBV1 => _2_KB,
+            RegisteredSealProof::StackedDrg8MiBV1 => _8_MB,
+            RegisteredSealProof::StackedDrg512MiBV1 => _512_MB,
+            RegisteredSealProof::StackedDrg32GiBV1 => _32_GB,
+            RegisteredSealProof::StackedDrg64GiBV1 => _64_GB,
         }
     }
 
-    ///
+    /// Create SealProof from a number(Should be SectorSize).
+    /// If the number is not a valid SectorSize, it would return an error.
     pub fn from_sector_size(ssize: SectorSize) -> Result<Self, UnknownSectorSizeErr> {
         match ssize {
-            TWO_KB => Ok(RegisteredProof::StackedDRG2KiBSeal),
-            EIGHT_MB => Ok(RegisteredProof::StackedDRG8MiBSeal),
-            FIVE_ONE_TWO_MB => Ok(RegisteredProof::StackedDRG512MiBSeal),
-            THIRD_TWO_GB => Ok(RegisteredProof::StackedDRG32GiBSeal),
-            SIXTY_TWO_GB => Ok(RegisteredProof::StackedDRG64GiBSeal),
+            _2_KB => Ok(RegisteredSealProof::StackedDrg2KiBV1),
+            _8_MB => Ok(RegisteredSealProof::StackedDrg8MiBV1),
+            _512_MB => Ok(RegisteredSealProof::StackedDrg512MiBV1),
+            _32_GB => Ok(RegisteredSealProof::StackedDrg32GiBV1),
+            _64_GB => Ok(RegisteredSealProof::StackedDrg64GiBV1),
             _ => Err(UnknownSectorSizeErr(ssize)),
         }
     }
@@ -212,120 +187,157 @@ impl RegisteredProof {
     /// Returns the partition size, in sectors, associated with a proof type.
     /// The partition size is the number of sectors proven in a single PoSt proof.
     pub fn window_post_partition_sectors(self) -> u64 {
-        // Resolve to seal proof and then compute size from that.
-        let seal_proof = self.registered_seal_proof();
-        match seal_proof {
+        match self {
             // These numbers must match those used by the proofs library.
             // See https://github.com/filecoin-project/rust-fil-proofs/blob/master/filecoin-proofs/src/constants.rs#L85
-            RegisteredProof::StackedDRG64GiBSeal => 2300,
-            RegisteredProof::StackedDRG32GiBSeal => 2349,
-            RegisteredProof::StackedDRG2KiBSeal
-            | RegisteredProof::StackedDRG8MiBSeal
-            | RegisteredProof::StackedDRG512MiBSeal => 2,
-            _ => unreachable!("registered_seal_proof must in above 4 types"),
+            RegisteredSealProof::StackedDrg64GiBV1 => 2300,
+            RegisteredSealProof::StackedDrg32GiBV1 => 2349,
+            RegisteredSealProof::StackedDrg2KiBV1
+            | RegisteredSealProof::StackedDrg8MiBV1
+            | RegisteredSealProof::StackedDrg512MiBV1 => 2,
         }
     }
 
-    /// RegisteredWinningPoStProof produces the PoSt-specific RegisteredProof
-    /// corresponding to the receiving RegisteredProof.
-    pub fn registered_winning_post_proof(self) -> Self {
+    /// Return the PoSt-specific RegisteredSealProof corresponding to the receiving RegisteredSealProof.
+    pub fn registered_winning_post_proof(self) -> RegisteredPoStProof {
         match self {
-            RegisteredProof::StackedDRG64GiBSeal
-            | RegisteredProof::StackedDRG64GiBWindowPoSt
-            | RegisteredProof::StackedDRG64GiBWinningPoSt => {
-                RegisteredProof::StackedDRG64GiBWinningPoSt
+            RegisteredSealProof::StackedDrg2KiBV1 => RegisteredPoStProof::StackedDrgWinning2KiBV1,
+            RegisteredSealProof::StackedDrg8MiBV1 => RegisteredPoStProof::StackedDrgWinning8MiBV1,
+            RegisteredSealProof::StackedDrg512MiBV1 => {
+                RegisteredPoStProof::StackedDrgWinning512MiBV1
             }
-            RegisteredProof::StackedDRG32GiBSeal
-            | RegisteredProof::StackedDRG32GiBWindowPoSt
-            | RegisteredProof::StackedDRG32GiBWinningPoSt => {
-                RegisteredProof::StackedDRG32GiBWinningPoSt
-            }
-            RegisteredProof::StackedDRG2KiBSeal
-            | RegisteredProof::StackedDRG2KiBWindowPoSt
-            | RegisteredProof::StackedDRG2KiBWinningPoSt => {
-                RegisteredProof::StackedDRG2KiBWinningPoSt
-            }
-            RegisteredProof::StackedDRG8MiBSeal
-            | RegisteredProof::StackedDRG8MiBWindowPoSt
-            | RegisteredProof::StackedDRG8MiBWinningPoSt => {
-                RegisteredProof::StackedDRG8MiBWinningPoSt
-            }
-            RegisteredProof::StackedDRG512MiBSeal
-            | RegisteredProof::StackedDRG512MiBWindowPoSt
-            | RegisteredProof::StackedDRG512MiBWinningPoSt => {
-                RegisteredProof::StackedDRG512MiBWinningPoSt
-            }
+            RegisteredSealProof::StackedDrg32GiBV1 => RegisteredPoStProof::StackedDrgWinning32GiBV1,
+            RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWinning64GiBV1,
         }
     }
 
-    /// RegisteredWindowPoStProof produces the PoSt-specific RegisteredProof
-    /// corresponding to the receiving RegisteredProof.
-    pub fn registered_window_post_proof(self) -> Self {
+    /// Return the PoSt-specific RegisteredSealProof corresponding to the receiving RegisteredSealProof.
+    pub fn registered_window_post_proof(self) -> RegisteredPoStProof {
         match self {
-            RegisteredProof::StackedDRG64GiBSeal
-            | RegisteredProof::StackedDRG64GiBWinningPoSt
-            | RegisteredProof::StackedDRG64GiBWindowPoSt => {
-                RegisteredProof::StackedDRG64GiBWindowPoSt
+            RegisteredSealProof::StackedDrg2KiBV1 => RegisteredPoStProof::StackedDrgWindow2KiBV1,
+            RegisteredSealProof::StackedDrg8MiBV1 => RegisteredPoStProof::StackedDrgWindow8MiBV1,
+            RegisteredSealProof::StackedDrg512MiBV1 => {
+                RegisteredPoStProof::StackedDrgWindow512MiBV1
             }
-            RegisteredProof::StackedDRG32GiBSeal
-            | RegisteredProof::StackedDRG32GiBWinningPoSt
-            | RegisteredProof::StackedDRG32GiBWindowPoSt => {
-                RegisteredProof::StackedDRG32GiBWindowPoSt
-            }
-            RegisteredProof::StackedDRG2KiBSeal
-            | RegisteredProof::StackedDRG2KiBWinningPoSt
-            | RegisteredProof::StackedDRG2KiBWindowPoSt => {
-                RegisteredProof::StackedDRG2KiBWindowPoSt
-            }
-            RegisteredProof::StackedDRG8MiBSeal
-            | RegisteredProof::StackedDRG8MiBWinningPoSt
-            | RegisteredProof::StackedDRG8MiBWindowPoSt => {
-                RegisteredProof::StackedDRG8MiBWindowPoSt
-            }
-            RegisteredProof::StackedDRG512MiBSeal
-            | RegisteredProof::StackedDRG512MiBWinningPoSt
-            | RegisteredProof::StackedDRG512MiBWindowPoSt => {
-                RegisteredProof::StackedDRG512MiBWindowPoSt
-            }
+            RegisteredSealProof::StackedDrg32GiBV1 => RegisteredPoStProof::StackedDrgWindow32GiBV1,
+            RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWindow64GiBV1,
         }
     }
 
-    /// RegisteredSealProof produces the seal-specific RegisteredProof
-    /// corresponding to the receiving RegisteredProof.
-    pub fn registered_seal_proof(self) -> Self {
-        match self {
-            RegisteredProof::StackedDRG64GiBSeal
-            | RegisteredProof::StackedDRG64GiBWindowPoSt
-            | RegisteredProof::StackedDRG64GiBWinningPoSt => RegisteredProof::StackedDRG64GiBSeal,
-            RegisteredProof::StackedDRG32GiBSeal
-            | RegisteredProof::StackedDRG32GiBWindowPoSt
-            | RegisteredProof::StackedDRG32GiBWinningPoSt => RegisteredProof::StackedDRG32GiBSeal,
-            RegisteredProof::StackedDRG2KiBSeal
-            | RegisteredProof::StackedDRG2KiBWindowPoSt
-            | RegisteredProof::StackedDRG2KiBWinningPoSt => RegisteredProof::StackedDRG2KiBSeal,
-            RegisteredProof::StackedDRG8MiBSeal
-            | RegisteredProof::StackedDRG8MiBWindowPoSt
-            | RegisteredProof::StackedDRG8MiBWinningPoSt => RegisteredProof::StackedDRG8MiBSeal,
-            RegisteredProof::StackedDRG512MiBSeal
-            | RegisteredProof::StackedDRG512MiBWindowPoSt
-            | RegisteredProof::StackedDRG512MiBWinningPoSt => RegisteredProof::StackedDRG512MiBSeal,
+    /// Return the maximum duration a sector sealed with this proof may exist between activation and expiration.
+    pub const fn sector_maximum_lifetime(self) -> ChainEpoch {
+        // For all Stacked DRG sectors, the max is 5 years
+        const EPOCHS_PER_YEAR: ChainEpoch = 1_262_277;
+        5 * EPOCHS_PER_YEAR
+    }
+}
+
+/// define `StackedDrgWinning2KiBV1` same as `ffi::StackedDrgWinning2KiBV1` in filecoin-proofs-api
+/// we use our local type for isolate bounds for `filecoin-proofs-api` to reduce influence.
+/// And other hand, this type provide cbor encode/decode
+#[doc(hidden)]
+#[repr(u64)]
+#[derive(
+    Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize_repr, Deserialize_repr,
+)]
+pub enum RegisteredPoStProof {
+    StackedDrgWinning2KiBV1 = 0,
+    StackedDrgWinning8MiBV1 = 1,
+    StackedDrgWinning512MiBV1 = 2,
+    StackedDrgWinning32GiBV1 = 3,
+    StackedDrgWinning64GiBV1 = 4,
+    StackedDrgWindow2KiBV1 = 5,
+    StackedDrgWindow8MiBV1 = 6,
+    StackedDrgWindow512MiBV1 = 7,
+    StackedDrgWindow32GiBV1 = 8,
+    StackedDrgWindow64GiBV1 = 9,
+}
+
+impl From<RegisteredPoStProof> for u64 {
+    fn from(proof: RegisteredPoStProof) -> Self {
+        match proof {
+            RegisteredPoStProof::StackedDrgWinning2KiBV1 => 0,
+            RegisteredPoStProof::StackedDrgWinning8MiBV1 => 1,
+            RegisteredPoStProof::StackedDrgWinning512MiBV1 => 2,
+            RegisteredPoStProof::StackedDrgWinning32GiBV1 => 3,
+            RegisteredPoStProof::StackedDrgWinning64GiBV1 => 4,
+            RegisteredPoStProof::StackedDrgWindow2KiBV1 => 5,
+            RegisteredPoStProof::StackedDrgWindow8MiBV1 => 6,
+            RegisteredPoStProof::StackedDrgWindow512MiBV1 => 7,
+            RegisteredPoStProof::StackedDrgWindow32GiBV1 => 8,
+            RegisteredPoStProof::StackedDrgWindow64GiBV1 => 9,
         }
     }
 }
 
-// Implement CBOR serialization for RegisteredProof.
-impl encode::Encode for RegisteredProof {
+impl TryFrom<u64> for RegisteredPoStProof {
+    type Error = &'static str;
+
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        Ok(match value {
+            0 => RegisteredPoStProof::StackedDrgWinning2KiBV1,
+            1 => RegisteredPoStProof::StackedDrgWinning8MiBV1,
+            2 => RegisteredPoStProof::StackedDrgWinning512MiBV1,
+            3 => RegisteredPoStProof::StackedDrgWinning32GiBV1,
+            4 => RegisteredPoStProof::StackedDrgWinning64GiBV1,
+            5 => RegisteredPoStProof::StackedDrgWindow2KiBV1,
+            6 => RegisteredPoStProof::StackedDrgWindow8MiBV1,
+            7 => RegisteredPoStProof::StackedDrgWindow512MiBV1,
+            8 => RegisteredPoStProof::StackedDrgWindow32GiBV1,
+            9 => RegisteredPoStProof::StackedDrgWindow64GiBV1,
+            _ => return Err("unexpected registered post proof"),
+        })
+    }
+}
+
+/// Implement CBOR serialization for RegisteredPoStProof.
+impl encode::Encode for RegisteredPoStProof {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
         e.u64(u64::from(*self))?.ok()
     }
 }
 
-// Implement CBOR deserialization for RegisteredProof.
-impl<'b> decode::Decode<'b> for RegisteredProof {
+/// Implement CBOR deserialization for RegisteredPoStProof.
+impl<'b> decode::Decode<'b> for RegisteredPoStProof {
     fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
         let proof = d.u64()?;
-        Ok(RegisteredProof::try_from(proof)
+        Ok(RegisteredPoStProof::try_from(proof)
             .map_err(|e| decode::Error::TypeMismatch(proof as u8, e))?)
+    }
+}
+
+impl RegisteredPoStProof {
+    /// Convert PostProof to SealProof
+    pub fn registered_seal_proof(self) -> RegisteredSealProof {
+        match self {
+            RegisteredPoStProof::StackedDrgWinning2KiBV1
+            | RegisteredPoStProof::StackedDrgWindow2KiBV1 => RegisteredSealProof::StackedDrg2KiBV1,
+            RegisteredPoStProof::StackedDrgWinning8MiBV1
+            | RegisteredPoStProof::StackedDrgWindow8MiBV1 => RegisteredSealProof::StackedDrg8MiBV1,
+            RegisteredPoStProof::StackedDrgWinning512MiBV1
+            | RegisteredPoStProof::StackedDrgWindow512MiBV1 => {
+                RegisteredSealProof::StackedDrg512MiBV1
+            }
+            RegisteredPoStProof::StackedDrgWinning32GiBV1
+            | RegisteredPoStProof::StackedDrgWindow32GiBV1 => {
+                RegisteredSealProof::StackedDrg32GiBV1
+            }
+            RegisteredPoStProof::StackedDrgWinning64GiBV1
+            | RegisteredPoStProof::StackedDrgWindow64GiBV1 => {
+                RegisteredSealProof::StackedDrg64GiBV1
+            }
+        }
+    }
+
+    /// Return Sector size for PostProof
+    pub fn sector_size(self) -> SectorSize {
+        self.registered_seal_proof().sector_size()
+    }
+
+    /// Returns the partition size, in sectors, associated with a proof type.
+    /// The partition size is the number of sectors proven in a single PoSt proof.
+    pub fn window_post_partition_sectors(self) -> u64 {
+        self.registered_seal_proof().window_post_partition_sectors()
     }
 }
 
@@ -334,8 +346,7 @@ impl<'b> decode::Decode<'b> for RegisteredProof {
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SectorInfo {
-    /// RegisteredProof used when sealing - needs to be mapped to PoSt registered proof when used to verify a PoSt
-    pub registered_proof: RegisteredProof,
+    pub seal_proof: RegisteredSealProof,
     pub sector_number: SectorNumber,
     #[serde(rename = "SealedCID")]
     pub sealed_cid: Cid,
@@ -345,7 +356,7 @@ pub struct SectorInfo {
 impl encode::Encode for SectorInfo {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
         e.array(3)?
-            .encode(&self.registered_proof)?
+            .encode(&self.seal_proof)?
             .u64(self.sector_number)?
             .encode(&self.sealed_cid)?
             .ok()
@@ -358,7 +369,7 @@ impl<'b> decode::Decode<'b> for SectorInfo {
         let array_len = d.array()?;
         assert_eq!(array_len, Some(3));
         Ok(SectorInfo {
-            registered_proof: d.decode::<RegisteredProof>()?,
+            seal_proof: d.decode::<RegisteredSealProof>()?,
             sector_number: d.u64()?,
             sealed_cid: d.decode::<Cid>()?,
         })

@@ -8,7 +8,7 @@ use plum_address::Address;
 use plum_bigint::bigint_json;
 use plum_bitfield::BitField;
 use plum_peerid::PeerId;
-use plum_sector::{RegisteredProof, SectorNumber, SectorSize};
+use plum_sector::{RegisteredSealProof, SectorNumber, SectorSize};
 use plum_types::{ChainEpoch, DealId, DealWeight, TokenAmount};
 
 // Balance of Miner Actor should be greater than or equal to
@@ -139,7 +139,7 @@ pub struct MinerInfo {
     pub peer_id: PeerId,
 
     /// The proof type used by this miner for sealing sectors.
-    pub seal_proof_type: RegisteredProof,
+    pub seal_proof_type: RegisteredSealProof,
 
     /// Amount of space in each sector committed by this miner.
     /// This is computed from the proof type and represented here redundantly.
@@ -174,7 +174,7 @@ impl<'b> minicbor::Decode<'b> for MinerInfo {
             worker: d.decode::<Address>()?,
             pending_worker_key: d.decode::<WorkerKeyChange>()?,
             peer_id: d.decode::<plum_peerid::PeerIdWrapper>()?.into_inner(),
-            seal_proof_type: d.decode::<RegisteredProof>()?,
+            seal_proof_type: d.decode::<RegisteredSealProof>()?,
             sector_size: d.decode::<SectorSize>()?,
             window_post_partition_sectors: d.decode::<u64>()?,
         })
@@ -204,7 +204,7 @@ pub struct WorkerKeyChange {
 #[cbor(array)]
 pub struct SectorPreCommitInfo {
     #[n(0)]
-    pub registered_proof: RegisteredProof,
+    pub registered_proof: RegisteredSealProof,
     #[n(1)]
     pub sector_number: SectorNumber,
     /// CommR
