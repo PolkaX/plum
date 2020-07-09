@@ -161,7 +161,7 @@ impl<'b> decode::Decode<'b> for RegisteredSealProof {
 
 impl RegisteredSealProof {
     /// Return the sector size of Seal Proof.
-    pub fn sector_size(&self) -> SectorSize {
+    pub fn sector_size(self) -> SectorSize {
         match self {
             RegisteredSealProof::StackedDrg2KiBV1 => _2_KB,
             RegisteredSealProof::StackedDrg8MiBV1 => _8_MB,
@@ -199,7 +199,7 @@ impl RegisteredSealProof {
     }
 
     /// Return the PoSt-specific RegisteredSealProof corresponding to the receiving RegisteredSealProof.
-    pub fn registered_winning_post_proof(&self) -> RegisteredPoStProof {
+    pub fn registered_winning_post_proof(self) -> RegisteredPoStProof {
         match self {
             RegisteredSealProof::StackedDrg64GiBV1 => RegisteredPoStProof::StackedDrgWinning64GiBV1,
             RegisteredSealProof::StackedDrg32GiBV1 => RegisteredPoStProof::StackedDrgWinning32GiBV1,
@@ -330,13 +330,13 @@ impl RegisteredPoStProof {
     }
 
     /// Return Sector size for PostProof
-    pub fn sector_size(&self) -> SectorSize {
+    pub fn sector_size(self) -> SectorSize {
         self.registered_seal_proof().sector_size()
     }
 
     /// Returns the partition size, in sectors, associated with a proof type.
     /// The partition size is the number of sectors proven in a single PoSt proof.
-    pub fn window_post_partition_sectors(&self) -> u64 {
+    pub fn window_post_partition_sectors(self) -> u64 {
         self.registered_seal_proof().window_post_partition_sectors()
     }
 }
