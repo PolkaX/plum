@@ -271,7 +271,6 @@ impl RegisteredSealProof {
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SectorInfo {
-    /// RegisteredProof used when sealing - needs to be mapped to PoSt registered proof when used to verify a PoSt
     pub seal_proof: RegisteredSealProof,
     pub sector_number: SectorNumber,
     #[serde(rename = "SealedCID")]
