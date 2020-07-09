@@ -14,10 +14,13 @@ pub struct Amt<'a, BS> {
     store: &'a BS,
 }
 
-impl<'a, BS> Amt<'a, BS>
-where
-    BS: BlockStore,
-{
+impl<'a, BS: BlockStore> PartialEq for Amt<'a, BS> {
+    fn eq(&self, other: &Self) -> bool {
+        self.root == other.root
+    }
+}
+
+impl<'a, BS: BlockStore> Amt<'a, BS> {
     ///
     pub fn new(store: &'a BS) -> Self {
         Self {
