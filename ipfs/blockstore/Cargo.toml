@@ -6,7 +6,7 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
+anyhow = "1.0"
 cid = { version = "0.5", features = ["cbor", "json"] }
-thiserror = "1.0"
 
 ipfs-block = { path = "../block" }
