@@ -2,8 +2,7 @@
 
 use cid::Cid;
 
-use ipfs_blockstore::BlockStore;
-use ipld::IpldValue;
+use ipld::{IpldStore, IpldValue};
 
 use crate::node::{Link, Node};
 use crate::root::Root;
@@ -26,20 +25,20 @@ pub const MAX_INDEX: usize = 1 << 48;
 
 ///
 #[derive(Debug)]
-pub struct Amt<'a, BS> {
+pub struct Amt<'a, S> {
     root: Root,
-    store: &'a BS,
+    store: &'a S,
 }
 
-impl<'a, BS: BlockStore> PartialEq for Amt<'a, BS> {
+impl<'a, S: IpldStore> PartialEq for Amt<'a, S> {
     fn eq(&self, other: &Self) -> bool {
         self.root == other.root
     }
 }
 
-impl<'a, BS: BlockStore> Amt<'a, BS> {
+impl<'a, S: IpldStore> Amt<'a, S> {
     ///
-    pub fn new(store: &'a BS) -> Self {
+    pub fn new(store: &'a S) -> Self {
         Self {
             root: Root::default(),
             store,
@@ -47,12 +46,12 @@ impl<'a, BS: BlockStore> Amt<'a, BS> {
     }
 
     ///
-    pub fn load(store: &'a BS, cid: &Cid) -> Result<Self, String> {
+    pub fn load(store: &'a S, cid: &Cid) -> Result<Self, String> {
         todo!()
     }
 
     ///
-    pub fn new_with_slice<T>(store: &'a BS, values: T) -> Result<Cid, String>
+    pub fn new_with_slice<T>(store: &'a S, values: T) -> Result<Cid, String>
     where
         T: IntoIterator<Item = IpldValue>,
     {
@@ -146,7 +145,7 @@ impl<'a, BS: BlockStore> Amt<'a, BS> {
                     Some(Link::Cid(cid)) => todo!(),
                     Some(Link::Cache(node)) => *node.clone(),
                     _ => unreachable!(),
-                }
+                },
                 Node::Leaves(_) => unreachable!(),
             };
             self.root.node = sub_node;

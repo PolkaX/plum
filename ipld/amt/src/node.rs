@@ -3,8 +3,7 @@
 use cid::Cid;
 use minicbor::{decode, encode, Decoder, Encoder};
 
-use ipfs_blockstore::BlockStore;
-use ipld::IpldValue;
+use ipld::{IpldStore, IpldValue};
 
 ///
 #[derive(Clone, PartialEq, Debug)]
@@ -48,9 +47,9 @@ impl<'b> decode::Decode<'b> for Node {
 
 impl Node {
     ///
-    pub fn get<BS: BlockStore>(
+    pub fn get<S: IpldStore>(
         &self,
-        store: &BS,
+        store: &S,
         height: u64,
         index: usize,
     ) -> Result<Option<IpldValue>, String> {
@@ -58,9 +57,9 @@ impl Node {
     }
 
     ///
-    pub fn set<BS: BlockStore>(
+    pub fn set<S: IpldStore>(
         &mut self,
-        store: &BS,
+        store: &S,
         height: u64,
         index: usize,
         value: IpldValue,
@@ -68,9 +67,9 @@ impl Node {
         todo!()
     }
 
-    pub fn delete<BS: BlockStore>(
+    pub fn delete<S: IpldStore>(
         &mut self,
-        store: &BS,
+        store: &S,
         height: u64,
         index: usize,
     ) -> Result<Option<IpldValue>, String> {
@@ -83,7 +82,7 @@ impl Node {
     }
 
     ///
-    pub fn flush<BS>(&mut self, store: &BS, height: u64) -> Result<(), String> {
+    pub fn flush<S: IpldStore>(&mut self, store: &S, height: u64) -> Result<(), String> {
         todo!()
     }
 }
