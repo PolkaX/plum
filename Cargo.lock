@@ -1259,7 +1259,6 @@ dependencies = [
  "ipfs-blockstore",
  "minicbor",
  "multibase",
- "multihash",
  "serde",
  "serde_json",
  "thiserror",
