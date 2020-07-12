@@ -1,14 +1,16 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-//!
+//! The implementation of IPLD data model.
 
 #![deny(missing_docs)]
 
 mod error;
+mod store;
 #[macro_use]
 mod value;
 
 pub use self::error::IpldError;
+pub use self::store::IpldStore;
 pub use self::value::{Bytes, Integer, IpldValue, Map, MapKey};
 
 /// Convert JSON object into an IPLD value.
