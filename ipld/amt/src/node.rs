@@ -1,5 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use anyhow::Result;
 use cid::Cid;
 use minicbor::{decode, encode, Decoder, Encoder};
 
@@ -52,7 +53,7 @@ impl Node {
         store: &S,
         height: u64,
         index: usize,
-    ) -> Result<Option<IpldValue>, String> {
+    ) -> Result<Option<IpldValue>> {
         todo!()
     }
 
@@ -63,7 +64,7 @@ impl Node {
         height: u64,
         index: usize,
         value: IpldValue,
-    ) -> Result<bool, String> {
+    ) -> Result<bool> {
         todo!()
     }
 
@@ -72,7 +73,7 @@ impl Node {
         store: &S,
         height: u64,
         index: usize,
-    ) -> Result<Option<IpldValue>, String> {
+    ) -> Result<Option<IpldValue>> {
         todo!()
     }
 
@@ -82,7 +83,7 @@ impl Node {
     }
 
     ///
-    pub fn flush<S: IpldStore>(&mut self, store: &S, height: u64) -> Result<(), String> {
+    pub fn flush<S: IpldStore>(&mut self, store: &S, height: u64) -> Result<()> {
         todo!()
     }
 }

@@ -6,6 +6,7 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
+anyhow = "1.0"
 cid = { version = "0.5", features = ["cbor", "json"] }
 minicbor = { version = "0.4", features = ["std"] }
 thiserror = "1.0"
