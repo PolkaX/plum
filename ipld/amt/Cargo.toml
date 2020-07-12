@@ -8,6 +8,7 @@ license = "GPL-3.0"
 [dependencies]
 cid = { version = "0.5", features = ["cbor", "json"] }
 minicbor = { version = "0.4", features = ["std"] }
+thiserror = "1.0"
 
 ipfs-block = { path = "../../ipfs/block" }
 ipfs-blockstore = { path = "../../ipfs/blockstore" }

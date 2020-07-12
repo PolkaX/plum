@@ -1267,6 +1267,7 @@ dependencies = [
  "ipfs-blockstore",
  "ipld",
  "minicbor",
+ "thiserror",
 ]
 
 [[package]]

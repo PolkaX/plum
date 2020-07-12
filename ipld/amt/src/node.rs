@@ -3,19 +3,8 @@
 use cid::Cid;
 use minicbor::{decode, encode, Decoder, Encoder};
 
+use ipfs_blockstore::BlockStore;
 use ipld::IpldValue;
-
-/// The only configurable parameter of an IPLD Vector.
-/// This parameter must be consistent across all nodes in a Vector.
-///
-/// Mutations cannot involve changes in width or
-/// joining multiple parts of a Vector with differing width values.
-///
-/// `WIDTH` must be an integer, of at least 2.
-pub const WIDTH: usize = 8;
-
-///
-pub const MAX_INDEX: u64 = 1 << 48; // fairly arbitrary, but I don't want to overflow/underflow in nodesForHeight
 
 ///
 #[derive(Clone, PartialEq, Debug)]
@@ -34,12 +23,12 @@ pub enum Node {
     ///
     Links(Vec<Link>),
     ///
-    Values(Vec<IpldValue>),
+    Leaves(Vec<IpldValue>),
 }
 
 impl Default for Node {
     fn default() -> Self {
-        Node::Values(vec![])
+        Node::Leaves(vec![])
     }
 }
 
@@ -53,6 +42,48 @@ impl encode::Encode for Node {
 // Implement CBOR deserialization for Node.
 impl<'b> decode::Decode<'b> for Node {
     fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
+        todo!()
+    }
+}
+
+impl Node {
+    ///
+    pub fn get<BS: BlockStore>(
+        &self,
+        store: &BS,
+        height: u64,
+        index: usize,
+    ) -> Result<Option<IpldValue>, String> {
+        todo!()
+    }
+
+    ///
+    pub fn set<BS: BlockStore>(
+        &mut self,
+        store: &BS,
+        height: u64,
+        index: usize,
+        value: IpldValue,
+    ) -> Result<bool, String> {
+        todo!()
+    }
+
+    pub fn delete<BS: BlockStore>(
+        &mut self,
+        store: &BS,
+        height: u64,
+        index: usize,
+    ) -> Result<Option<IpldValue>, String> {
+        todo!()
+    }
+
+    ///
+    pub fn is_empty(&self) -> bool {
+        todo!()
+    }
+
+    ///
+    pub fn flush<BS>(&mut self, store: &BS, height: u64) -> Result<(), String> {
         todo!()
     }
 }
