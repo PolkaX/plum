@@ -117,3 +117,16 @@ mod node;
 mod root;
 
 pub use self::amt::Amt;
+
+/// The only configurable parameter of an IPLD Vector.
+/// This parameter must be consistent across all nodes in a Vector.
+///
+/// Mutations cannot involve changes in width or
+/// joining multiple parts of a Vector with differing width values.
+///
+/// `WIDTH` must be an integer, of at least 2.
+pub const WIDTH: usize = 8;
+
+fn nodes_for_height(height: u64) -> usize {
+    WIDTH.pow(height as u32)
+}

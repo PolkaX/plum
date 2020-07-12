@@ -8,15 +8,7 @@ use ipld::{IpldStore, IpldValue};
 use crate::error::IpldAmtError;
 use crate::node::{Link, Node};
 use crate::root::Root;
-
-/// The only configurable parameter of an IPLD Vector.
-/// This parameter must be consistent across all nodes in a Vector.
-///
-/// Mutations cannot involve changes in width or
-/// joining multiple parts of a Vector with differing width values.
-///
-/// `WIDTH` must be an integer, of at least 2.
-pub const WIDTH: usize = 8;
+use crate::nodes_for_height;
 
 /// The maximum possible index for a tree.
 // width^(height+1) = 1 << 48
@@ -27,20 +19,20 @@ pub const MAX_INDEX: usize = 1 << 48;
 
 ///
 #[derive(Debug)]
-pub struct Amt<S> {
+pub struct Amt<'a, S> {
     root: Root,
-    store: S,
+    store: &'a mut S,
 }
 
-impl<S: IpldStore> PartialEq for Amt<S> {
+impl<'a, S: IpldStore> PartialEq for Amt<'a, S> {
     fn eq(&self, other: &Self) -> bool {
         self.root == other.root
     }
 }
 
-impl<S: IpldStore> Amt<S> {
+impl<'a, S: IpldStore> Amt<'a, S> {
     ///
-    pub fn new(store: S) -> Self {
+    pub fn new(store: &'a mut S) -> Self {
         Self {
             root: Root::default(),
             store,
@@ -48,13 +40,13 @@ impl<S: IpldStore> Amt<S> {
     }
 
     ///
-    pub fn load(store: S, cid: &Cid) -> Result<Self> {
-        let root = IpldStore::get(&store, cid)?.ok_or_else(|| IpldAmtError::NotFound)?;
+    pub fn load(store: &'a mut S, cid: &Cid) -> Result<Self> {
+        let root = IpldStore::get(store, cid)?.ok_or_else(|| IpldAmtError::NotFound)?;
         Ok(Self { root, store })
     }
 
     ///
-    pub fn new_with_slice<T>(store: S, values: T) -> Result<Cid>
+    pub fn new_with_slice<T>(store: &'a mut S, values: T) -> Result<Cid>
     where
         T: IntoIterator<Item = IpldValue>,
     {
@@ -74,7 +66,7 @@ impl<S: IpldStore> Amt<S> {
     }
 
     ///
-    pub fn get(&self, index: usize) -> Result<Option<IpldValue>> {
+    pub fn get(&self, index: usize) -> Result<Option<&IpldValue>> {
         if index >= MAX_INDEX {
             return Err(anyhow!("out of range"));
         }
@@ -83,7 +75,7 @@ impl<S: IpldStore> Amt<S> {
             return Ok(None);
         }
 
-        self.root.node.get(&self.store, self.height(), index)
+        self.root.node.get(self.store, self.height(), index)
     }
 
     ///
@@ -94,9 +86,9 @@ impl<S: IpldStore> Amt<S> {
 
         while index >= nodes_for_height(self.height() + 1) {
             if !self.root.node.is_empty() {
-                self.root.node.flush(&self.store, self.height())?;
+                self.root.node.flush(self.store, self.height())?;
 
-                let cid = IpldStore::put(&mut self.store, &self.root)?;
+                let cid = IpldStore::put(self.store, &self.root)?;
                 self.root.node = Node::Links(vec![Link::Cid(cid)]);
             } else {
                 self.root.node = Node::Links(vec![]);
@@ -108,7 +100,7 @@ impl<S: IpldStore> Amt<S> {
         if self
             .root
             .node
-            .set(&self.store, self.height(), index, value)?
+            .set(self.store, self.height(), index, value)?
         {
             self.root.count += 1;
         }
@@ -136,7 +128,7 @@ impl<S: IpldStore> Amt<S> {
             return Ok(None);
         }
 
-        let result = match self.root.node.delete(&self.store, self.height(), index)? {
+        let result = match self.root.node.delete(self.store, self.height(), index)? {
             Some(value) => Ok(Some(value)),
             None => return Ok(None),
         };
@@ -170,11 +162,7 @@ impl<S: IpldStore> Amt<S> {
 
     ///
     pub fn flush(&mut self) -> Result<Cid> {
-        self.root.node.flush(&self.store, self.height())?;
-        Ok(IpldStore::put(&mut self.store, &self.root)?)
+        self.root.node.flush(self.store, self.height())?;
+        Ok(IpldStore::put(self.store, &self.root)?)
     }
-}
-
-fn nodes_for_height(height: u64) -> usize {
-    WIDTH.pow(height as u32)
 }

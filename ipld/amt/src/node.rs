@@ -6,6 +6,8 @@ use minicbor::{decode, encode, Decoder, Encoder};
 
 use ipld::{IpldStore, IpldValue};
 
+use crate::nodes_for_height;
+
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub enum Link {
@@ -53,8 +55,20 @@ impl Node {
         store: &S,
         height: u64,
         index: usize,
-    ) -> Result<Option<IpldValue>> {
-        todo!()
+    ) -> Result<Option<&IpldValue>> {
+        let sub_index = index / nodes_for_height(height);
+
+        match self {
+            Node::Leaves(values) => Ok(values.get(index)),
+            Node::Links(links) => match &links[sub_index] {
+                Link::Cid(cid) => {
+                    todo!()
+                }
+                Link::Cache(node) => {
+                    node.get(store, height - 1, index % nodes_for_height(height))
+                }
+            },
+        }
     }
 
     ///
@@ -83,7 +97,17 @@ impl Node {
     }
 
     ///
-    pub fn flush<S: IpldStore>(&mut self, store: &S, height: u64) -> Result<()> {
-        todo!()
+    pub fn flush<S: IpldStore>(&mut self, store: &mut S, height: u64) -> Result<()> {
+        if let Node::Links(links) = self {
+            for link in links.iter_mut() {
+                if let Link::Cache(node) = link {
+                    node.flush(store, height - 1)?;
+                    let cid = IpldStore::put(store, node)?;
+                    *link = Link::Cid(cid);
+                }
+            }
+        }
+
+        Ok(())
     }
 }
