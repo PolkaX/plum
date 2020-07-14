@@ -1,20 +1,32 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use anyhow::Result;
 use cid::Cid;
 use minicbor::{decode, encode, Decoder, Encoder};
 
 use ipld::{IpldStore, IpldValue};
 
-use crate::{max_leaf_node_size_for, max_leaf_value_size_for};
+use crate::bitmap::BitMap;
+use crate::error::{IpldAmtError, Result};
+use crate::{max_leaf_node_size_for, max_leaf_value_size_for, WIDTH};
 
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub enum Link {
     ///
-    Cid(Cid),
-    ///
     Cache(Box<Node>),
+    ///
+    Cid(Cid),
+}
+
+impl Link {
+    fn load_node<S: IpldStore>(&mut self, store: &S) -> Result<()> {
+        if let Link::Cid(cid) = self {
+            let node =
+                IpldStore::get::<Node>(store, cid)?.ok_or_else(|| IpldAmtError::CidNotFound)?;
+            *self = Link::Cache(Box::new(node));
+        }
+        Ok(())
+    }
 }
 
 /// Each node in an IPLD vector stores the width, the height of the node,
@@ -23,14 +35,30 @@ pub enum Link {
 #[derive(Clone, PartialEq, Debug)]
 pub enum Node {
     ///
-    Links(Vec<Link>),
+    Links {
+        bitmap: BitMap,
+        links: [Option<Link>; WIDTH],
+    },
     ///
+    Leaves {
+        bitmap: BitMap,
+        values: [Option<IpldValue>; WIDTH],
+    },
+}
+
+/*
+enum NodeItem {
+    Links(Vec<Link>),
     Leaves(Vec<IpldValue>),
 }
+*/
 
 impl Default for Node {
     fn default() -> Self {
-        Node::Leaves(vec![])
+        Node::Leaves {
+            bitmap: BitMap::default(),
+            values: [None; WIDTH],
+        }
     }
 }
 
@@ -50,21 +78,45 @@ impl<'b> decode::Decode<'b> for Node {
 
 impl Node {
     ///
+    pub fn bitmap(&self) -> BitMap {
+        match self {
+            Node::Links { bitmap, .. } => *bitmap,
+            Node::Leaves { bitmap, .. } => *bitmap,
+        }
+    }
+
+    ///
+    pub fn is_empty(&self) -> bool {
+        todo!()
+    }
+
+    ///
     pub fn get<S: IpldStore>(
         &self,
         store: &S,
         height: u64,
         index: usize,
-    ) -> Result<Option<&IpldValue>> {
+    ) -> Result<Option<IpldValue>> {
+        // the sub index at height - 1.
         let sub_index = index / max_leaf_node_size_for(height);
+        assert!(sub_index <= WIDTH);
+
+        if !self.bitmap().has_bit(sub_index as u8) {
+            return Ok(None);
+        }
 
         match self {
-            Node::Leaves(values) => Ok(values.get(index)),
-            Node::Links(links) => match &links[sub_index] {
-                Link::Cid(cid) => todo!(),
-                Link::Cache(node) => {
+            Node::Leaves { values, .. } => Ok(values[index].clone()),
+            Node::Links { links, .. } => match &links[sub_index] {
+                Some(Link::Cid(cid)) => {
+                    let node = IpldStore::get::<Node>(store, cid)?
+                        .ok_or_else(|| IpldAmtError::CidNotFound)?;
                     node.get(store, height - 1, index % max_leaf_node_size_for(height))
                 }
+                Some(Link::Cache(node)) => {
+                    node.get(store, height - 1, index % max_leaf_node_size_for(height))
+                }
+                None => Ok(None),
             },
         }
     }
@@ -77,7 +129,41 @@ impl Node {
         index: usize,
         value: IpldValue,
     ) -> Result<bool> {
-        todo!()
+        if height == 0 {}
+
+        // the sub index at height - 1.
+        let sub_index = index / max_leaf_node_size_for(height);
+        assert!(sub_index <= WIDTH);
+
+        match self {
+            Node::Links { bitmap, links } => {
+                links[sub_index] = match &links[sub_index] {
+                    Some(Link::Cache(node)) => Some(Link::Cache(node.clone())),
+                    Some(Link::Cid(cid)) => {
+                        let mut node = IpldStore::get::<Node>(store, cid)?
+                            .ok_or_else(|| IpldAmtError::CidNotFound)?;
+                        Some(Link::Cache(Box::new(node)));
+                    }
+                    None => {
+                        let mut node = match height {
+                            1 => Node::Leaves {
+                                bitmap: BitMap::default(),
+                                values: [None; WIDTH],
+                            },
+                            _ => Node::Links {
+                                bitmap: BitMap::default(),
+                                links: [None; WIDTH],
+                            },
+                        };
+                        bitmap.set_bit(sub_index as u8);
+                        Some(Link::Cache(Box::new(node)));
+                    }
+                };
+            }
+            Node::Leaves { .. } => {
+                unreachable!("If the current node's height > 0, it sohuldn't be leaf")
+            }
+        }
     }
 
     pub fn delete<S: IpldStore>(
@@ -90,22 +176,7 @@ impl Node {
     }
 
     ///
-    pub fn is_empty(&self) -> bool {
-        todo!()
-    }
-
-    ///
     pub fn flush<S: IpldStore>(&mut self, store: &mut S, height: u64) -> Result<()> {
-        if let Node::Links(links) = self {
-            for link in links.iter_mut() {
-                if let Link::Cache(node) = link {
-                    node.flush(store, height - 1)?;
-                    let cid = IpldStore::put(store, node)?;
-                    *link = Link::Cid(cid);
-                }
-            }
-        }
-
-        Ok(())
+        todo!()
     }
 }

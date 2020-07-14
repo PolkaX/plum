@@ -110,13 +110,13 @@
 
 #![deny(missing_docs)]
 
-mod amt;
+// mod amt;
 mod bitmap;
 mod error;
 mod node;
-mod root;
+// mod root;
 
-pub use self::amt::Amt;
+// pub use self::amt::Amt;
 
 /// The only configurable parameter of an IPLD Vector.
 /// This parameter must be consistent across all nodes in a Vector.

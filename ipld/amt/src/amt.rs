@@ -41,7 +41,7 @@ impl<S: IpldStore> Amt<S> {
 
     /// Load a new AMT with a block store and a cid of the root of the AMT.
     pub fn load(store: S, cid: &Cid) -> Result<Self> {
-        let root = <S as IpldStore>::get(&store, cid)?.ok_or_else(|| IpldAmtError::NotFound)?;
+        let root = IpldStoreget(&store, cid)?.ok_or_else(|| IpldAmtError::NotFound)?;
         Ok(Self { root, store })
     }
 

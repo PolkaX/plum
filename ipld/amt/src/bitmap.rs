@@ -4,8 +4,9 @@ use std::fmt;
 
 use minicbor::{decode, encode, Decoder, Encoder};
 
-///
-#[derive(Copy, Clone, PartialEq, Debug)]
+/// A map for 8 bits.
+/// u8 is enough for `WIDTH = 8`.
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 pub struct BitMap(u8);
 
 impl fmt::Display for BitMap {
