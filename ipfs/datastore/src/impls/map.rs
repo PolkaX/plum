@@ -2,8 +2,8 @@
 
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::io::Result;
 
-use crate::error::{DataStoreError, Result};
 use crate::key::Key;
 use crate::store::{DataStore, DataStoreRead, DataStoreWrite};
 
@@ -34,15 +34,11 @@ impl DataStore for MapDataStore {
 }
 
 impl DataStoreRead for MapDataStore {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
-        Ok(self
-            .values
-            .get(key.borrow())
-            .ok_or_else(|| DataStoreError::NotFound(key.borrow().to_string()))?
-            .to_owned())
+        Ok(self.values.get(key.borrow()).cloned())
     }
 
     fn has<K>(&self, key: &K) -> Result<bool>
@@ -50,17 +46,6 @@ impl DataStoreRead for MapDataStore {
         K: Borrow<Key>,
     {
         Ok(self.values.contains_key(key.borrow()))
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        Ok(self
-            .values
-            .get(key.borrow())
-            .ok_or_else(|| DataStoreError::NotFound(key.borrow().to_string()))?
-            .len())
     }
 }
 

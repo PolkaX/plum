@@ -2,8 +2,8 @@
 
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::io::Result;
 
-use crate::error::Result;
 use crate::key::Key;
 use crate::store::ToTxn;
 use crate::store::{Check, CheckedDataStore};
@@ -37,7 +37,7 @@ impl<DS: DataStore> BasicBatchDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStoreRead for BasicBatchDataStore<DS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -49,13 +49,6 @@ impl<DS: DataStore> DataStoreRead for BasicBatchDataStore<DS> {
         K: Borrow<Key>,
     {
         self.datastore.has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        self.datastore.size(key)
     }
 }
 
@@ -147,7 +140,7 @@ impl<DS: DataStore> BasicTxnDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStoreRead for BasicTxnDataStore<DS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -159,13 +152,6 @@ impl<DS: DataStore> DataStoreRead for BasicTxnDataStore<DS> {
         K: Borrow<Key>,
     {
         self.datastore.has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        self.datastore.size(key)
     }
 }
 

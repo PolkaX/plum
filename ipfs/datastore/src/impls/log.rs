@@ -1,10 +1,10 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
+use std::io::Result;
 
 use log::info;
 
-use crate::error::Result;
 use crate::key::Key;
 use crate::store::{BatchDataStore, ToBatch, ToTxn, TxnDataStore};
 use crate::store::{Check, CheckedBatchDataStore, CheckedDataStore, CheckedTxnDataStore};
@@ -49,7 +49,7 @@ impl<DS: DataStore> DataStore for LogDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStoreRead for LogDataStore<DS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -63,14 +63,6 @@ impl<DS: DataStore> DataStoreRead for LogDataStore<DS> {
     {
         info!("{}: has {}", self.name, key.borrow());
         self.datastore.has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        info!("{}: size {}", self.name, key.borrow());
-        self.datastore.size(key)
     }
 }
 
@@ -182,7 +174,7 @@ impl<BDS: BatchDataStore> DataStore for LogBatchDataStore<BDS> {
 }
 
 impl<BDS: BatchDataStore> DataStoreRead for LogBatchDataStore<BDS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -196,14 +188,6 @@ impl<BDS: BatchDataStore> DataStoreRead for LogBatchDataStore<BDS> {
     {
         info!("{}: batch has {}", self.name, key.borrow());
         self.datastore.has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        info!("{}: batch size {}", self.name, key.borrow());
-        self.datastore.size(key)
     }
 }
 
@@ -310,7 +294,7 @@ impl<TDS: TxnDataStore> DataStore for LogTxnDataStore<TDS> {
 }
 
 impl<TDS: TxnDataStore> DataStoreRead for LogTxnDataStore<TDS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -324,14 +308,6 @@ impl<TDS: TxnDataStore> DataStoreRead for LogTxnDataStore<TDS> {
     {
         info!("{}: txn has {}", self.name, key.borrow());
         self.datastore.has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        info!("{}: txn size {}", self.name, key.borrow());
-        self.datastore.size(key)
     }
 }
 

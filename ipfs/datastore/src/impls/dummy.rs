@@ -1,8 +1,8 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
+use std::io::Result;
 
-use crate::error::{DataStoreError, Result};
 use crate::impls::{BasicBatchDataStore, BasicTxnDataStore};
 use crate::key::Key;
 use crate::store::{Check, Gc, Persistent, Scrub};
@@ -28,11 +28,11 @@ impl DataStore for DummyDataStore {
 }
 
 impl DataStoreRead for DummyDataStore {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, _key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
-        Err(DataStoreError::NotFound(key.borrow().to_string()))
+        Ok(None)
     }
 
     fn has<K>(&self, _key: &K) -> Result<bool>
@@ -40,13 +40,6 @@ impl DataStoreRead for DummyDataStore {
         K: Borrow<Key>,
     {
         Ok(false)
-    }
-
-    fn size<K>(&self, _key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        Ok(0)
     }
 }
 
