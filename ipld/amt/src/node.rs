@@ -6,7 +6,7 @@ use minicbor::{decode, encode, Decoder, Encoder};
 
 use ipld::{IpldStore, IpldValue};
 
-use crate::nodes_for_height;
+use crate::{max_leaf_node_size_for, max_leaf_value_size_for};
 
 ///
 #[derive(Clone, PartialEq, Debug)]
@@ -56,16 +56,14 @@ impl Node {
         height: u64,
         index: usize,
     ) -> Result<Option<&IpldValue>> {
-        let sub_index = index / nodes_for_height(height);
+        let sub_index = index / max_leaf_node_size_for(height);
 
         match self {
             Node::Leaves(values) => Ok(values.get(index)),
             Node::Links(links) => match &links[sub_index] {
-                Link::Cid(cid) => {
-                    todo!()
-                }
+                Link::Cid(cid) => todo!(),
                 Link::Cache(node) => {
-                    node.get(store, height - 1, index % nodes_for_height(height))
+                    node.get(store, height - 1, index % max_leaf_node_size_for(height))
                 }
             },
         }

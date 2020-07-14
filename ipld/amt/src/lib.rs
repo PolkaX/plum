@@ -127,6 +127,43 @@ pub use self::amt::Amt;
 /// `WIDTH` must be an integer, of at least 2.
 pub const WIDTH: usize = 8;
 
-fn nodes_for_height(height: u64) -> usize {
+// Max size of leaf values before root overflow.
+// ============================================================================
+// Height
+// ↓
+// 0:    [1 2 3]
+//
+// Max size of leaf nodes before root overflow: 1
+// Max size of leaf values before root overflow: 3
+//
+// ============================================================================
+// Height
+// ↓
+// 1:            [a b c]
+//          ┌─────┘ │ └─────┐
+// 0:    [1 2 3] [4 5 6] [7 8 9]
+//
+// Max size of leaf nodes before root overflow: 3
+// Max size of leaf values before root overflow: 9
+//
+// ============================================================================
+// Height
+// ↓
+// 2:                                       [A  B  C]
+//                 ┌─────────────────────────┘  │  └─────────────────────────────┐
+// 1:            [a b c]                    [d  e  f]                        [g  h  i]
+//          ┌─────┘ │ └─────┐        ┌───────┘  │  └────────┐         ┌───────┘  │  └────────┐
+// 0:    [1 2 3] [4 5 6] [7 8 9] [10 11 12] [13 14 15] [16 17 18] [19 20 21] [22 23 24] [25 26 27]
+//
+// Max size of leaf nodes before root overflow: 9
+// Max size of leaf values before root overflow: 27
+#[inline]
+fn max_leaf_value_size_for(height: u64) -> usize {
+    WIDTH * max_leaf_node_size_for(height)
+}
+
+// Max size of leaf nodes before root overflow.
+#[inline]
+fn max_leaf_node_size_for(height: u64) -> usize {
     WIDTH.pow(height as u32)
 }

@@ -6,9 +6,9 @@ use cid::Cid;
 use ipld::{IpldStore, IpldValue};
 
 use crate::error::IpldAmtError;
+use crate::max_leaf_value_size_for;
 use crate::node::{Link, Node};
 use crate::root::Root;
-use crate::nodes_for_height;
 
 /// The maximum possible index for a tree.
 // width^(height+1) = 1 << 48
@@ -19,34 +19,34 @@ pub const MAX_INDEX: usize = 1 << 48;
 
 ///
 #[derive(Debug)]
-pub struct Amt<'a, S> {
+pub struct Amt<S> {
     root: Root,
-    store: &'a mut S,
+    store: S,
 }
 
-impl<'a, S: IpldStore> PartialEq for Amt<'a, S> {
+impl<S: IpldStore> PartialEq for Amt<S> {
     fn eq(&self, other: &Self) -> bool {
         self.root == other.root
     }
 }
 
-impl<'a, S: IpldStore> Amt<'a, S> {
-    ///
-    pub fn new(store: &'a mut S) -> Self {
+impl<S: IpldStore> Amt<S> {
+    /// Create a new IPLD AMT (Array Mapped Tries) root node with a block store.
+    pub fn new(store: S) -> Self {
         Self {
             root: Root::default(),
             store,
         }
     }
 
-    ///
-    pub fn load(store: &'a mut S, cid: &Cid) -> Result<Self> {
-        let root = IpldStore::get(store, cid)?.ok_or_else(|| IpldAmtError::NotFound)?;
+    /// Create a new AMT with a block store and a cid of the root of the AMT.
+    pub fn load(store: S, cid: &Cid) -> Result<Self> {
+        let root = <S as IpldStore>::get(&store, cid)?.ok_or_else(|| IpldAmtError::NotFound)?;
         Ok(Self { root, store })
     }
 
     ///
-    pub fn new_with_slice<T>(store: &'a mut S, values: T) -> Result<Cid>
+    pub fn new_with_slice<T>(store: S, values: T) -> Result<Cid>
     where
         T: IntoIterator<Item = IpldValue>,
     {
@@ -55,40 +55,39 @@ impl<'a, S: IpldStore> Amt<'a, S> {
         amt.flush()
     }
 
-    ///
+    /// Return the height of the root node of the AMT.
     pub fn height(&self) -> u64 {
         self.root.height
     }
 
-    ///
+    /// Return the count of the nodes of the AMT.
     pub fn count(&self) -> u64 {
         self.root.count
     }
 
-    ///
+    /// Get the IPLD value at the index of the AMT.
     pub fn get(&self, index: usize) -> Result<Option<&IpldValue>> {
         if index >= MAX_INDEX {
             return Err(anyhow!("out of range"));
         }
 
-        if index >= nodes_for_height(self.height() + 1) {
+        if index >= max_leaf_value_size_for(self.height()) {
             return Ok(None);
         }
 
-        self.root.node.get(self.store, self.height(), index)
+        self.root.node.get(&self.store, self.height(), index)
     }
 
-    ///
+    /// Set the IPLD value at the index of the AMT.
     pub fn set(&mut self, index: usize, value: IpldValue) -> Result<()> {
         if index >= MAX_INDEX {
             return Err(anyhow!("out of range"));
         }
 
-        while index >= nodes_for_height(self.height() + 1) {
+        while index >= max_leaf_value_size_for(self.height()) {
             if !self.root.node.is_empty() {
-                self.root.node.flush(self.store, self.height())?;
-
-                let cid = IpldStore::put(self.store, &self.root)?;
+                self.root.node.flush(&mut self.store, self.root.height)?;
+                let cid = IpldStore::put(&mut self.store, &self.root)?;
                 self.root.node = Node::Links(vec![Link::Cid(cid)]);
             } else {
                 self.root.node = Node::Links(vec![]);
@@ -100,7 +99,7 @@ impl<'a, S: IpldStore> Amt<'a, S> {
         if self
             .root
             .node
-            .set(self.store, self.height(), index, value)?
+            .set(&mut self.store, self.root.height, index, value)?
         {
             self.root.count += 1;
         }
@@ -108,7 +107,7 @@ impl<'a, S: IpldStore> Amt<'a, S> {
         Ok(())
     }
 
-    ///
+    /// Batch set the IPLD values into the AMT.
     pub fn batch_set<T>(&mut self, values: T) -> Result<()>
     where
         T: IntoIterator<Item = IpldValue>,
@@ -119,16 +118,20 @@ impl<'a, S: IpldStore> Amt<'a, S> {
         Ok(())
     }
 
-    ///
+    /// Delete the IPLD value at the index of the AMT.
     pub fn delete(&mut self, index: usize) -> Result<Option<IpldValue>> {
         if index >= MAX_INDEX {
             return Err(anyhow!("out of range"));
         }
-        if index >= nodes_for_height(self.height() + 1) {
+        if index >= max_leaf_value_size_for(self.height()) {
             return Ok(None);
         }
 
-        let result = match self.root.node.delete(self.store, self.height(), index)? {
+        let result = match self
+            .root
+            .node
+            .delete(&mut self.store, self.root.height, index)?
+        {
             Some(value) => Ok(Some(value)),
             None => return Ok(None),
         };
@@ -149,7 +152,7 @@ impl<'a, S: IpldStore> Amt<'a, S> {
         result
     }
 
-    ///
+    /// Batch delete the IPLD values from the AMT.
     pub fn batch_delete<T>(&mut self, indexes: T) -> Result<()>
     where
         T: IntoIterator<Item = usize>,
@@ -160,9 +163,9 @@ impl<'a, S: IpldStore> Amt<'a, S> {
         Ok(())
     }
 
-    ///
+    /// Flush the root node into the block store and return the cid of the root.
     pub fn flush(&mut self) -> Result<Cid> {
-        self.root.node.flush(self.store, self.height())?;
-        Ok(IpldStore::put(self.store, &self.root)?)
+        self.root.node.flush(&mut self.store, self.root.height)?;
+        Ok(IpldStore::put(&mut self.store, &self.root)?)
     }
 }
