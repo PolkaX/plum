@@ -1,8 +1,8 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
+use std::io::Result;
 
-use crate::error::Result;
 use crate::key::Key;
 use crate::store::{BatchDataStore, ToBatch, ToTxn, TxnDataStore};
 use crate::store::{Check, CheckedBatchDataStore, CheckedDataStore, CheckedTxnDataStore};
@@ -54,7 +54,7 @@ impl<KT: KeyTransform, DS: DataStore> DataStore for TransformDataStore<KT, DS> {
 }
 
 impl<KT: KeyTransform, DS: DataStore> DataStoreRead for TransformDataStore<KT, DS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -68,14 +68,6 @@ impl<KT: KeyTransform, DS: DataStore> DataStoreRead for TransformDataStore<KT, D
     {
         let key = self.transform.convert_key(key);
         self.datastore.has(&key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        let key = self.transform.convert_key(key);
-        self.datastore.size(&key)
     }
 }
 
@@ -178,7 +170,7 @@ impl<KT: KeyTransform, BDS: BatchDataStore> DataStore for TransformBatchDataStor
 }
 
 impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreRead for TransformBatchDataStore<KT, BDS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -192,14 +184,6 @@ impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreRead for TransformBatchData
     {
         let key = self.transform.convert_key(key);
         self.datastore.has(&key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        let key = self.transform.convert_key(key);
-        self.datastore.size(&key)
     }
 }
 
@@ -299,7 +283,7 @@ impl<KT: KeyTransform, TDS: TxnDataStore> DataStore for TransformTxnDataStore<KT
 }
 
 impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreRead for TransformTxnDataStore<KT, TDS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -313,14 +297,6 @@ impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreRead for TransformTxnDataStor
     {
         let key = self.transform.convert_key(key);
         self.datastore.has(&key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        let key = self.transform.convert_key(key);
-        self.datastore.size(&key)
     }
 }
 

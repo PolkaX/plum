@@ -1,8 +1,8 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
+use std::io::Result;
 
-use crate::error::Result;
 use crate::key::Key;
 
 /// DataStore represents storage for any key-value pair.
@@ -26,7 +26,7 @@ use crate::key::Key;
 /// and thus it should behave predictably and handle exceptional conditions with
 /// proper error reporting. Thus, all DataStore calls may return errors, which
 /// should be checked by callers.
-pub trait DataStore: DataStoreRead + DataStoreWrite + Clone + Sync + Send + 'static {
+pub trait DataStore: DataStoreRead + DataStoreWrite + Clone {
     /// Guarantees that any `put` or `delete` calls under prefix that returned before `sync(prefix)`
     /// was called will be observed after `sync(prefix)` returns, even if the program crashes.
     /// If `put/delete` operations already satisfy these requirements then Sync may be a no-op.
@@ -43,17 +43,12 @@ pub trait DataStore: DataStoreRead + DataStoreWrite + Clone + Sync + Send + 'sta
 /// DataStoreRead is the read-side of the DataStore trait.
 pub trait DataStoreRead {
     /// Retrieve the object `value` named by `key`.
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>;
 
     /// Return whether the `key` is mapped to a `value`.
     fn has<K>(&self, key: &K) -> Result<bool>
-    where
-        K: Borrow<Key>;
-
-    /// Return the size of the `value` named by `key`.
-    fn size<K>(&self, key: &K) -> Result<usize>
     where
         K: Borrow<Key>;
 

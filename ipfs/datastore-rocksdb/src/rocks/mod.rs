@@ -94,7 +94,7 @@ fn generate_options(config: &DatabaseConfig) -> Options {
     } else {
         opts.set_max_open_files(config.max_open_files);
     }
-    opts.set_bytes_per_sync(1 * MB as u64);
+    opts.set_bytes_per_sync(MB as u64);
     opts.set_keep_log_file_num(1);
     opts.increase_parallelism(cmp::max(1, num_cpus::get() as i32 / 2));
 

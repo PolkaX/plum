@@ -1,8 +1,8 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
+use std::io::Result;
 
-use crate::error::Result;
 use crate::key::Key;
 use crate::store::{BatchDataStore, ToBatch, ToTxn, TxnDataStore};
 use crate::store::{Check, CheckedBatchDataStore, CheckedDataStore, CheckedTxnDataStore};
@@ -46,7 +46,7 @@ impl<F: FailFn, DS: DataStore> DataStore for FailDataStore<F, DS> {
 }
 
 impl<F: FailFn, DS: DataStore> DataStoreRead for FailDataStore<F, DS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -60,14 +60,6 @@ impl<F: FailFn, DS: DataStore> DataStoreRead for FailDataStore<F, DS> {
     {
         (self.fail_fn)("has")?;
         self.datastore.has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        (self.fail_fn)("size")?;
-        self.datastore.size(key)
     }
 }
 
@@ -172,7 +164,7 @@ impl<F: FailFn, BDS: BatchDataStore> DataStore for FailBatchDataStore<F, BDS> {
 }
 
 impl<F: FailFn, BDS: BatchDataStore> DataStoreRead for FailBatchDataStore<F, BDS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -186,14 +178,6 @@ impl<F: FailFn, BDS: BatchDataStore> DataStoreRead for FailBatchDataStore<F, BDS
     {
         (self.fail_fn)("batch-has")?;
         self.datastore.has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        (self.fail_fn)("batch-size")?;
-        self.datastore.size(key)
     }
 }
 
@@ -294,7 +278,7 @@ impl<F: FailFn, TDS: TxnDataStore> DataStore for FailTxnDataStore<F, TDS> {
 }
 
 impl<F: FailFn, TDS: TxnDataStore> DataStoreRead for FailTxnDataStore<F, TDS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -308,14 +292,6 @@ impl<F: FailFn, TDS: TxnDataStore> DataStoreRead for FailTxnDataStore<F, TDS> {
     {
         (self.fail_fn)("txn-has")?;
         self.datastore.has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        (self.fail_fn)("txn-size")?;
-        self.datastore.size(key)
     }
 }
 

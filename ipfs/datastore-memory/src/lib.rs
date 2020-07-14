@@ -5,11 +5,10 @@
 #![deny(missing_docs)]
 
 use std::borrow::Borrow;
+use std::io::Result;
 
 use ipfs_datastore::{DataStore, DataStoreRead, DataStoreWrite};
-use ipfs_datastore::{DataStoreError, Key, MapDataStore, SyncDataStore};
-
-pub(crate) type Result<T> = std::result::Result<T, DataStoreError>;
+use ipfs_datastore::{Key, MapDataStore, SyncDataStore};
 
 /// A thread-safe datastore living in memory, which is generally intended for tests.
 #[derive(Clone)]
@@ -31,7 +30,7 @@ impl DataStore for MemoryDataStore {
 }
 
 impl DataStoreRead for MemoryDataStore {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -43,13 +42,6 @@ impl DataStoreRead for MemoryDataStore {
         K: Borrow<Key>,
     {
         self.datastore.has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        self.datastore.size(key)
     }
 }
 

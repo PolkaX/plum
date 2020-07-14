@@ -1,6 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use crate::error::Result;
+use std::io::Result;
+
 use crate::store::{BatchDataStore, DataStore, TxnDataStore};
 
 /// An interface check on-disk data integrity.

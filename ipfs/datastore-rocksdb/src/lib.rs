@@ -13,14 +13,12 @@ pub use self::rocks::{
 
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::io::Result;
 use std::sync::Arc;
 
 use ipfs_datastore::{
-    DataStore, DataStoreBatch, DataStoreError, DataStoreRead, DataStoreTxn, DataStoreWrite, Key,
-    ToBatch, ToTxn,
+    DataStore, DataStoreBatch, DataStoreRead, DataStoreTxn, DataStoreWrite, Key, ToBatch, ToTxn,
 };
-
-pub(crate) type Result<T> = std::result::Result<T, DataStoreError>;
 
 /// RocksDBDataStore is a datastore with RocksDB as backend.
 #[derive(Clone)]
@@ -87,16 +85,14 @@ impl DataStore for RocksDBDataStore {
 }
 
 impl DataStoreRead for RocksDBDataStore {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
         let key = key.borrow();
         let col = key_column(key);
 
-        self.db
-            .get(&col, key.as_bytes())?
-            .ok_or_else(|| DataStoreError::NotFound(key.to_string()))
+        Ok(self.db.get(&col, key.as_bytes())?)
     }
 
     fn has<K>(&self, key: &K) -> Result<bool>
@@ -107,19 +103,6 @@ impl DataStoreRead for RocksDBDataStore {
         let col = key_column(key);
 
         Ok(self.db.get(&col, key.as_bytes())?.is_some())
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        let key = key.borrow();
-        let col = key_column(key);
-
-        self.db
-            .get(&col, key.as_bytes())?
-            .ok_or_else(|| DataStoreError::NotFound(key.to_string()))
-            .map(|value| value.len())
     }
 }
 
@@ -200,16 +183,14 @@ impl RocksDBBatchDataStore {
 }
 
 impl DataStoreRead for RocksDBBatchDataStore {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
         let key = key.borrow();
         let col = key_column(key);
 
-        self.db
-            .get(&col, key.as_bytes())?
-            .ok_or_else(|| DataStoreError::NotFound(key.to_string()))
+        Ok(self.db.get(&col, key.as_bytes())?)
     }
 
     fn has<K>(&self, key: &K) -> Result<bool>
@@ -220,19 +201,6 @@ impl DataStoreRead for RocksDBBatchDataStore {
         let col = key_column(key);
 
         Ok(self.db.get(&col, key.as_bytes())?.is_some())
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        let key = key.borrow();
-        let col = key_column(key);
-
-        self.db
-            .get(&col, key.as_bytes())?
-            .ok_or_else(|| DataStoreError::NotFound(key.to_string()))
-            .map(|value| value.len())
     }
 }
 
@@ -308,16 +276,14 @@ impl RocksDBTxnDataStore {
 }
 
 impl DataStoreRead for RocksDBTxnDataStore {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
         let key = key.borrow();
         let col = key_column(key);
 
-        self.db
-            .get(&col, key.as_bytes())?
-            .ok_or_else(|| DataStoreError::NotFound(key.to_string()))
+        Ok(self.db.get(&col, key.as_bytes())?)
     }
 
     fn has<K>(&self, key: &K) -> Result<bool>
@@ -328,19 +294,6 @@ impl DataStoreRead for RocksDBTxnDataStore {
         let col = key_column(key);
 
         Ok(self.db.get(&col, key.as_bytes())?.is_some())
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        let key = key.borrow();
-        let col = key_column(key);
-
-        self.db
-            .get(&col, key.as_bytes())?
-            .ok_or_else(|| DataStoreError::NotFound(key.to_string()))
-            .map(|value| value.len())
     }
 }
 

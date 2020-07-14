@@ -33,3 +33,5 @@ pub trait IpldStore: BlockStore {
         Ok(cid)
     }
 }
+
+impl<T: BlockStore> IpldStore for T {}

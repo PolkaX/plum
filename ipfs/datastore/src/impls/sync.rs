@@ -1,11 +1,11 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
+use std::io::Result;
 use std::sync::Arc;
 
 use parking_lot::RwLock;
 
-use crate::error::Result;
 use crate::key::Key;
 use crate::store::{BatchDataStore, ToBatch, ToTxn, TxnDataStore};
 use crate::store::{Check, CheckedBatchDataStore, CheckedDataStore, CheckedTxnDataStore};
@@ -46,7 +46,7 @@ impl<DS: DataStore> DataStore for SyncDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStoreRead for SyncDataStore<DS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -58,13 +58,6 @@ impl<DS: DataStore> DataStoreRead for SyncDataStore<DS> {
         K: Borrow<Key>,
     {
         self.datastore.read().has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        self.datastore.read().size(key)
     }
 }
 
@@ -161,7 +154,7 @@ impl<BDS: BatchDataStore> DataStore for SyncBatchDataStore<BDS> {
 }
 
 impl<BDS: BatchDataStore> DataStoreRead for SyncBatchDataStore<BDS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -173,13 +166,6 @@ impl<BDS: BatchDataStore> DataStoreRead for SyncBatchDataStore<BDS> {
         K: Borrow<Key>,
     {
         self.datastore.read().has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        self.datastore.read().size(key)
     }
 }
 
@@ -272,7 +258,7 @@ impl<TDS: TxnDataStore> DataStore for SyncTxnDataStore<TDS> {
 }
 
 impl<TDS: TxnDataStore> DataStoreRead for SyncTxnDataStore<TDS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -284,13 +270,6 @@ impl<TDS: TxnDataStore> DataStoreRead for SyncTxnDataStore<TDS> {
         K: Borrow<Key>,
     {
         self.datastore.read().has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        self.datastore.read().size(key)
     }
 }
 

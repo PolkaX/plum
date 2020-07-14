@@ -1,8 +1,8 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
+use std::io::Result;
 
-use crate::error::Result;
 use crate::impls::{BasicBatchDataStore, BasicTxnDataStore};
 use crate::key::Key;
 use crate::store::{DataStore, DataStoreRead, DataStoreWrite};
@@ -44,7 +44,7 @@ impl<DL: Delay, DS: DataStore> DataStore for DelayDataStore<DL, DS> {
 }
 
 impl<DL: Delay, DS: DataStore> DataStoreRead for DelayDataStore<DL, DS> {
-    fn get<K>(&self, key: &K) -> Result<Vec<u8>>
+    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -58,14 +58,6 @@ impl<DL: Delay, DS: DataStore> DataStoreRead for DelayDataStore<DL, DS> {
     {
         self.delay.wait();
         self.datastore.has(key)
-    }
-
-    fn size<K>(&self, key: &K) -> Result<usize>
-    where
-        K: Borrow<Key>,
-    {
-        self.delay.wait();
-        self.datastore.size(key)
     }
 }
 

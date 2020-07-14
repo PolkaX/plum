@@ -4,7 +4,7 @@
 
 #![deny(missing_docs)]
 
-mod error;
+// mod error;
 mod impls;
 mod key;
 // TODO: mount
@@ -12,7 +12,6 @@ mod key;
 mod query;
 mod store;
 
-pub use self::error::DataStoreError;
 pub use self::key::{namespace_type, namespace_value, Key};
 pub use self::query::*;
 

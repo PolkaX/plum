@@ -1,9 +1,9 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
+use std::io::Result;
 use std::time::{Duration, Instant};
 
-use crate::error::Result;
 use crate::key::Key;
 use crate::store::{BatchDataStore, DataStore, TxnDataStore};
 
