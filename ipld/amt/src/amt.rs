@@ -10,14 +10,14 @@ use crate::max_leaf_value_size_for;
 use crate::node::{Link, Node};
 use crate::root::Root;
 
-/// The maximum possible index for a tree.
+/// The maximum possible index for a AMT.
 // width^(height+1) = 1 << 48
 // ==> 8^(height+1) = 2^48
 // ==> height = 15
 // fairly arbitrary, but don't want to overflow/underflow in nodesForHeight
 pub const MAX_INDEX: usize = 1 << 48;
 
-///
+/// The IPLD AMT (Array Mapped Tries).
 #[derive(Debug)]
 pub struct Amt<S> {
     root: Root,
@@ -39,13 +39,14 @@ impl<S: IpldStore> Amt<S> {
         }
     }
 
-    /// Create a new AMT with a block store and a cid of the root of the AMT.
+    /// Load a new AMT with a block store and a cid of the root of the AMT.
     pub fn load(store: S, cid: &Cid) -> Result<Self> {
         let root = <S as IpldStore>::get(&store, cid)?.ok_or_else(|| IpldAmtError::NotFound)?;
         Ok(Self { root, store })
     }
 
-    ///
+    /// Create a new AMT with a block store and set a slice of IPLD values into the block store,
+    /// return the cid of the root of the AMT.
     pub fn new_with_slice<T>(store: S, values: T) -> Result<Cid>
     where
         T: IntoIterator<Item = IpldValue>,
