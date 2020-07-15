@@ -39,6 +39,20 @@ impl IpfsBlock {
         Self { cid, data }
     }
 
+    /// Create IPFS(IPLD) block when the hash of the data is already known.
+    ///
+    /// # Safety
+    ///
+    /// It used to save time in situations where we are able to be confident
+    /// that data and cid is correct.
+    ///
+    pub unsafe fn new_unchecked<T: Into<Vec<u8>>>(data: T, cid: Cid) -> Self {
+        Self {
+            cid,
+            data: data.into(),
+        }
+    }
+
     /// Return the Cid of the IPFS(IPLD) block.
     pub fn cid(&self) -> &Cid {
         &self.cid

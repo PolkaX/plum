@@ -13,7 +13,7 @@ pub trait IpldStore: BlockStore {
     where
         T: for<'b> minicbor::Decode<'b>,
     {
-        match BlockStore::get(self, cid)? {
+        match <Self as BlockStore>::get(self, cid)? {
             Some(block) => {
                 let data = (*block).data();
                 Ok(Some(minicbor::decode(data)?))
@@ -29,7 +29,7 @@ pub trait IpldStore: BlockStore {
     {
         let block = IpfsBlock::new(value);
         let cid = block.cid().clone();
-        BlockStore::put(self, block)?;
+        <Self as BlockStore>::put(self, block)?;
         Ok(cid)
     }
 }
