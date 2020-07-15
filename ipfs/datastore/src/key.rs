@@ -127,8 +127,8 @@ impl Key {
     /// The key should start with "/" and shouldn't end with "/".
     /// Specially, "/" is valid key.
     ///
-    pub unsafe fn new_unchecked<S: AsRef<str>>(s: S) -> Self {
-        let input = s.as_ref();
+    pub unsafe fn new_unchecked<S: Into<String>>(s: S) -> Self {
+        let input = s.into();
 
         // accept an empty string and fix it to avoid special cases elsewhere
         if input.is_empty() {
@@ -141,7 +141,7 @@ impl Key {
             panic!("invalid datastore key: {}", input);
         }
 
-        Self(input.to_owned())
+        Self(input)
     }
 
     /// Return a random (uuid) generated key,

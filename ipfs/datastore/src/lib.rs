@@ -15,8 +15,11 @@ mod store;
 pub use self::key::{namespace_type, namespace_value, Key};
 pub use self::query::*;
 
-pub use self::store::{BatchDataStore, ToBatch, ToTxn, TxnDataStore};
 pub use self::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreTxn, DataStoreWrite};
+
+pub use self::store::{BatchDataStore, TxnDataStore};
+pub use self::store::{ToBatch, ToBatchDataStore};
+pub use self::store::{ToTxn, ToTxnDataStore};
 
 pub use self::store::{Check, CheckedBatchDataStore, CheckedDataStore, CheckedTxnDataStore};
 pub use self::store::{Gc, GcBatchDataStore, GcDataStore, GcTxnDataStore};
