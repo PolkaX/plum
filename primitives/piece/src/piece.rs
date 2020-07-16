@@ -30,8 +30,8 @@ impl<'b> decode::Decode<'b> for PieceInfo {
         let array_len = d.array()?;
         assert_eq!(array_len, Some(2));
         Ok(Self {
-            size: PaddedPieceSize::new(d.u64()?),
-            piece_cid: d.decode::<Cid>()?,
+            size: PaddedPieceSize(d.u64()?),
+            piece_cid: d.decode()?,
         })
     }
 }
