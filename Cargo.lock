@@ -2239,6 +2239,15 @@ name = "plum"
 version = "0.1.0"
 
 [[package]]
+name = "plum-vm-exitcode"
+version = "0.1.0"
+dependencies = [
+ "minicbor",
+ "serde",
+ "serde_repr",
+]
+
+[[package]]
 name = "plum_actor"
 version = "0.1.0"
 dependencies = [
@@ -2432,6 +2441,7 @@ dependencies = [
  "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "minicbor",
  "multihash",
+ "plum-vm-exitcode",
  "plum_address",
  "plum_bigint",
  "plum_bytes",
