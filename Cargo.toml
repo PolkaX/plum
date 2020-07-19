@@ -57,6 +57,7 @@ members = [
 
   # VM
   "vm",
+  "vm/exitcode",
   "actor",
 
   # Tools

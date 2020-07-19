@@ -18,6 +18,7 @@ plum_bigint = { path = "../bigint" }
 plum_bytes = { path = "../bytes" }
 plum_crypto = { path = "../crypto" }
 plum_types = { path = "../types" }
+plum-vm-exitcode = { path = "../../vm/exitcode" }
 
 [dev-dependencies]
 serde_json = "1.0"

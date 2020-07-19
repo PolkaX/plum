@@ -4,13 +4,14 @@ use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
 use plum_bigint::{bigint_json, BigInt, BigIntRefWrapper, BigIntWrapper};
+use plum_vm_exitcode::ExitCode;
 
 /// The receipt of applying message.
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MessageReceipt {
     /// The exit code of VM.
-    pub exit_code: u8,
+    pub exit_code: ExitCode,
     /// The return bytes.
     #[serde(with = "plum_bytes")]
     pub r#return: Vec<u8>,
@@ -23,7 +24,7 @@ pub struct MessageReceipt {
 impl encode::Encode for MessageReceipt {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
         e.array(3)?
-            .u8(self.exit_code)?
+            .encode(self.exit_code)?
             .bytes(&self.r#return)?
             .encode(BigIntRefWrapper::from(&self.gas_used))?
             .ok()
@@ -36,7 +37,7 @@ impl<'b> decode::Decode<'b> for MessageReceipt {
         let array_len = d.array()?;
         assert_eq!(array_len, Some(3));
         Ok(MessageReceipt {
-            exit_code: d.u8()?,
+            exit_code: d.decode()?,
             r#return: d.bytes()?.to_vec(),
             gas_used: d.decode::<BigIntWrapper>()?.into_inner(),
         })
@@ -50,11 +51,11 @@ mod tests {
     #[test]
     fn message_receipt_cbor_serde() {
         let receipt = MessageReceipt {
-            exit_code: 127u8,
+            exit_code: ExitCode::Ok,
             r#return: b"ret".to_vec(),
             gas_used: BigInt::from(1_776_234),
         };
-        let expected = vec![131, 24, 127, 67, 114, 101, 116, 68, 0, 27, 26, 106];
+        let expected = vec![131, 0, 67, 114, 101, 116, 68, 0, 27, 26, 106];
 
         let ser = minicbor::to_vec(&receipt).unwrap();
         assert_eq!(ser, expected);
@@ -65,11 +66,11 @@ mod tests {
     #[test]
     fn message_receipt_json_serde() {
         let receipt = MessageReceipt {
-            exit_code: 127u8,
+            exit_code: ExitCode::Ok,
             r#return: b"ret".to_vec(),
             gas_used: BigInt::from(1_776_234),
         };
-        let expected = "{\"ExitCode\":127,\"Return\":\"cmV0\",\"GasUsed\":\"1776234\"}";
+        let expected = "{\"ExitCode\":0,\"Return\":\"cmV0\",\"GasUsed\":\"1776234\"}";
 
         let ser = serde_json::to_string(&receipt).unwrap();
         assert_eq!(ser, expected);
