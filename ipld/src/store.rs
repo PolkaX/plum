@@ -1,6 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use anyhow::Result;
+use std::io::{Error, ErrorKind, Result};
+
 use cid::Cid;
 
 use ipfs_block::IpfsBlock;
@@ -16,7 +17,9 @@ pub trait IpldStore: BlockStore {
         match <Self as BlockStore>::get(self, cid)? {
             Some(block) => {
                 let data = (*block).data();
-                Ok(Some(minicbor::decode(data)?))
+                Ok(Some(
+                    minicbor::decode(data).map_err(|err| Error::new(ErrorKind::Other, err))?,
+                ))
             }
             None => Ok(None),
         }

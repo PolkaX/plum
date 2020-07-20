@@ -6,7 +6,4 @@ pub enum IpldError {
     /// Codec error.
     #[error("{0}")]
     Codec(String),
-    /// Custom error.
-    #[error("{0}")]
-    Custom(String),
 }

@@ -1247,7 +1247,6 @@ dependencies = [
 name = "ipld"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ipfs-block",
  "ipfs-blockstore",
