@@ -7,7 +7,13 @@ use minicbor::{decode, encode, Decoder, Encoder};
 /// A map for 8 bits.
 /// u8 is enough for `WIDTH = 8`.
 #[derive(Copy, Clone, PartialEq, Debug, Default)]
-pub struct BitMap(u8);
+pub struct BitMap(pub(crate) u8);
+
+impl PartialEq<u8> for BitMap {
+    fn eq(&self, other: &u8) -> bool {
+        self.0 == *other
+    }
+}
 
 impl fmt::Display for BitMap {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -47,13 +53,13 @@ impl BitMap {
         self.0 & (1 << i) != 0
     }
 
-    /// Set bit at the index of bitmap.
+    /// Set the bit at the index of bitmap.
     pub fn set_bit(&mut self, i: u8) {
         self.0 |= 1 << i
     }
 
-    /// Unset bit at the index of bitmap.
-    pub fn unset_bit(&mut self, i: u8) {
+    /// Clear the bit at the index of bitmap.
+    pub fn clear_bit(&mut self, i: u8) {
         self.0 &= !(1 << i)
     }
 }

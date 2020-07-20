@@ -9,23 +9,21 @@ use crate::bitmap::BitMap;
 use crate::error::{IpldAmtError, Result};
 use crate::{max_leaf_node_size_for, max_leaf_value_size_for, WIDTH};
 
-///
+/// The link to Amt node.
 #[derive(Clone, PartialEq, Debug)]
-pub enum Link {
-    ///
+pub(crate) enum Link {
     Cache(Box<Node>),
-    ///
     Cid(Cid),
 }
 
 impl Link {
-    fn load_node<S: IpldStore>(&mut self, store: &S) -> Result<()> {
-        if let Link::Cid(cid) = self {
-            let node =
-                IpldStore::get::<Node>(store, cid)?.ok_or_else(|| IpldAmtError::CidNotFound)?;
-            *self = Link::Cache(Box::new(node));
-        }
-        Ok(())
+    pub fn load_node<S: IpldStore>(&self, store: &S) -> Result<Node> {
+        Ok(match self {
+            Link::Cache(node) => *node.clone(),
+            Link::Cid(cid) => {
+                IpldStore::get::<Node>(store, cid)?.ok_or_else(|| IpldAmtError::CidNotFound)?
+            }
+        })
     }
 }
 
@@ -33,39 +31,50 @@ impl Link {
 /// starting from 0 where values are stored,
 /// and a data array to contain values (for height 0), or child node CIDs (for heights above 1).
 #[derive(Clone, PartialEq, Debug)]
-pub enum Node {
-    ///
-    Links {
+pub(crate) enum Node {
+    Link {
         bitmap: BitMap,
         links: [Option<Link>; WIDTH],
     },
-    ///
-    Leaves {
+    Leaf {
         bitmap: BitMap,
         values: [Option<IpldValue>; WIDTH],
     },
 }
 
-/*
-enum NodeItem {
-    Links(Vec<Link>),
-    Leaves(Vec<IpldValue>),
-}
-*/
-
 impl Default for Node {
     fn default() -> Self {
-        Node::Leaves {
+        Node::Leaf {
             bitmap: BitMap::default(),
-            values: [None; WIDTH],
+            values: <[Option<IpldValue>; WIDTH]>::default(),
         }
     }
+}
+
+fn links_as_cids(links: &[Option<Link>; WIDTH]) -> Vec<&Cid> {
+    let cids = links
+        .iter()
+        .filter_map(|link| match link {
+            Some(Link::Cid(cid)) => Some(cid),
+            Some(Link::Cache(_)) => None,
+            None => None,
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(cids.len(), WIDTH);
+    cids
 }
 
 // Implement CBOR serialization for Node.
 impl encode::Encode for Node {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
-        todo!()
+        match self {
+            Node::Link { bitmap, links } => e
+                .encode(bitmap)?
+                .encode(links_as_cids(links))?
+                .encode([0u8; WIDTH])?
+                .ok(),
+            Node::Leaf { bitmap, values } => e.encode(bitmap)?.encode([0u8; WIDTH])?.encode()?.ok(),
+        }
     }
 }
 
@@ -80,14 +89,14 @@ impl Node {
     ///
     pub fn bitmap(&self) -> BitMap {
         match self {
-            Node::Links { bitmap, .. } => *bitmap,
-            Node::Leaves { bitmap, .. } => *bitmap,
+            Node::Link { bitmap, .. } => *bitmap,
+            Node::Leaf { bitmap, .. } => *bitmap,
         }
     }
 
     ///
     pub fn is_empty(&self) -> bool {
-        todo!()
+        self.bitmap().is_empty()
     }
 
     ///
@@ -106,8 +115,8 @@ impl Node {
         }
 
         match self {
-            Node::Leaves { values, .. } => Ok(values[index].clone()),
-            Node::Links { links, .. } => match &links[sub_index] {
+            Node::Leaf { values, .. } => Ok(values[index].clone()),
+            Node::Link { links, .. } => match &links[sub_index] {
                 Some(Link::Cid(cid)) => {
                     let node = IpldStore::get::<Node>(store, cid)?
                         .ok_or_else(|| IpldAmtError::CidNotFound)?;
@@ -134,7 +143,8 @@ impl Node {
         // the sub index at height - 1.
         let sub_index = index / max_leaf_node_size_for(height);
         assert!(sub_index <= WIDTH);
-
+        todo!()
+        /*
         match self {
             Node::Links { bitmap, links } => {
                 links[sub_index] = match &links[sub_index] {
@@ -146,7 +156,7 @@ impl Node {
                     }
                     None => {
                         let mut node = match height {
-                            1 => Node::Leaves {
+                            1 => Node::Leaf {
                                 bitmap: BitMap::default(),
                                 values: [None; WIDTH],
                             },
@@ -160,10 +170,10 @@ impl Node {
                     }
                 };
             }
-            Node::Leaves { .. } => {
+            Node::Leaf { .. } => {
                 unreachable!("If the current node's height > 0, it sohuldn't be leaf")
             }
-        }
+        }*/
     }
 
     pub fn delete<S: IpldStore>(
