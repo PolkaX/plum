@@ -7,8 +7,9 @@ license = "GPL-3.0"
 build = "build.rs"
 
 [build-dependencies]
-prost-build = "0.6"
+protobuf-build = { version = "0.11", default-features = false, features = ["grpcio-prost-codec"] }
 
 [dependencies]
+futures = "0.3"
 prost = "0.6"
-grpcio = { version = "0.6", default-features = false, features = ["openssl-vendored"] }
+grpcio = { version = "0.6", default-features = false, features = ["openssl-vendored", "prost-codec"] }
