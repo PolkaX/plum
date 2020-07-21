@@ -3,3 +3,7 @@
 //!
 
 #![deny(missing_docs)]
+
+mod drand {
+    include!(concat!(env!("OUT_DIR"), "/drand.rs"));
+}
