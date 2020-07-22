@@ -4,5 +4,8 @@
 
 #![deny(missing_docs)]
 
+mod beacon;
 #[path = "../proto/mod.rs"]
 mod proto;
+
+pub use self::beacon::RandomBeacon;
