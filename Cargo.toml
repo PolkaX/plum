@@ -19,11 +19,13 @@ path = "src/bin/main.rs"
 
 [workspace]
 members = [
-  "chain",
 #  "cli",
-  "hashing",
   "params",
   "wallet",
+
+  # BlockChain
+  "beacon",
+  "chain",
 
   # IPFS and IPLD
   "ipfs/block",
@@ -59,6 +61,9 @@ members = [
   "vm",
   "vm/exitcode",
   "actor",
+
+  # Utils
+  "hashing",
 
   # Tools
   "api-client/jsonrpc-client",

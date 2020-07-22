@@ -3,21 +3,29 @@
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
-///
+/// The result from getting an entry from Drand.
 #[derive(Eq, PartialEq, Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BeaconEntry {
-    ///
-    pub round: u64,
+    round: u64,
     #[serde(with = "plum_bytes")]
-    ///
-    pub data: Vec<u8>,
+    data: Vec<u8>,
 }
 
 impl BeaconEntry {
     /// Create a new BeachEntry with given round and data.
     pub fn new(round: u64, data: Vec<u8>) -> Self {
         Self { round, data }
+    }
+
+    /// Return the current round number.
+    pub fn round(&self) -> u64 {
+        self.round
+    }
+
+    /// Return the signature of public rand response.
+    pub fn data(&self) -> &[u8] {
+        &self.data
     }
 }
 
