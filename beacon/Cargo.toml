@@ -16,7 +16,7 @@ futures = "0.3"
 lazy_static = "1.4"
 prost = "0.6"
 protobuf = "2"
-grpcio = { version = "0.6", default-features = false, features = ["openssl-vendored", "prost-codec"] }
+grpcio = { version = "0.6", default-features = false, features = ["openssl-vendored", "secure", "prost-codec"] }
 
 plum_block = { path = "../primitives/block" }
 plum_types = { path = "../primitives/types" }

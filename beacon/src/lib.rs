@@ -8,4 +8,4 @@ mod beacon;
 #[path = "../proto/mod.rs"]
 mod proto;
 
-pub use self::beacon::RandomBeacon;
+pub use self::beacon::{DrandBeacon, RandomBeacon};
