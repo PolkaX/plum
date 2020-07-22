@@ -2340,10 +2340,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "bls-signatures",
  "futures",
  "grpcio",
+ "hex",
  "lazy_static",
  "plum_block",
+ "plum_hashing",
  "plum_types",
  "prost",
  "protobuf",
