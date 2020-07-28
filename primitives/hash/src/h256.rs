@@ -1,5 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use std::str::FromStr;
+
 use fixed_hash::construct_fixed_hash;
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{de, ser};
@@ -9,13 +11,25 @@ construct_fixed_hash! {
     pub struct H256(32);
 }
 
+impl FromStr for H256 {
+    type Err = hex::FromHexError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes = hex::decode(s)?;
+        if bytes.len() != Self::len_bytes() {
+            return Err(hex::FromHexError::InvalidStringLength);
+        }
+        Ok(H256::from_slice(&bytes))
+    }
+}
+
 // Implement JSON serialization for H256.
 impl ser::Serialize for H256 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
-        plum_bytes::serialize(self.as_bytes(), serializer)
+        hex::encode(self.as_bytes()).serialize(serializer)
     }
 }
 
@@ -25,7 +39,8 @@ impl<'de> de::Deserialize<'de> for H256 {
     where
         D: de::Deserializer<'de>,
     {
-        let bytes = plum_bytes::deserialize(deserializer)?;
+        let bytes = hex::decode(String::deserialize(deserializer)?)
+            .map_err(|err| de::Error::custom(format!("hex decode error: {}", err)))?;
         if bytes.len() == H256::len_bytes() {
             Ok(H256::from_slice(bytes.as_slice()))
         } else {

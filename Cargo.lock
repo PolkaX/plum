@@ -766,7 +766,6 @@ checksum = "11498d382790b7a8f2fd211780bec78619bba81cdad3a283997c0c41f836759c"
 dependencies = [
  "byteorder",
  "rand",
- "rustc-hex",
  "static_assertions",
 ]
 
@@ -2480,6 +2479,7 @@ name = "plum_bytes"
 version = "0.1.0"
 dependencies = [
  "base64 0.12.3",
+ "hex",
  "minicbor",
  "serde",
 ]
@@ -2531,8 +2531,9 @@ name = "plum_hash"
 version = "0.1.0"
 dependencies = [
  "fixed-hash",
+ "hex",
  "minicbor",
- "plum_bytes",
+ "rand",
  "serde",
 ]
 

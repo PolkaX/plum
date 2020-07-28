@@ -72,6 +72,6 @@ pub struct KeyInfo {
     /// The key type.
     pub r#type: KeyType,
     /// The private key corresponding to key type.
-    #[serde(with = "plum_bytes")]
+    #[serde(with = "plum_bytes::base64")]
     pub private_key: Vec<u8>,
 }

@@ -20,7 +20,7 @@ pub struct SignedVoucher {
     /// time_lock_max set to 0 means no timeout
     pub time_lock_max: ChainEpoch,
     /// (optional) The secret_preimage is used by `To` to validate
-    #[serde(with = "plum_bytes")]
+    #[serde(with = "plum_bytes::base64")]
     pub secret_preimage: Vec<u8>,
     /// (optional) extra can be specified by `From` to add a verification method to the voucher
     pub extra: ModVerifyParams,
@@ -48,6 +48,6 @@ pub struct SignedVoucher {
 pub struct ModVerifyParams {
     pub actor: Address,
     pub method: MethodNum,
-    #[serde(with = "plum_bytes")]
+    #[serde(with = "plum_bytes::base64")]
     pub data: Vec<u8>,
 }

@@ -14,7 +14,7 @@ use crate::sector::{RegisteredPoStProof, SectorInfo};
 pub struct PoStProof {
     #[serde(rename = "PoStProof")]
     pub post_proof: RegisteredPoStProof,
-    #[serde(with = "plum_bytes")]
+    #[serde(with = "plum_bytes::base64")]
     pub proof_bytes: Vec<u8>,
 }
 

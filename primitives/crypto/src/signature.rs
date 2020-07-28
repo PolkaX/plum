@@ -56,7 +56,7 @@ pub struct Signature {
     /// Tha actual signature bytes.
     /// secp256k1: signature (64 bytes) + recovery_id (1 byte)
     /// bls: signature (96 bytes)
-    #[serde(with = "plum_bytes")]
+    #[serde(with = "plum_bytes::base64")]
     data: Vec<u8>,
 }
 

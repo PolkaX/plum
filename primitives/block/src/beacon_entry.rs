@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "PascalCase")]
 pub struct BeaconEntry {
     round: u64,
-    #[serde(with = "plum_bytes")]
+    #[serde(with = "plum_bytes::base64")]
     data: Vec<u8>,
 }
 
