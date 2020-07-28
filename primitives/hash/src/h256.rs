@@ -19,7 +19,7 @@ impl FromStr for H256 {
         if bytes.len() != Self::len_bytes() {
             return Err(hex::FromHexError::InvalidStringLength);
         }
-        Ok(H256::from_slice(&bytes))
+        Ok(Self::from_slice(&bytes))
     }
 }
 

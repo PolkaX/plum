@@ -1,17 +1,15 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use std::sync::Arc;
-use std::time::Duration;
-
 use anyhow::Result;
-use bls::Serialize;
-use grpcio::{ChannelBuilder, EnvBuilder, LbPolicy};
+use bls::{PublicKey, Serialize};
+use reqwest::{Client, ClientBuilder};
+use serde::Deserialize;
 
 use plum_block::BeaconEntry;
 use plum_hashing::sha256;
 use plum_types::ChainEpoch;
 
-use crate::proto::drand::{PublicClient, PublicRandRequest};
+use crate::config::DrandConfig;
 
 /// RandomBeacon represents a system that provides randomness to Lotus.
 /// Other components interrogate the RandomBeacon to acquire randomness that's
@@ -37,47 +35,27 @@ pub trait RandomBeacon {
 ///
 /// The root trust for the Drand chain is configured from build.DrandChain.
 pub struct DrandBeacon {
-    client: PublicClient,
-    pubkey: bls::PublicKey,
+    client: Client,
+    url: String,
+    pubkey: PublicKey,
 
-    interval: Duration,
+    interval: u64, // time.Duration (i64)
     drand_gen_time: u64,
     fil_gen_time: u64,
     fil_round_time: u64,
 }
 
-/*
-var DrandConfig = dtypes.DrandConfig{
-    Servers: []string{
-        "https://pl-eu.testnet.drand.sh",
-        "https://pl-us.testnet.drand.sh",
-        "https://pl-sin.testnet.drand.sh",
-     },
-    ChainInfoJSON: `{
-        "public_key":"922a2e93828ff83345bae533f5172669a26c02dc76d6bf59c80892e12ab1455c229211886f35bb56af6d5bea981024df",
-        "period":25,
-        "genesis_time":1590445175,
-        "hash":"138a324aa6540f93d0dad002aa89454b1bec2b6e948682cde6bd4db40f4b7c9b"
-    }`,
-}
-*/
 impl DrandBeacon {
-    /// Create a new DrandBeacon with the config.
-    pub fn new(genesis_ts: u64, interval: u64) -> Result<Self> {
-        let env = Arc::new(EnvBuilder::new().build());
-        let channel = ChannelBuilder::new(env)
-            .load_balancing_policy(LbPolicy::RoundRobin)
-            .connect("https://pl-eu.testnet.drand.sh");
-        let client = PublicClient::new(channel);
-
-        let pubkey = hex::decode("922a2e93828ff83345bae533f5172669a26c02dc76d6bf59c80892e12ab1455c229211886f35bb56af6d5bea981024df").unwrap();
-        let pubkey = bls::PublicKey::from_bytes(&pubkey)?;
+    /// Create a new DrandBeacon HTTP client with the config.
+    pub fn new(genesis_ts: u64, interval: u64, config: DrandConfig) -> Result<Self> {
+        let client = ClientBuilder::new().build()?;
 
         Ok(Self {
             client,
-            pubkey,
-            interval: Duration::from_secs(25),
-            drand_gen_time: 1590445175,
+            url: config.servers[0].to_string(),
+            pubkey: config.chain_info.public_key,
+            interval: config.chain_info.period,
+            drand_gen_time: config.chain_info.genesis_time,
             fil_round_time: interval,
             fil_gen_time: genesis_ts,
         })
@@ -98,12 +76,35 @@ impl DrandBeacon {
     }
 }
 
+#[allow(dead_code)]
+#[derive(Deserialize)]
+struct PublicRandResponse {
+    round: u64,
+    #[serde(with = "plum_bytes::hex")]
+    signature: Vec<u8>,
+    #[serde(with = "plum_bytes::hex")]
+    previous_signature: Vec<u8>,
+    // randomness is simply there to demonstrate - it is the hash of the signature.
+    // It should be computed locally.
+    #[serde(with = "plum_bytes::hex")]
+    randomness: Vec<u8>,
+}
+
 #[async_trait::async_trait]
 impl RandomBeacon for DrandBeacon {
     async fn entry(&self, round: u64) -> Result<BeaconEntry> {
-        let mut public_rand_req = PublicRandRequest::default();
-        public_rand_req.round = round;
-        let public_rand_resp = self.client.public_rand_async(&public_rand_req)?.await?;
+        let url = if round == 0 {
+            format!("{}/public/latest", self.url)
+        } else {
+            format!("{}/public/{}", self.url, round)
+        };
+        let public_rand_resp = self
+            .client
+            .get(&url)
+            .send()
+            .await?
+            .json::<PublicRandResponse>()
+            .await?;
         Ok(BeaconEntry::new(
             public_rand_resp.round,
             public_rand_resp.signature,
@@ -111,6 +112,7 @@ impl RandomBeacon for DrandBeacon {
     }
 
     fn verify_entry(&self, curr: &BeaconEntry, prev: &BeaconEntry) -> Result<bool> {
+        // The previous beacon entry is the latest.
         if prev.round() == 0 {
             return Ok(true);
         }
@@ -121,6 +123,6 @@ impl RandomBeacon for DrandBeacon {
         // TODO: sometimes the genesis time for filecoin is zero and this goes negative
         let latest_ts =
             fil_epoch as u64 * self.fil_round_time + self.fil_gen_time - self.fil_round_time;
-        (latest_ts - self.drand_gen_time) / self.interval.as_secs()
+        (latest_ts - self.drand_gen_time) / self.interval
     }
 }
