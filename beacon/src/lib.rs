@@ -9,8 +9,6 @@ extern crate bls_signatures as bls;
 mod beacon;
 mod config;
 mod mock;
-#[cfg(feature = "grpc")]
-mod proto;
 
 pub use self::beacon::{DrandBeacon, RandomBeacon};
 pub use self::config::{DrandConfig, DrandNetwork};
@@ -21,9 +19,16 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_drand_beacon() {
+    async fn test_drand_beacon_mainnet() {
         let beacon = DrandBeacon::new(100, 25, DrandConfig::mainnet()).unwrap();
-        let entry = beacon.entry(1).await.unwrap();
-        println!("{:?}", entry);
+        let entry = beacon.entry(0).await.unwrap();
+        println!("Mainnet: {:?}", entry);
+    }
+
+    #[tokio::test]
+    async fn test_drand_beacon_testnet() {
+        let beacon = DrandBeacon::new(100, 25, DrandConfig::testnet()).unwrap();
+        let entry = beacon.entry(0).await.unwrap();
+        println!("Testnet: {:?}", entry);
     }
 }

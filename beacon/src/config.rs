@@ -37,10 +37,6 @@ pub struct DrandConfig {
     /// HTTP servers addresses.
     #[cfg(not(feature = "grpc"))]
     pub servers: Vec<&'static str>,
-    /// gRPC server address.
-    #[cfg(feature = "grpc")]
-    pub server: &'static str,
-
     pub relays: Vec<&'static str>,
     pub chain_info: DrandChainInfo,
 }
@@ -60,14 +56,11 @@ impl DrandConfig {
     /// Return the config of the Drand main network.
     pub fn mainnet() -> Self {
         Self {
-            #[cfg(not(feature = "grpc"))]
             servers: vec![
                 "https://api.drand.sh",
                 "https://api2.drand.sh",
                 "https://api3.drand.sh",
             ],
-            #[cfg(feature = "grpc")]
-            server: "localhost:1234",
             relays: vec![
                 "/dnsaddr/api.drand.sh/",
                 "/dnsaddr/api2.drand.sh/",
@@ -86,14 +79,11 @@ impl DrandConfig {
     /// Return the config of the Drand test network.
     pub fn testnet() -> Self {
         Self {
-            #[cfg(not(feature = "grpc"))]
             servers: vec![
                 "https://pl-eu.testnet.drand.sh",
                 "https://pl-us.testnet.drand.sh",
                 "https://pl-sin.testnet.drand.sh",
             ],
-            #[cfg(feature = "grpc")]
-            server: "localhost:1234",
             relays: vec![
                 "/dnsaddr/pl-eu.testnet.drand.sh/",
                 "/dnsaddr/pl-us.testnet.drand.sh/",
@@ -112,13 +102,10 @@ impl DrandConfig {
     /// Return the config of the Drand develop network.
     pub fn devnet() -> Self {
         Self {
-            #[cfg(not(feature = "grpc"))]
             servers: vec![
                 "https://dev1.drand.sh",
                 "https://dev2.drand.sh",
             ],
-            #[cfg(feature = "grpc")]
-            server: "localhost:1234",
             relays: vec![
                 "/dnsaddr/dev1.drand.sh/",
                 "/dnsaddr/dev2.drand.sh/",

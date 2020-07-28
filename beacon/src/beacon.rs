@@ -1,7 +1,5 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use std::sync::Arc;
-
 use anyhow::Result;
 use bls::{PublicKey, Serialize};
 use reqwest::{Client, ClientBuilder};
@@ -12,8 +10,6 @@ use plum_hashing::sha256;
 use plum_types::ChainEpoch;
 
 use crate::config::DrandConfig;
-#[cfg(feature = "grpc")]
-use crate::proto::drand::{PublicClient, PublicRandRequest};
 
 /// RandomBeacon represents a system that provides randomness to Lotus.
 /// Other components interrogate the RandomBeacon to acquire randomness that's
@@ -39,13 +35,8 @@ pub trait RandomBeacon {
 ///
 /// The root trust for the Drand chain is configured from build.DrandChain.
 pub struct DrandBeacon {
-    #[cfg(not(feature = "grpc"))]
     client: Client,
-    #[cfg(not(feature = "grpc"))]
     url: String,
-    #[cfg(feature = "grpc")]
-    client: PublicClient,
-
     pubkey: PublicKey,
 
     interval: u64, // time.Duration (i64)
@@ -56,34 +47,12 @@ pub struct DrandBeacon {
 
 impl DrandBeacon {
     /// Create a new DrandBeacon HTTP client with the config.
-    #[cfg(not(feature = "grpc"))]
     pub fn new(genesis_ts: u64, interval: u64, config: DrandConfig) -> Result<Self> {
         let client = ClientBuilder::new().build()?;
 
         Ok(Self {
             client,
             url: config.servers[0].to_string(),
-            pubkey: config.chain_info.public_key,
-            interval: config.chain_info.period,
-            drand_gen_time: config.chain_info.genesis_time,
-            fil_round_time: interval,
-            fil_gen_time: genesis_ts,
-        })
-    }
-
-    /// Create a new DrandBeacon gRPC client with the config.
-    #[cfg(feature = "grpc")]
-    pub fn new(genesis_ts: u64, interval: u64, config: DrandConfig) -> Result<Self> {
-        use grpcio::{ChannelBuilder, EnvBuilder, LbPolicy};
-
-        let env = Arc::new(EnvBuilder::new().build());
-        let channel = ChannelBuilder::new(env)
-            .load_balancing_policy(LbPolicy::RoundRobin)
-            .connect(config.server);
-        let client = PublicClient::new(channel);
-
-        Ok(Self {
-            client,
             pubkey: config.chain_info.public_key,
             interval: config.chain_info.period,
             drand_gen_time: config.chain_info.genesis_time,
@@ -107,7 +76,7 @@ impl DrandBeacon {
     }
 }
 
-#[cfg(not(feature = "grpc"))]
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct PublicRandResponse {
     round: u64,
@@ -123,7 +92,6 @@ struct PublicRandResponse {
 
 #[async_trait::async_trait]
 impl RandomBeacon for DrandBeacon {
-    #[cfg(not(feature = "grpc"))]
     async fn entry(&self, round: u64) -> Result<BeaconEntry> {
         let url = if round == 0 {
             format!("{}/public/latest", self.url)
@@ -137,17 +105,6 @@ impl RandomBeacon for DrandBeacon {
             .await?
             .json::<PublicRandResponse>()
             .await?;
-        Ok(BeaconEntry::new(
-            public_rand_resp.round,
-            public_rand_resp.signature,
-        ))
-    }
-
-    #[cfg(feature = "grpc")]
-    async fn entry(&self, round: u64) -> Result<BeaconEntry> {
-        let mut public_rand_req = PublicRandRequest::default();
-        public_rand_req.round = round;
-        let public_rand_resp = self.client.public_rand_async(&public_rand_req)?.await?;
         Ok(BeaconEntry::new(
             public_rand_resp.round,
             public_rand_resp.signature,
