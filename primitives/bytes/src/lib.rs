@@ -150,16 +150,16 @@ pub mod hex {
 
     /// Implement JSON serialization of Vec<u8> using hex.
     pub fn serialize<S>(bytes: &[u8], serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: ser::Serializer,
+    where
+        S: ser::Serializer,
     {
         ::hex::encode(bytes).serialize(serializer)
     }
 
     /// Implement JSON deserialization of Vec<u8> using hex.
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
-        where
-            D: de::Deserializer<'de>,
+    where
+        D: de::Deserializer<'de>,
     {
         ::hex::decode(String::deserialize(deserializer)?)
             .map_err(|err| de::Error::custom(format!("hex decode error: {}", err)))

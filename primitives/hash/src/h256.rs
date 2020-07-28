@@ -39,7 +39,8 @@ impl<'de> de::Deserialize<'de> for H256 {
     where
         D: de::Deserializer<'de>,
     {
-        let bytes = hex::decode(String::deserialize(deserializer)?).map_err(|err| de::Error::custom(format!("hex decode error: {}", err)))?;
+        let bytes = hex::decode(String::deserialize(deserializer)?)
+            .map_err(|err| de::Error::custom(format!("hex decode error: {}", err)))?;
         if bytes.len() == H256::len_bytes() {
             Ok(H256::from_slice(bytes.as_slice()))
         } else {
