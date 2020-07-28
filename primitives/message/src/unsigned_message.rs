@@ -36,7 +36,7 @@ pub struct UnsignedMessage {
     /// The method.
     pub method: MethodNum,
     /// The params of method.
-    #[serde(with = "plum_bytes")]
+    #[serde(with = "plum_bytes::base64")]
     pub params: Vec<u8>,
 }
 

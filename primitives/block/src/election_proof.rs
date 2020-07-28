@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct ElectionProof {
     /// VRF proof
     #[serde(rename = "VRFProof")]
-    #[serde(with = "plum_bytes")]
+    #[serde(with = "plum_bytes::base64")]
     pub vrf_proof: Vec<u8>,
 }
 

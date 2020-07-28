@@ -15,7 +15,7 @@ impl ser::Serialize for H256 {
     where
         S: ser::Serializer,
     {
-        plum_bytes::serialize(self.as_bytes(), serializer)
+        hex::encode(self.as_bytes()).serialize(serializer)
     }
 }
 
@@ -25,7 +25,7 @@ impl<'de> de::Deserialize<'de> for H256 {
     where
         D: de::Deserializer<'de>,
     {
-        let bytes = plum_bytes::deserialize(deserializer)?;
+        let bytes = hex::decode(String::deserialize(deserializer)?).map_err(|err| de::Error::custom(format!("hex decode error: {}", err)))?;
         if bytes.len() == H256::len_bytes() {
             Ok(H256::from_slice(bytes.as_slice()))
         } else {

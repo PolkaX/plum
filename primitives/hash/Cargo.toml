@@ -6,9 +6,8 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-fixed-hash = "0.6"
+fixed-hash = { version = "0.6", default-features = false, features = ["byteorder", "rand"] }
+hex = "0.4"
 minicbor = { version = "0.4", features = ["std"] }
+rand = "0.7"
 serde = "1.0"
-
-# plum
-plum_bytes = { path = "../bytes" }

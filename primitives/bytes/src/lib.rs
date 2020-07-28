@@ -68,7 +68,7 @@ impl ser::Serialize for Bytes {
     where
         S: ser::Serializer,
     {
-        self::serialize(self.as_inner(), serializer)
+        self::base64::serialize(self.as_inner(), serializer)
     }
 }
 
@@ -78,7 +78,7 @@ impl<'de> de::Deserialize<'de> for Bytes {
     where
         D: de::Deserializer<'de>,
     {
-        Ok(Self(self::deserialize(deserializer)?))
+        Ok(Self(self::base64::deserialize(deserializer)?))
     }
 }
 
@@ -118,23 +118,50 @@ impl<'a> ser::Serialize for BytesRef<'a> {
     where
         S: ser::Serializer,
     {
-        self::serialize(self.as_inner(), serializer)
+        self::base64::serialize(self.as_inner(), serializer)
     }
 }
 
-/// Implement JSON serialization of Vec<u8> using base64.
-pub fn serialize<S>(bytes: &[u8], serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: ser::Serializer,
-{
-    base64::encode(bytes).serialize(serializer)
+/// Implement JSON serialization/deserialization of Vec<u8> using base64.
+pub mod base64 {
+    use super::*;
+
+    /// Implement JSON serialization of Vec<u8> using base64.
+    pub fn serialize<S>(bytes: &[u8], serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        ::base64::encode(bytes).serialize(serializer)
+    }
+
+    /// Implement JSON deserialization of Vec<u8> using base64.
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        ::base64::decode(String::deserialize(deserializer)?)
+            .map_err(|err| de::Error::custom(format!("base64 decode error: {}", err)))
+    }
 }
 
-/// Implement JSON deserialization of Vec<u8> using base64.
-pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    base64::decode(String::deserialize(deserializer)?)
-        .map_err(|err| de::Error::custom(format!("base64 decode error: {}", err)))
+/// Implement JSON serialization/deserialization of Vec<u8> using hex.
+pub mod hex {
+    use super::*;
+
+    /// Implement JSON serialization of Vec<u8> using hex.
+    pub fn serialize<S>(bytes: &[u8], serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+    {
+        ::hex::encode(bytes).serialize(serializer)
+    }
+
+    /// Implement JSON deserialization of Vec<u8> using hex.
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+        where
+            D: de::Deserializer<'de>,
+    {
+        ::hex::decode(String::deserialize(deserializer)?)
+            .map_err(|err| de::Error::custom(format!("hex decode error: {}", err)))
+    }
 }

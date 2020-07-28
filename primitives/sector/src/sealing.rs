@@ -70,7 +70,7 @@ impl<'b> decode::Decode<'b> for SealVerifyInfo {
 //     pub sealed_cid: Cid,
 //     pub interactive_epoch: ChainEpoch,
 //     pub registered_proof: RegisteredSealProof,
-//     #[serde(with = "plum_bytes")]
+//     #[serde(with = "plum_bytes::base64")]
 //     pub proof: Vec<u8>,
 //     #[serde(rename = "DealIDs")]
 //     pub deal_ids: Vec<DealId>,
