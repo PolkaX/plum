@@ -18,9 +18,7 @@ pub struct SealVerifyInfo {
     pub sector_id: SectorId,
     #[serde(rename = "DealIDs")]
     pub deal_ids: Vec<DealId>,
-    #[serde(with = "plum_bytes")]
     pub randomness: Randomness,
-    #[serde(with = "plum_bytes")]
     pub interactive_randomness: Randomness,
     pub proof: Vec<u8>,
     #[serde(rename = "SealedCID")]
@@ -72,7 +70,7 @@ impl<'b> decode::Decode<'b> for SealVerifyInfo {
 //     pub sealed_cid: Cid,
 //     pub interactive_epoch: ChainEpoch,
 //     pub registered_proof: RegisteredSealProof,
-//     #[serde(with = "plum_bytes")]
+//     #[serde(with = "plum_bytes::base64")]
 //     pub proof: Vec<u8>,
 //     #[serde(rename = "DealIDs")]
 //     pub deal_ids: Vec<DealId>,

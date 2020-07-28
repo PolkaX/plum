@@ -13,7 +13,7 @@ pub struct MessageReceipt {
     /// The exit code of VM.
     pub exit_code: ExitCode,
     /// The return bytes.
-    #[serde(with = "plum_bytes")]
+    #[serde(with = "plum_bytes::base64")]
     pub r#return: Vec<u8>,
     /// The used number of gas.
     #[serde(with = "bigint_json")]

@@ -14,7 +14,7 @@ use crate::sector::{RegisteredPoStProof, SectorInfo};
 pub struct PoStProof {
     #[serde(rename = "PoStProof")]
     pub post_proof: RegisteredPoStProof,
-    #[serde(with = "plum_bytes")]
+    #[serde(with = "plum_bytes::base64")]
     pub proof_bytes: Vec<u8>,
 }
 
@@ -46,7 +46,6 @@ impl<'b> decode::Decode<'b> for PoStProof {
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct WinningPoStVerifyInfo {
-    #[serde(with = "plum_bytes")]
     pub randomness: Randomness,
     pub proofs: Vec<PoStProof>,
     pub challenged_sectors: Vec<SectorInfo>,
@@ -84,7 +83,6 @@ impl<'b> decode::Decode<'b> for WinningPoStVerifyInfo {
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct WindowPoStVerifyInfo {
-    #[serde(with = "plum_bytes")]
     pub randomness: Randomness,
     pub proofs: Vec<PoStProof>,
     pub challenged_sectors: Vec<SectorInfo>,

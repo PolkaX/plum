@@ -16,7 +16,7 @@ pub struct SectorInfo {
     pub state: SectorState,
     pub comm_d: Cid,
     pub comm_r: Cid,
-    #[serde(with = "plum_bytes")]
+    #[serde(with = "plum_bytes::base64")]
     pub proof: Vec<u8>,
     pub deals: Vec<DealId>,
     pub ticket: SealTicket,
@@ -63,7 +63,6 @@ pub struct SealedRefs {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SealTicket {
-    #[serde(with = "plum_bytes")]
     pub value: Randomness,
     pub epoch: ChainEpoch,
 }
@@ -73,7 +72,6 @@ pub struct SealTicket {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SealSeed {
-    #[serde(with = "plum_bytes")]
     pub value: Randomness,
     pub epoch: ChainEpoch,
 }

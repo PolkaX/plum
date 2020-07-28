@@ -107,23 +107,24 @@ impl DrandBeacon {
     }
 }
 
+#[cfg(not(feature = "grpc"))]
+#[derive(Deserialize)]
+struct PublicRandResponse {
+    round: u64,
+    #[serde(with = "plum_bytes::hex")]
+    signature: Vec<u8>,
+    #[serde(with = "plum_bytes::hex")]
+    previous_signature: Vec<u8>,
+    // randomness is simply there to demonstrate - it is the hash of the signature.
+    // It should be computed locally.
+    #[serde(with = "plum_bytes::hex")]
+    randomness: Vec<u8>,
+}
+
 #[async_trait::async_trait]
 impl RandomBeacon for DrandBeacon {
     #[cfg(not(feature = "grpc"))]
     async fn entry(&self, round: u64) -> Result<BeaconEntry> {
-        #[derive(Deserialize)]
-        struct PublicRandResponse {
-            round: u64,
-            #[serde(with = "plum_bytes::hex")]
-            signature: Vec<u8>,
-            #[serde(with = "plum_bytes::hex")]
-            previous_signature: Vec<u8>,
-            // randomness is simply there to demonstrate - it is the hash of the signature.
-            // It should be computed locally.
-            #[serde(with = "plum_bytes::hex")]
-            randomness: Vec<u8>,
-        }
-
         let url = if round == 0 {
             format!("{}/public/latest", self.url)
         } else {

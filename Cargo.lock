@@ -2484,6 +2484,7 @@ name = "plum_bytes"
 version = "0.1.0"
 dependencies = [
  "base64 0.12.3",
+ "hex",
  "minicbor",
  "serde",
 ]
@@ -2664,7 +2665,7 @@ dependencies = [
  "lazy_static",
  "minicbor",
  "plum_bigint",
- "plum_bytes",
+ "plum_hash",
  "serde",
 ]
 
