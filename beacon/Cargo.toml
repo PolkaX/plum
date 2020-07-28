@@ -14,12 +14,17 @@ anyhow = "1.0"
 async-trait = "0.1"
 bls-signatures = "0.6"
 futures = "0.3"
+grpcio = { version = "0.6", default-features = false, features = ["openssl-vendored", "secure", "prost-codec"] }
 hex = "0.4"
 lazy_static = "1.4"
 prost = "0.6"
 protobuf = "2"
-grpcio = { version = "0.6", default-features = false, features = ["openssl-vendored", "secure", "prost-codec"] }
+serde = { version = "1.0", features = ["derive"] }
 
 plum_block = { path = "../primitives/block" }
+plum_hash = { path = "../primitives/hash" }
 plum_hashing = { path = "../hashing" }
 plum_types = { path = "../primitives/types" }
+
+#[dev-dependencies]
+#tokio = { version = "0.2", features = ["rt-threaded", "macros"] }

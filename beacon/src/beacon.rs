@@ -1,16 +1,16 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::sync::Arc;
-use std::time::Duration;
 
 use anyhow::Result;
-use bls::Serialize;
+use bls::{PublicKey, Serialize};
 use grpcio::{ChannelBuilder, EnvBuilder, LbPolicy};
 
 use plum_block::BeaconEntry;
 use plum_hashing::sha256;
 use plum_types::ChainEpoch;
 
+use crate::config::DrandConfig;
 use crate::proto::drand::{PublicClient, PublicRandRequest};
 
 /// RandomBeacon represents a system that provides randomness to Lotus.
@@ -38,46 +38,30 @@ pub trait RandomBeacon {
 /// The root trust for the Drand chain is configured from build.DrandChain.
 pub struct DrandBeacon {
     client: PublicClient,
-    pubkey: bls::PublicKey,
+    pubkey: PublicKey,
 
-    interval: Duration,
+    interval: u64, // time.Duration (i64)
     drand_gen_time: u64,
     fil_gen_time: u64,
     fil_round_time: u64,
 }
 
-/*
-var DrandConfig = dtypes.DrandConfig{
-    Servers: []string{
-        "https://pl-eu.testnet.drand.sh",
-        "https://pl-us.testnet.drand.sh",
-        "https://pl-sin.testnet.drand.sh",
-     },
-    ChainInfoJSON: `{
-        "public_key":"922a2e93828ff83345bae533f5172669a26c02dc76d6bf59c80892e12ab1455c229211886f35bb56af6d5bea981024df",
-        "period":25,
-        "genesis_time":1590445175,
-        "hash":"138a324aa6540f93d0dad002aa89454b1bec2b6e948682cde6bd4db40f4b7c9b"
-    }`,
-}
-*/
 impl DrandBeacon {
     /// Create a new DrandBeacon with the config.
-    pub fn new(genesis_ts: u64, interval: u64) -> Result<Self> {
+    pub fn new(genesis_ts: u64, interval: u64, config: DrandConfig) -> Result<Self> {
+        let addr = config.servers.join(",");
+
         let env = Arc::new(EnvBuilder::new().build());
         let channel = ChannelBuilder::new(env)
             .load_balancing_policy(LbPolicy::RoundRobin)
-            .connect("https://pl-eu.testnet.drand.sh");
+            .connect(&addr);
         let client = PublicClient::new(channel);
-
-        let pubkey = hex::decode("922a2e93828ff83345bae533f5172669a26c02dc76d6bf59c80892e12ab1455c229211886f35bb56af6d5bea981024df").unwrap();
-        let pubkey = bls::PublicKey::from_bytes(&pubkey)?;
 
         Ok(Self {
             client,
-            pubkey,
-            interval: Duration::from_secs(25),
-            drand_gen_time: 1590445175,
+            pubkey: config.chain_info.public_key,
+            interval: config.chain_info.period,
+            drand_gen_time: config.chain_info.genesis_time,
             fil_round_time: interval,
             fil_gen_time: genesis_ts,
         })
@@ -121,6 +105,6 @@ impl RandomBeacon for DrandBeacon {
         // TODO: sometimes the genesis time for filecoin is zero and this goes negative
         let latest_ts =
             fil_epoch as u64 * self.fil_round_time + self.fil_gen_time - self.fil_round_time;
-        (latest_ts - self.drand_gen_time) / self.interval.as_secs()
+        (latest_ts - self.drand_gen_time) / self.interval
     }
 }

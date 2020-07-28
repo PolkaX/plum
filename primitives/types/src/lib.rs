@@ -9,7 +9,6 @@ use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
 use plum_bigint::{bigint_json, BigInt, BigIntWrapper};
-use plum_hash::H256;
 
 mod constants;
 
@@ -89,7 +88,7 @@ pub type MethodNum = u64;
 pub type TokenAmount = BigInt;
 
 /// Randomness is a string of random bytes
-pub type Randomness = H256; // Vec<u8> ???
+pub type Randomness = Vec<u8>;
 
 ///
 pub type DealId = u64;

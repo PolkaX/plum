@@ -18,7 +18,9 @@ pub struct SealVerifyInfo {
     pub sector_id: SectorId,
     #[serde(rename = "DealIDs")]
     pub deal_ids: Vec<DealId>,
+    #[serde(with = "plum_bytes")]
     pub randomness: Randomness,
+    #[serde(with = "plum_bytes")]
     pub interactive_randomness: Randomness,
     pub proof: Vec<u8>,
     #[serde(rename = "SealedCID")]

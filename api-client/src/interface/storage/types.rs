@@ -63,6 +63,7 @@ pub struct SealedRefs {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SealTicket {
+    #[serde(with = "plum_bytes")]
     pub value: Randomness,
     pub epoch: ChainEpoch,
 }
@@ -72,6 +73,7 @@ pub struct SealTicket {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SealSeed {
+    #[serde(with = "plum_bytes")]
     pub value: Randomness,
     pub epoch: ChainEpoch,
 }

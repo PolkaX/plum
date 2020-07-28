@@ -766,7 +766,6 @@ checksum = "11498d382790b7a8f2fd211780bec78619bba81cdad3a283997c0c41f836759c"
 dependencies = [
  "byteorder",
  "rand",
- "rustc-hex",
  "static_assertions",
 ]
 
@@ -2346,11 +2345,13 @@ dependencies = [
  "hex",
  "lazy_static",
  "plum_block",
+ "plum_hash",
  "plum_hashing",
  "plum_types",
  "prost",
  "protobuf",
  "protobuf-build",
+ "serde",
 ]
 
 [[package]]
@@ -2531,8 +2532,9 @@ name = "plum_hash"
 version = "0.1.0"
 dependencies = [
  "fixed-hash",
+ "hex",
  "minicbor",
- "plum_bytes",
+ "rand",
  "serde",
 ]
 
@@ -2659,7 +2661,7 @@ dependencies = [
  "lazy_static",
  "minicbor",
  "plum_bigint",
- "plum_hash",
+ "plum_bytes",
  "serde",
 ]
 

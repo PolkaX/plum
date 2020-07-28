@@ -7,8 +7,10 @@
 extern crate bls_signatures as bls;
 
 mod beacon;
+mod config;
 mod mock;
 mod proto;
 
 pub use self::beacon::{DrandBeacon, RandomBeacon};
+pub use self::config::{DrandConfig, DrandNetwork};
 pub use self::mock::MockBeacon;
