@@ -89,7 +89,7 @@ pub type MethodNum = u64;
 pub type TokenAmount = BigInt;
 
 /// Randomness is a string of random bytes
-pub type Randomness = H256; // Vec<u8>???
+pub type Randomness = H256; // Vec<u8> ???
 
 ///
 pub type DealId = u64;
