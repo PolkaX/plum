@@ -8,7 +8,6 @@ extern crate bls_signatures as bls;
 
 mod beacon;
 mod mock;
-#[path = "../proto/mod.rs"]
 mod proto;
 
 pub use self::beacon::{DrandBeacon, RandomBeacon};
