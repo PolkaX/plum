@@ -2345,13 +2345,16 @@ dependencies = [
  "hex",
  "lazy_static",
  "plum_block",
+ "plum_bytes",
  "plum_hash",
  "plum_hashing",
  "plum_types",
  "prost",
  "protobuf",
  "protobuf-build",
+ "reqwest",
  "serde",
+ "tokio",
 ]
 
 [[package]]
@@ -3433,6 +3436,7 @@ dependencies = [
  "lazy_static",
  "memchr",
  "mio",
+ "num_cpus",
  "pin-project-lite",
  "slab",
  "tokio-macros",

@@ -6,25 +6,44 @@ edition = "2018"
 license = "GPL-3.0"
 build = "build.rs"
 
+[features]
+default = []
+grpc = [
+  "futures",
+  "grpcio/openssl-vendored",
+  "grpcio/secure",
+  "grpcio/prost-codec",
+  "lazy_static",
+  "prost",
+  "protobuf",
+  "protobuf-build",
+]
+
 [build-dependencies]
-protobuf-build = { version = "0.11", default-features = false, features = ["grpcio-prost-codec"] }
+protobuf-build = { version = "0.11", default-features = false, features = ["grpcio-prost-codec"], optional = true }
 
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
 bls-signatures = "0.6"
-futures = "0.3"
-grpcio = { version = "0.6", default-features = false, features = ["openssl-vendored", "secure", "prost-codec"] }
 hex = "0.4"
-lazy_static = "1.4"
-prost = "0.6"
-protobuf = "2"
 serde = { version = "1.0", features = ["derive"] }
 
 plum_block = { path = "../primitives/block" }
+plum_bytes = { path = "../primitives/bytes" }
 plum_hash = { path = "../primitives/hash" }
 plum_hashing = { path = "../hashing" }
 plum_types = { path = "../primitives/types" }
 
-#[dev-dependencies]
-#tokio = { version = "0.2", features = ["rt-threaded", "macros"] }
+# HTTP
+reqwest = { version = "0.10", features = ["json"] }
+
+# gRPC
+futures = { version = "0.3", optional = true }
+grpcio = { version = "0.6", default-features = false, features = ["openssl-vendored", "secure", "prost-codec"], optional = true }
+lazy_static = { version = "1.4", optional = true }
+prost = { version = "0.6", optional = true }
+protobuf = { version = "2", optional = true }
+
+[dev-dependencies]
+tokio = { version = "0.2", features = ["rt-threaded", "macros"] }
