@@ -1,5 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use std::str::FromStr;
+
 use fixed_hash::construct_fixed_hash;
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{de, ser};
@@ -7,6 +9,18 @@ use serde::{de, ser};
 construct_fixed_hash! {
     /// Fixed-size uninterpreted hash type with 32 bytes (256 bits) size.
     pub struct H256(32);
+}
+
+impl FromStr for H256 {
+    type Err = hex::FromHexError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes = hex::decode(s)?;
+        if bytes.len() != Self::len_bytes() {
+            return Err(hex::FromHexError::InvalidStringLength);
+        }
+        Ok(H256::from_slice(&bytes))
+    }
 }
 
 // Implement JSON serialization for H256.
