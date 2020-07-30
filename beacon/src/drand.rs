@@ -1,7 +1,10 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+use std::collections::HashMap;
+
 use anyhow::Result;
 use bls::{PublicKey, Serialize};
+use parking_lot::Mutex;
 use reqwest::{Client, ClientBuilder};
 use serde::Deserialize;
 
@@ -43,21 +46,26 @@ pub struct DrandBeacon {
     drand_gen_time: u64,
     fil_gen_time: u64,
     fil_round_time: u64,
+
+    local_cache: Mutex<HashMap<u64, BeaconEntry>>,
 }
 
 impl DrandBeacon {
     /// Create a new DrandBeacon HTTP client with the config.
     pub fn new(genesis_ts: u64, interval: u64, config: DrandConfig) -> Result<Self> {
-        let client = ClientBuilder::new().build()?;
+        if genesis_ts == 0 {
+            panic!("Genesis timestamp cannot be 0");
+        }
 
         Ok(Self {
-            client,
+            client: ClientBuilder::new().build()?,
             url: config.servers[0].to_string(),
             pubkey: config.chain_info.public_key,
             interval: config.chain_info.period,
             drand_gen_time: config.chain_info.genesis_time,
             fil_round_time: interval,
             fil_gen_time: genesis_ts,
+            local_cache: Mutex::new(HashMap::new()),
         })
     }
 
@@ -93,11 +101,14 @@ struct PublicRandResponse {
 #[async_trait::async_trait]
 impl RandomBeacon for DrandBeacon {
     async fn entry(&self, round: u64) -> Result<BeaconEntry> {
-        let url = if round == 0 {
-            format!("{}/public/latest", self.url)
-        } else {
-            format!("{}/public/{}", self.url, round)
-        };
+        if round != 0 {
+            // round is not the latest.
+            if let Some(entry) = self.local_cache.lock().get(&round) {
+                return Ok(entry.clone());
+            }
+        }
+
+        let url = format!("{}/public/{}", self.url, round);
         let public_rand_resp = self
             .client
             .get(&url)
@@ -116,7 +127,12 @@ impl RandomBeacon for DrandBeacon {
         if prev.round() == 0 {
             return Ok(true);
         }
-        self.verify_beacon_data(curr.round(), curr.data(), prev.data())
+
+        let is_match = self.verify_beacon_data(curr.round(), curr.data(), prev.data())?;
+        if is_match {
+            self.local_cache.lock().insert(curr.round(), curr.clone());
+        }
+        Ok(is_match)
     }
 
     fn max_beacon_round_for_epoch(&self, fil_epoch: ChainEpoch) -> u64 {

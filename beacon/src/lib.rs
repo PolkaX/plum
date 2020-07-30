@@ -6,12 +6,12 @@
 
 extern crate bls_signatures as bls;
 
-mod beacon;
 mod config;
+mod drand;
 mod mock;
 
-pub use self::beacon::{DrandBeacon, RandomBeacon};
 pub use self::config::{DrandConfig, DrandNetwork};
+pub use self::drand::{DrandBeacon, RandomBeacon};
 pub use self::mock::MockBeacon;
 
 #[cfg(test)]
@@ -22,13 +22,17 @@ mod tests {
     async fn test_drand_beacon_mainnet() {
         let beacon = DrandBeacon::new(100, 25, DrandConfig::mainnet()).unwrap();
         let entry = beacon.entry(0).await.unwrap();
-        println!("Mainnet: {:?}", entry);
+        println!("Mainnet round 0: {:?}", entry);
+        let entry = beacon.entry(1).await.unwrap();
+        println!("Mainnet round 1: {:?}", entry);
     }
 
     #[tokio::test]
     async fn test_drand_beacon_testnet() {
         let beacon = DrandBeacon::new(100, 25, DrandConfig::testnet()).unwrap();
         let entry = beacon.entry(0).await.unwrap();
-        println!("Testnet: {:?}", entry);
+        println!("Testnet round 0: {:?}", entry);
+        let entry = beacon.entry(1).await.unwrap();
+        println!("Testnet round 1: {:?}", entry);
     }
 }
