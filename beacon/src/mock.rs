@@ -7,7 +7,7 @@ use anyhow::Result;
 use plum_block::BeaconEntry;
 use plum_hashing::blake2b_256;
 
-use crate::beacon::RandomBeacon;
+use crate::drand::RandomBeacon;
 
 /// MockBeacon assumes that filecoin rounds are 1:1 mapped with the beacon rounds.
 pub struct MockBeacon {

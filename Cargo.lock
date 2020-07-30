@@ -2287,6 +2287,7 @@ dependencies = [
  "async-trait",
  "bls-signatures",
  "hex",
+ "parking_lot 0.11.0",
  "plum_block",
  "plum_bytes",
  "plum_hash",
