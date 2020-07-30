@@ -34,6 +34,7 @@ members = [
   "ipfs/datastore-memory",
   "ipfs/datastore-rocksdb",
   "ipld",
+  "ipld/amt",
 
   # Network
   "network",
