@@ -17,7 +17,7 @@ thiserror = "1.0"
 # plum
 plum_address = { path = "../address" }
 plum_bytes = { path = "../bytes" }
-plum_hashing = { path = "../../hashing" }
+plum-hashing = { path = "../../hashing" }
 
 [dev-dependencies]
 serde_json = "1.0"
