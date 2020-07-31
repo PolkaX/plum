@@ -11,10 +11,10 @@ lazy_static = "1.4"
 minicbor = { version = "0.4", features = ["std"] }
 serde = "1.0"
 thiserror = "1.0"
-unsigned-varint = "0.3"
+unsigned-varint = "0.4"
 
 # plum
-plum_hashing = { path = "../../hashing" }
+plum-hashing = { path = "../../hashing" }
 
 [dev-dependencies]
 bls-signatures = "0.6"

@@ -1,5 +1,5 @@
 [package]
-name = "plum_hashing"
+name = "plum-hashing"
 version = "0.1.0"
 authors = ["The PolkaX Authors"]
 edition = "2018"
@@ -8,7 +8,7 @@ license = "GPL-3.0"
 [dependencies]
 blake2b_simd = { version = "0.5", default-features = false }
 blake2s_simd = { version = "0.5", default-features = false }
-digest = { version = "0.8", default-features = false }
-sha-1 = { version = "0.8", default-features = false }
-sha2 = { version = "0.8", default-features = false }
-sha3 = { version = "0.8", default-features = false }
+digest = { version = "0.9", default-features = false }
+sha-1 = { version = "0.9", default-features = false }
+sha2 = { version = "0.9", default-features = false }
+sha3 = { version = "0.9", default-features = false }

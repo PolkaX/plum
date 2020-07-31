@@ -13,6 +13,6 @@ byteorder = "1.3"
 
 # plum
 plum_crypto = { path = "../primitives/crypto" }
-plum_hashing = { path = "../hashing" }
+plum-hashing = { path = "../hashing" }
 plum_types = { path = "../primitives/types" }
 plum_actor = { path = "../actor" }

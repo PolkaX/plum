@@ -1953,7 +1953,7 @@ dependencies = [
  "digest 0.9.0",
  "sha-1 0.9.1",
  "sha2 0.9.1",
- "sha3 0.9.1",
+ "sha3",
  "unsigned-varint 0.4.0",
 ]
 
@@ -2367,14 +2367,26 @@ dependencies = [
  "bls-signatures",
  "hex",
  "parking_lot 0.11.0",
+ "plum-hashing",
  "plum_block",
  "plum_bytes",
  "plum_hash",
- "plum_hashing",
  "plum_types",
  "reqwest",
  "serde",
  "tokio",
+]
+
+[[package]]
+name = "plum-hashing"
+version = "0.1.0"
+dependencies = [
+ "blake2b_simd",
+ "blake2s_simd",
+ "digest 0.9.0",
+ "sha-1 0.9.1",
+ "sha2 0.9.1",
+ "sha3",
 ]
 
 [[package]]
@@ -2416,12 +2428,12 @@ dependencies = [
  "lazy_static",
  "libsecp256k1",
  "minicbor",
- "plum_hashing",
+ "plum-hashing",
  "rand",
  "serde",
  "serde_json",
  "thiserror",
- "unsigned-varint 0.3.3",
+ "unsigned-varint 0.4.0",
 ]
 
 [[package]]
@@ -2516,9 +2528,9 @@ dependencies = [
  "anyhow",
  "byteorder",
  "cid 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "plum-hashing",
  "plum_actor",
  "plum_crypto",
- "plum_hashing",
  "plum_types",
  "thiserror",
 ]
@@ -2530,9 +2542,9 @@ dependencies = [
  "bls-signatures",
  "libsecp256k1",
  "minicbor",
+ "plum-hashing",
  "plum_address",
  "plum_bytes",
- "plum_hashing",
  "rand",
  "serde",
  "serde_json",
@@ -2561,18 +2573,6 @@ dependencies = [
  "minicbor",
  "rand",
  "serde",
-]
-
-[[package]]
-name = "plum_hashing"
-version = "0.1.0"
-dependencies = [
- "blake2b_simd",
- "blake2s_simd",
- "digest 0.8.1",
- "sha-1 0.8.2",
- "sha2 0.8.2",
- "sha3 0.8.2",
 ]
 
 [[package]]
@@ -3241,19 +3241,6 @@ dependencies = [
  "lazy_static",
  "opaque-debug 0.2.3",
  "raw-cpuid",
-]
-
-[[package]]
-name = "sha3"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd26bc0e7a2e3a7c959bc494caf58b72ee0c71d67704e9520f736ca7e4853ecf"
-dependencies = [
- "block-buffer 0.7.3",
- "byte-tools",
- "digest 0.8.1",
- "keccak",
- "opaque-debug 0.2.3",
 ]
 
 [[package]]
