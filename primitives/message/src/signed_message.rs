@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use cid::{Cid, Codec, IntoExt};
+use cid::{Cid, Codec};
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
@@ -26,7 +26,7 @@ impl SignedMessage {
         }
         let data = minicbor::to_vec(self)
             .expect("CBOR serialization of SignedMessage shouldn't be failed");
-        let hash = multihash::Blake2b256::digest(&data).into_ext();
+        let hash = multihash::Blake2b256::digest(&data);
         Cid::new_v1(Codec::DagCBOR, hash)
     }
 
@@ -38,7 +38,7 @@ impl SignedMessage {
         if self.signature.r#type() == SignatureType::Bls {
             return self.message.cid();
         }
-        let hash = multihash::Blake2b256::digest(data.as_ref()).into_ext();
+        let hash = multihash::Blake2b256::digest(data.as_ref());
         Cid::new_v1(Codec::DagCBOR, hash)
     }
 

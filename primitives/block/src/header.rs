@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use cid::{Cid, Codec, IntoExt};
+use cid::{Cid, Codec};
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
@@ -71,7 +71,7 @@ impl BlockHeader {
     /// For cases where serialized data of the BlockHeader is already known,
     /// it's more cheaper than `cid`.
     pub fn cid_with_data(&self, data: impl AsRef<[u8]>) -> Cid {
-        let hash = multihash::Blake2b256::digest(data.as_ref()).into_ext();
+        let hash = multihash::Blake2b256::digest(data.as_ref());
         Cid::new_v1(Codec::DagCBOR, hash)
     }
 

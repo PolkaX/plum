@@ -6,7 +6,7 @@
 
 use std::fmt;
 
-use cid::{Cid, Codec, IntoExt};
+use cid::{Cid, Codec};
 
 /// Block provides abstraction for IPFS blocks implementations.
 pub trait Block: fmt::Display {
@@ -35,7 +35,7 @@ impl IpfsBlock {
     pub fn new<T: minicbor::Encode>(entity: T) -> Self {
         let data = minicbor::to_vec(&entity).unwrap();
         let hash = multihash::Blake2b256::digest(&data);
-        let cid = Cid::new_v1(Codec::DagCBOR, hash.into_ext());
+        let cid = Cid::new_v1(Codec::DagCBOR, hash);
         Self { cid, data }
     }
 

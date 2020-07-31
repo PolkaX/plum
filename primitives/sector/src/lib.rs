@@ -112,8 +112,8 @@ mod tests {
         let _info = SealVerifyInfo {
             seal_proof,
             sector_id,
-            randomness: [1; 32].into(),
-            interactive_randomness: [2; 32].into(),
+            randomness: vec![1; 32].into(),
+            interactive_randomness: vec![2; 32].into(),
             proof: vec![1, 2, 3, 4, 5, 6, 7, 8],
             sealed_cid: cid.clone(),
             unsealed_cid: cid,
@@ -135,7 +135,7 @@ mod tests {
 
         // WinningPoStVerifyInfo and WindowPoStVerifyInfo
         let post_verify_info = WinningPoStVerifyInfo {
-            randomness: [1; 32].into(),
+            randomness: vec![1; 32].into(),
             proofs: vec![post_proof],
             challenged_sectors: vec![sector_info],
             prover: 0,
