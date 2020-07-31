@@ -86,19 +86,19 @@ impl<'b> decode::Decode<'b> for TipsetKey {
 
 #[cfg(test)]
 mod tests {
-    use cid::{Cid, Codec, IntoExt};
+    use cid::{Cid, Codec};
     use multihash::Blake2b256;
 
     use super::TipsetKey;
 
     fn cid1() -> Cid {
-        Cid::new_v1(Codec::DagCBOR, Blake2b256::digest(b"a").into_ext())
+        Cid::new_v1(Codec::DagCBOR, Blake2b256::digest(b"a"))
     }
     fn cid2() -> Cid {
-        Cid::new_v1(Codec::DagCBOR, Blake2b256::digest(b"b").into_ext())
+        Cid::new_v1(Codec::DagCBOR, Blake2b256::digest(b"b"))
     }
     fn cid3() -> Cid {
-        Cid::new_v1(Codec::DagCBOR, Blake2b256::digest(b"c").into_ext())
+        Cid::new_v1(Codec::DagCBOR, Blake2b256::digest(b"c"))
     }
 
     #[test]
