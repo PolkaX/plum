@@ -1,0 +1,18 @@
+[package]
+name = "ipfs-bitswap"
+version = "0.1.0"
+authors = ["The PolkaX Authors"]
+edition = "2018"
+license = "GPL-3.0"
+build = "build.rs"
+
+[build-dependencies]
+prost-build = "0.6"
+
+[dependencies]
+prost = "0.6"
+
+ipfs-block = { path = "../block" }
+ipld = { path = "../../ipld" }
+
+[dev-dependencies]

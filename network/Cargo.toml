@@ -1,5 +1,5 @@
 [package]
-name = "plum_network"
+name = "plum-network"
 version = "0.1.0"
 authors = ["The PolkaX Authors"]
 edition = "2018"

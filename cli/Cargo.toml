@@ -19,5 +19,5 @@ time = "0.1.42"
 # plum
 plum_address = { path = "../primitives/address" }
 plum_chain = { path = "../chain" }
-plum_network = { path = "../network" }
-plum_wallet = { path = "../wallet" }
+plum-network = { path = "../network" }
+plum-wallet = { path = "../wallet" }

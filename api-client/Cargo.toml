@@ -32,4 +32,4 @@ plum_sector = { path = "../primitives/sector" }
 plum_tipset = { path = "../primitives/tipset" }
 plum_types = { path = "../primitives/types" }
 plum_vm = { path = "../vm" }
-plum_wallet = { path = "../wallet" }
+plum-wallet = { path = "../wallet" }

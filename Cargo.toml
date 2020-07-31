@@ -9,7 +9,7 @@ license = "GPL-3.0"
 name = "plum"
 
 [[bin]]
-name = "plum_node"
+name = "plum-node"
 path = "src/bin/main.rs"
 
 [dependencies]
@@ -29,6 +29,7 @@ members = [
   "chain",
 
   # IPFS and IPLD
+  "ipfs/bitswap",
   "ipfs/block",
   "ipfs/blockstore",
   "ipfs/datastore",

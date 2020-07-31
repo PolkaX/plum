@@ -1297,6 +1297,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ipfs-bitswap"
+version = "0.1.0"
+dependencies = [
+ "ipfs-block",
+ "ipld",
+ "prost",
+ "prost-build",
+]
+
+[[package]]
 name = "ipfs-block"
 version = "0.1.0"
 dependencies = [
@@ -2390,12 +2400,49 @@ dependencies = [
 ]
 
 [[package]]
+name = "plum-network"
+version = "0.1.0"
+
+[[package]]
+name = "plum-network-p2p"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "cid 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "futures",
+ "libp2p",
+ "log",
+ "minicbor",
+ "multihash 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "plum_bigint",
+ "plum_block",
+ "plum_message",
+ "plum_types",
+]
+
+[[package]]
 name = "plum-vm-exitcode"
 version = "0.1.0"
 dependencies = [
  "minicbor",
  "serde",
  "serde_repr",
+]
+
+[[package]]
+name = "plum-wallet"
+version = "0.1.0"
+dependencies = [
+ "bls-signatures",
+ "libsecp256k1",
+ "parking_lot 0.11.0",
+ "plum_address",
+ "plum_bytes",
+ "plum_crypto",
+ "rand",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -2446,6 +2493,7 @@ dependencies = [
  "jsonrpc-client",
  "libp2p-core",
  "log",
+ "plum-wallet",
  "plum_actor",
  "plum_address",
  "plum_bigint",
@@ -2460,7 +2508,6 @@ dependencies = [
  "plum_tipset",
  "plum_types",
  "plum_vm",
- "plum_wallet",
  "serde",
  "serde_json",
  "serde_repr",
@@ -2594,27 +2641,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "plum_network"
-version = "0.1.0"
-
-[[package]]
-name = "plum_p2p"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "cid 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "futures",
- "libp2p",
- "log",
- "minicbor",
- "multihash 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "plum_bigint",
- "plum_block",
- "plum_message",
- "plum_types",
-]
-
-[[package]]
 name = "plum_params"
 version = "0.1.0"
 dependencies = [
@@ -2703,22 +2729,6 @@ dependencies = [
  "plum_sector",
  "plum_types",
  "serde",
-]
-
-[[package]]
-name = "plum_wallet"
-version = "0.1.0"
-dependencies = [
- "bls-signatures",
- "libsecp256k1",
- "parking_lot 0.11.0",
- "plum_address",
- "plum_bytes",
- "plum_crypto",
- "rand",
- "serde",
- "serde_json",
- "thiserror",
 ]
 
 [[package]]
