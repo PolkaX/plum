@@ -1300,10 +1300,16 @@ dependencies = [
 name = "ipfs-bitswap"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ipfs-block",
  "ipld",
+ "libp2p 0.22.0",
+ "multihash",
  "prost",
  "prost-build",
+ "thiserror",
+ "unsigned-varint 0.4.0",
 ]
 
 [[package]]
@@ -1511,6 +1517,27 @@ dependencies = [
  "libp2p-tcp",
  "libp2p-yamux",
  "multihash 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "parity-multiaddr",
+ "parking_lot 0.10.2",
+ "pin-project",
+ "smallvec 1.4.1",
+ "wasm-timer",
+]
+
+[[package]]
+name = "libp2p"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0306a49ee6a89468f96089906f36b0eef82c988dcfc8acf3e2dcd6ad1c859f85"
+dependencies = [
+ "bytes",
+ "futures",
+ "lazy_static",
+ "libp2p-core",
+ "libp2p-core-derive",
+ "libp2p-request-response",
+ "libp2p-swarm",
+ "multihash",
  "parity-multiaddr",
  "parking_lot 0.10.2",
  "pin-project",
@@ -2410,7 +2437,7 @@ dependencies = [
  "async-trait",
  "cid 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures",
- "libp2p",
+ "libp2p 0.21.1",
  "log",
  "minicbor",
  "multihash 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
