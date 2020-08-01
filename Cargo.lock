@@ -1301,15 +1301,15 @@ name = "ipfs-bitswap"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "cid 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cid 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "ipfs-block",
  "ipld",
  "libp2p 0.22.0",
- "multihash",
+ "multihash 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "prost",
  "prost-build",
  "thiserror",
- "unsigned-varint 0.4.0",
+ "unsigned-varint 0.3.3",
 ]
 
 [[package]]
@@ -1537,7 +1537,7 @@ dependencies = [
  "libp2p-core-derive",
  "libp2p-request-response",
  "libp2p-swarm",
- "multihash",
+ "multihash 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "parity-multiaddr",
  "parking_lot 0.10.2",
  "pin-project",

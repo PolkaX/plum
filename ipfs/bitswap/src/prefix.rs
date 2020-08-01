@@ -2,7 +2,8 @@
 
 use std::convert::TryFrom;
 
-use cid::{Cid, Codec, ExtCode, Version};
+use cid::{Cid, Codec, Version};
+use multihash::Code;
 
 use unsigned_varint::{decode as varint_decode, encode as varint_encode};
 
@@ -14,7 +15,7 @@ pub struct Prefix {
     /// The codec of CID.
     pub codec: Codec,
     /// The multihash type of CID.
-    pub mh_type: ExtCode,
+    pub mh_type: Code,
     /// The multihash length of CID.
     pub mh_len: usize,
 }
