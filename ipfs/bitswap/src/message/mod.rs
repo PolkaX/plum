@@ -1,5 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+mod block;
 mod block_presence;
 mod prefix;
 /// The generated types from `message.proto`.
@@ -7,6 +8,7 @@ mod prefix;
 pub mod proto;
 mod wantlist;
 
+pub use self::block::Block;
 pub use self::block_presence::{BlockPresence, BlockPresenceType};
 pub use self::prefix::Prefix;
 pub use self::wantlist::{Priority, WantList, WantListEntry, WantType};
@@ -59,6 +61,7 @@ impl BitswapMessage {
     }
 
     /// Return the size of the message in bytes.
+    // FIXME: ???
     pub fn size(&self) -> usize {
         let mut size = 0usize;
         size += self

@@ -6,7 +6,7 @@ use super::proto;
 pub use super::proto::message::BlockPresenceType;
 
 /// A struct represents HAVE / DONT_HAVE for a given Cid.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BlockPresence {
     cid: Cid,
     r#type: BlockPresenceType, // have: 0, don't have: 1
