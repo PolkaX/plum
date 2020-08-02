@@ -63,7 +63,26 @@
 // mod behaviour;
 mod error;
 // mod ledger;
-// mod message;
-mod prefix;
-mod proto;
-// mod protocol;
+mod message;
+
+pub use self::message::{
+    proto, BitswapMessage, BlockPresence, BlockPresenceType, Prefix, Priority, WantList,
+    WantListEntry, WantType,
+};
+
+const SECOND: usize = 1000;
+///
+pub const MAX_PROVIDERS_PER_REQUEST: usize = 3;
+///
+pub const PROVIDER_REQUEST_TIMEOUT: usize = 10 * SECOND;
+///
+pub const HAS_BLOCK_TIMEOUT: usize = 15 * SECOND;
+///
+pub const PROVIDE_TIMEOUT: usize = 15 * SECOND;
+
+///
+pub const MAX_PRIORITY: i32 = 1 << 31 - 1;
+///
+pub const MAX_LISTENERS: usize = 1000;
+///
+pub const WANTLIST_SEND_DEBOUNCE_MS: usize = 1;
