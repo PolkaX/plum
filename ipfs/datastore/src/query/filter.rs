@@ -6,7 +6,7 @@ use std::fmt;
 use crate::key::Key;
 use crate::query::Entry;
 
-/// Filter is an object that tests ResultEntries.
+/// Filter is an object that tests io::ResultEntries.
 pub trait Filter: dyn_clone::DynClone + fmt::Debug + fmt::Display {
     /// Return whether the entry passes the filter.
     fn filter(&self, entry: &Entry) -> bool;
@@ -27,7 +27,7 @@ pub enum FilterOp {
 }
 
 impl fmt::Display for FilterOp {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         match self {
             FilterOp::Equal => f.write_str("=="),
             FilterOp::NotEqual => f.write_str("!="),
@@ -54,7 +54,7 @@ impl FilterKeyCompare {
 }
 
 impl fmt::Display for FilterKeyCompare {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         write!(f, "KEY {} {}", self.op, self.key)
     }
 }
@@ -90,7 +90,7 @@ impl FilterValueCompare {
 }
 
 impl fmt::Display for FilterValueCompare {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         write!(f, "VALUE {} {:?}", self.op, self.value)
     }
 }
@@ -125,7 +125,7 @@ impl FilterKeyPrefix {
 }
 
 impl fmt::Display for FilterKeyPrefix {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         write!(f, "PREFIX({})", self.prefix)
     }
 }

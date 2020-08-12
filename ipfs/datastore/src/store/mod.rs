@@ -1,7 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
-use std::io::Result;
+use std::io;
 
 use crate::key::Key;
 
@@ -32,23 +32,23 @@ pub trait DataStore: DataStoreRead + DataStoreWrite + Clone {
     /// If `put/delete` operations already satisfy these requirements then Sync may be a no-op.
     ///
     ///  If the prefix fails to `sync` this method returns an error.
-    fn sync<K>(&mut self, prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>;
 
     /// Close I/O.
-    fn close(&mut self) -> Result<()>;
+    fn close(&mut self) -> io::Result<()>;
 }
 
 /// DataStoreRead is the read-side of the DataStore trait.
 pub trait DataStoreRead {
     /// Retrieve the object `value` named by `key`.
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>;
 
     /// Return whether the `key` is mapped to a `value`.
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>;
 
@@ -68,14 +68,14 @@ pub trait DataStoreWrite {
     /// Ultimately, the lowest-level datastore will need to do some value checking
     /// or risk getting incorrect values. It may also be useful to expose a more
     /// type-safe interface to your application, and do the checking up-front.
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>;
 
     /// Remove the value for given `key`.
     /// If the key is not in the datastore, this method returns no error.
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>;
 }
@@ -84,7 +84,7 @@ pub trait DataStoreWrite {
 /// to support batch write.
 pub trait DataStoreBatch: DataStoreWrite {
     /// Commit all update operations.
-    fn commit(&mut self) -> Result<()>;
+    fn commit(&mut self) -> io::Result<()>;
 }
 
 /// BatchDataStore is an interface that should be implemented by data stores that
@@ -99,7 +99,7 @@ pub trait ToBatch {
     type Batch: DataStoreBatch;
 
     /// Create a new batching data store.
-    fn batch(&self) -> Result<Self::Batch>;
+    fn batch(&self) -> io::Result<Self::Batch>;
 }
 
 /// ToBatchDataStore is an interface that describe a database have batch feature, it
@@ -107,14 +107,14 @@ pub trait ToBatch {
 pub trait ToBatchDataStore: ToBatch + DataStore {}
 impl<T: ToBatch + DataStore> ToBatchDataStore for T {}
 
-/// DataStoreTxn is a interface that needs to be implemented by `TxnhDataStore`
+/// DataStoreTxn is a interface that needs to be implemented by `TxnDataStore`
 /// to support transactions.
 pub trait DataStoreTxn: DataStoreRead + DataStoreBatch {
     /// Discard throws away changes recorded in a transaction without committing
     /// them to the underlying Datastore. Any calls made to Discard after Commit
     /// has been successfully called will have no effect on the transaction and
     /// state of the Datastore, making it safe to defer.
-    fn discard(&mut self) -> Result<()>;
+    fn discard(&mut self) -> io::Result<()>;
 }
 
 /// TxnDataStore is an interface that should be implemented by data stores that support transactions.
@@ -127,7 +127,7 @@ pub trait ToTxn {
     type Txn: DataStoreTxn;
 
     /// Create a new txn data store.
-    fn txn(&self, read_only: bool) -> Result<Self::Txn>;
+    fn txn(&self, read_only: bool) -> io::Result<Self::Txn>;
 }
 
 /// ToTxnDataStore is an interface that describe a database have totxn feature, it

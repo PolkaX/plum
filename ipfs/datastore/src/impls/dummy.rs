@@ -1,7 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
-use std::io::Result;
+use std::io;
 
 use crate::impls::{BasicBatchDataStore, BasicTxnDataStore};
 use crate::key::Key;
@@ -15,27 +15,27 @@ use crate::store::{ToBatch, ToTxn};
 pub struct DummyDataStore;
 
 impl DataStore for DummyDataStore {
-    fn sync<K>(&mut self, _prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, _prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
         Ok(())
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> io::Result<()> {
         Ok(())
     }
 }
 
 impl DataStoreRead for DummyDataStore {
-    fn get<K>(&self, _key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, _key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
         Ok(None)
     }
 
-    fn has<K>(&self, _key: &K) -> Result<bool>
+    fn has<K>(&self, _key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -44,7 +44,7 @@ impl DataStoreRead for DummyDataStore {
 }
 
 impl DataStoreWrite for DummyDataStore {
-    fn put<K, V>(&mut self, _key: K, _value: V) -> Result<()>
+    fn put<K, V>(&mut self, _key: K, _value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -52,7 +52,7 @@ impl DataStoreWrite for DummyDataStore {
         Ok(())
     }
 
-    fn delete<K>(&mut self, _key: &K) -> Result<()>
+    fn delete<K>(&mut self, _key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -61,25 +61,25 @@ impl DataStoreWrite for DummyDataStore {
 }
 
 impl Check for DummyDataStore {
-    fn check(&self) -> Result<()> {
+    fn check(&self) -> io::Result<()> {
         Ok(())
     }
 }
 
 impl Gc for DummyDataStore {
-    fn collect_garbage(&self) -> Result<()> {
+    fn collect_garbage(&self) -> io::Result<()> {
         Ok(())
     }
 }
 
 impl Persistent for DummyDataStore {
-    fn disk_usage(&self) -> Result<u64> {
+    fn disk_usage(&self) -> io::Result<u64> {
         Ok(0)
     }
 }
 
 impl Scrub for DummyDataStore {
-    fn scrub(&self) -> Result<()> {
+    fn scrub(&self) -> io::Result<()> {
         Ok(())
     }
 }
@@ -87,7 +87,7 @@ impl Scrub for DummyDataStore {
 impl ToBatch for DummyDataStore {
     type Batch = BasicBatchDataStore<DummyDataStore>;
 
-    fn batch(&self) -> Result<Self::Batch> {
+    fn batch(&self) -> io::Result<Self::Batch> {
         Ok(BasicBatchDataStore::new(DummyDataStore))
     }
 }
@@ -95,7 +95,7 @@ impl ToBatch for DummyDataStore {
 impl ToTxn for DummyDataStore {
     type Txn = BasicTxnDataStore<DummyDataStore>;
 
-    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+    fn txn(&self, _read_only: bool) -> io::Result<Self::Txn> {
         Ok(BasicTxnDataStore::new(DummyDataStore))
     }
 }

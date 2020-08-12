@@ -1,7 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
-use std::io::Result;
+use std::io;
 
 use log::info;
 
@@ -34,7 +34,7 @@ impl<DS: DataStore> LogDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStore for LogDataStore<DS> {
-    fn sync<K>(&mut self, prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -42,14 +42,14 @@ impl<DS: DataStore> DataStore for LogDataStore<DS> {
         self.datastore.sync(prefix)
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> io::Result<()> {
         info!("{}: close", self.name);
         self.datastore.close()
     }
 }
 
 impl<DS: DataStore> DataStoreRead for LogDataStore<DS> {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -57,7 +57,7 @@ impl<DS: DataStore> DataStoreRead for LogDataStore<DS> {
         self.datastore.get(key)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -67,7 +67,7 @@ impl<DS: DataStore> DataStoreRead for LogDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStoreWrite for LogDataStore<DS> {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -78,7 +78,7 @@ impl<DS: DataStore> DataStoreWrite for LogDataStore<DS> {
         self.datastore.put(key, value)
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -88,28 +88,28 @@ impl<DS: DataStore> DataStoreWrite for LogDataStore<DS> {
 }
 
 impl<DS: CheckedDataStore> Check for LogDataStore<DS> {
-    fn check(&self) -> Result<()> {
+    fn check(&self) -> io::Result<()> {
         info!("{}: check", self.name);
         self.datastore.check()
     }
 }
 
 impl<DS: GcDataStore> Gc for LogDataStore<DS> {
-    fn collect_garbage(&self) -> Result<()> {
+    fn collect_garbage(&self) -> io::Result<()> {
         info!("{}: collect_garbage", self.name);
         self.datastore.collect_garbage()
     }
 }
 
 impl<DS: PersistentDataStore> Persistent for LogDataStore<DS> {
-    fn disk_usage(&self) -> Result<u64> {
+    fn disk_usage(&self) -> io::Result<u64> {
         info!("{}: disk_usage", self.name);
         self.datastore.disk_usage()
     }
 }
 
 impl<DS: ScrubbedDataStore> Scrub for LogDataStore<DS> {
-    fn scrub(&self) -> Result<()> {
+    fn scrub(&self) -> io::Result<()> {
         info!("{}: scrub", self.name);
         self.datastore.scrub()
     }
@@ -118,7 +118,7 @@ impl<DS: ScrubbedDataStore> Scrub for LogDataStore<DS> {
 impl<BDS: BatchDataStore> ToBatch for LogDataStore<BDS> {
     type Batch = LogBatchDataStore<BDS>;
 
-    fn batch(&self) -> Result<Self::Batch> {
+    fn batch(&self) -> io::Result<Self::Batch> {
         info!("{}: batch", self.name);
         Ok(LogBatchDataStore::new(
             self.name.clone(),
@@ -130,7 +130,7 @@ impl<BDS: BatchDataStore> ToBatch for LogDataStore<BDS> {
 impl<TDS: TxnDataStore> ToTxn for LogTxnDataStore<TDS> {
     type Txn = LogTxnDataStore<TDS>;
 
-    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+    fn txn(&self, _read_only: bool) -> io::Result<Self::Txn> {
         info!("{}: txn", self.name);
         Ok(LogTxnDataStore::new(
             self.name.clone(),
@@ -159,7 +159,7 @@ impl<BDS: BatchDataStore> LogBatchDataStore<BDS> {
 }
 
 impl<BDS: BatchDataStore> DataStore for LogBatchDataStore<BDS> {
-    fn sync<K>(&mut self, prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -167,14 +167,14 @@ impl<BDS: BatchDataStore> DataStore for LogBatchDataStore<BDS> {
         self.datastore.sync(prefix)
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> io::Result<()> {
         info!("{}: batch close", self.name);
         self.datastore.close()
     }
 }
 
 impl<BDS: BatchDataStore> DataStoreRead for LogBatchDataStore<BDS> {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -182,7 +182,7 @@ impl<BDS: BatchDataStore> DataStoreRead for LogBatchDataStore<BDS> {
         self.datastore.get(key)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -192,7 +192,7 @@ impl<BDS: BatchDataStore> DataStoreRead for LogBatchDataStore<BDS> {
 }
 
 impl<BDS: BatchDataStore> DataStoreWrite for LogBatchDataStore<BDS> {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -203,7 +203,7 @@ impl<BDS: BatchDataStore> DataStoreWrite for LogBatchDataStore<BDS> {
         self.datastore.put(key, value)
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -213,35 +213,35 @@ impl<BDS: BatchDataStore> DataStoreWrite for LogBatchDataStore<BDS> {
 }
 
 impl<BDS: BatchDataStore> DataStoreBatch for LogBatchDataStore<BDS> {
-    fn commit(&mut self) -> Result<()> {
+    fn commit(&mut self) -> io::Result<()> {
         info!("{}: batch commit", self.name);
         self.commit()
     }
 }
 
 impl<BDS: CheckedBatchDataStore> Check for LogBatchDataStore<BDS> {
-    fn check(&self) -> Result<()> {
+    fn check(&self) -> io::Result<()> {
         info!("{}: check", self.name);
         self.datastore.check()
     }
 }
 
 impl<BDS: GcBatchDataStore> Gc for LogBatchDataStore<BDS> {
-    fn collect_garbage(&self) -> Result<()> {
+    fn collect_garbage(&self) -> io::Result<()> {
         info!("{}: collect_garbage", self.name);
         self.datastore.collect_garbage()
     }
 }
 
 impl<BDS: PersistentBatchDataStore> Persistent for LogBatchDataStore<BDS> {
-    fn disk_usage(&self) -> Result<u64> {
+    fn disk_usage(&self) -> io::Result<u64> {
         info!("{}: disk_usage", self.name);
         self.datastore.disk_usage()
     }
 }
 
 impl<BDS: ScrubbedBatchDataStore> Scrub for LogBatchDataStore<BDS> {
-    fn scrub(&self) -> Result<()> {
+    fn scrub(&self) -> io::Result<()> {
         info!("{}: scrub", self.name);
         self.datastore.scrub()
     }
@@ -250,7 +250,7 @@ impl<BDS: ScrubbedBatchDataStore> Scrub for LogBatchDataStore<BDS> {
 impl<TDS: TxnDataStore> ToTxn for LogBatchDataStore<TDS> {
     type Txn = LogTxnDataStore<TDS>;
 
-    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+    fn txn(&self, _read_only: bool) -> io::Result<Self::Txn> {
         info!("{}: txn", self.name);
         Ok(LogTxnDataStore::new(
             self.name.clone(),
@@ -279,7 +279,7 @@ impl<TDS: TxnDataStore> LogTxnDataStore<TDS> {
 }
 
 impl<TDS: TxnDataStore> DataStore for LogTxnDataStore<TDS> {
-    fn sync<K>(&mut self, prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -287,14 +287,14 @@ impl<TDS: TxnDataStore> DataStore for LogTxnDataStore<TDS> {
         self.datastore.sync(prefix)
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> io::Result<()> {
         info!("{}: txn close", self.name);
         self.datastore.close()
     }
 }
 
 impl<TDS: TxnDataStore> DataStoreRead for LogTxnDataStore<TDS> {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -302,7 +302,7 @@ impl<TDS: TxnDataStore> DataStoreRead for LogTxnDataStore<TDS> {
         self.datastore.get(key)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -312,7 +312,7 @@ impl<TDS: TxnDataStore> DataStoreRead for LogTxnDataStore<TDS> {
 }
 
 impl<TDS: TxnDataStore> DataStoreWrite for LogTxnDataStore<TDS> {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -323,7 +323,7 @@ impl<TDS: TxnDataStore> DataStoreWrite for LogTxnDataStore<TDS> {
         self.datastore.put(key, value)
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -333,42 +333,42 @@ impl<TDS: TxnDataStore> DataStoreWrite for LogTxnDataStore<TDS> {
 }
 
 impl<TDS: TxnDataStore> DataStoreBatch for LogTxnDataStore<TDS> {
-    fn commit(&mut self) -> Result<()> {
+    fn commit(&mut self) -> io::Result<()> {
         info!("{}: txn commit", self.name);
         self.commit()
     }
 }
 
 impl<TDS: TxnDataStore> DataStoreTxn for LogTxnDataStore<TDS> {
-    fn discard(&mut self) -> Result<()> {
+    fn discard(&mut self) -> io::Result<()> {
         info!("{}: txn discard", self.name);
         self.discard()
     }
 }
 
 impl<TDS: CheckedTxnDataStore> Check for LogTxnDataStore<TDS> {
-    fn check(&self) -> Result<()> {
+    fn check(&self) -> io::Result<()> {
         info!("{}: check", self.name);
         self.datastore.check()
     }
 }
 
 impl<TDS: GcTxnDataStore> Gc for LogTxnDataStore<TDS> {
-    fn collect_garbage(&self) -> Result<()> {
+    fn collect_garbage(&self) -> io::Result<()> {
         info!("{}: collect_garbage", self.name);
         self.datastore.collect_garbage()
     }
 }
 
 impl<TDS: PersistentTxnDataStore> Persistent for LogTxnDataStore<TDS> {
-    fn disk_usage(&self) -> Result<u64> {
+    fn disk_usage(&self) -> io::Result<u64> {
         info!("{}: disk_usage", self.name);
         self.datastore.disk_usage()
     }
 }
 
 impl<TDS: ScrubbedTxnDataStore> Scrub for LogTxnDataStore<TDS> {
-    fn scrub(&self) -> Result<()> {
+    fn scrub(&self) -> io::Result<()> {
         info!("{}: scrub", self.name);
         self.datastore.scrub()
     }

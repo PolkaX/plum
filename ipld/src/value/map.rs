@@ -9,10 +9,10 @@ use std::ops;
 use minicbor::{decode, encode, Decoder, Encoder};
 use serde::{Deserialize, Serialize};
 
-use crate::value::IpldValue;
+use crate::value::Value;
 
 /// The Map kind of IPLD Data Model.
-pub type Map = BTreeMap<MapKey, IpldValue>;
+pub type Map = BTreeMap<MapKey, Value>;
 
 /// In DAG-CBOR, map keys must be strings, as defined by the [IPLD Data Model](https://github.com/ipld/specs/blob/master/data-model-layer/data-model.md)
 /// The keys in every map must be sorted lowest value to highest.

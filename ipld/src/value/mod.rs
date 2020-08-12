@@ -19,94 +19,94 @@ use serde::{de, ser};
 
 /// The [IPLD Data Model](https://github.com/ipld/specs/blob/master/data-model-layer/data-model.md).
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
-pub enum IpldValue {
+pub enum Value {
     /// Null value.
     ///
     /// ```
-    /// # use ipld::{ipld, IpldValue};
-    /// assert_eq!(IpldValue::Null, ipld!(null));
+    /// # use ipld::{ipld, Value};
+    /// assert_eq!(Value::Null, ipld!(null));
     /// ```
     Null,
     /// Boolean value.
     ///
     /// ```
-    /// # use ipld::{ipld, IpldValue};
-    /// assert_eq!(IpldValue::Bool(true), ipld!(true));
-    /// assert_eq!(IpldValue::Bool(false), ipld!(false));
+    /// # use ipld::{ipld, Value};
+    /// assert_eq!(Value::Bool(true), ipld!(true));
+    /// assert_eq!(Value::Bool(false), ipld!(false));
     /// ```
     Bool(bool),
     /// Integer value.
     ///
     /// ```
-    /// # use ipld::{ipld, IpldValue, Integer};
-    /// assert_eq!(IpldValue::Integer(Integer::from(123)), ipld!(123));
-    /// assert_eq!(IpldValue::Integer(Integer::from(-123)), ipld!(-123));
+    /// # use ipld::{ipld, Value, Integer};
+    /// assert_eq!(Value::Integer(Integer::from(123)), ipld!(123));
+    /// assert_eq!(Value::Integer(Integer::from(-123)), ipld!(-123));
     /// ```
     Integer(Integer),
     /// Floating point value.
     ///
     /// ```
-    /// # use ipld::{ipld, IpldValue};
-    /// assert_eq!(IpldValue::Float(123.0), ipld!(123.0));
-    /// assert_eq!(IpldValue::Float(-123.0), ipld!(-123.0));
+    /// # use ipld::{ipld, Value};
+    /// assert_eq!(Value::Float(123.0), ipld!(123.0));
+    /// assert_eq!(Value::Float(-123.0), ipld!(-123.0));
     /// ```
     Float(f64),
     /// UTF-8 string value.
     ///
     /// ```
-    /// # use ipld::{ipld, IpldValue};
-    /// assert_eq!(IpldValue::String("string".into()), ipld!("string"));
+    /// # use ipld::{ipld, Value};
+    /// assert_eq!(Value::String("string".into()), ipld!("string"));
     /// ```
     String(String),
     /// Byte string value.
     ///
     /// ```
-    /// # use ipld::{ipld, IpldValue};
-    /// assert_eq!(IpldValue::Bytes(vec![0, 1, 100, 255].into()), ipld!(bytes![0, 1, 100, 255]));
-    /// assert_eq!(IpldValue::Bytes(vec![100; 3].into()), ipld!(bytes![100; 3]));
-    /// assert_eq!(IpldValue::Bytes(vec![100; 3].into()), ipld!(bytes![100, 100, 100]));
+    /// # use ipld::{ipld, Value};
+    /// assert_eq!(Value::Bytes(vec![0, 1, 100, 255].into()), ipld!(bytes![0, 1, 100, 255]));
+    /// assert_eq!(Value::Bytes(vec![100; 3].into()), ipld!(bytes![100; 3]));
+    /// assert_eq!(Value::Bytes(vec![100; 3].into()), ipld!(bytes![100, 100, 100]));
     /// ```
     Bytes(Bytes),
     /// List value.
     ///
     /// ```
     /// # use cid::Cid;
-    /// # use ipld::{ipld, IpldValue};
+    /// # use ipld::{ipld, Value};
     /// # use std::collections::BTreeMap;
     /// assert_eq!(
-    ///     IpldValue::List(vec![
-    ///         IpldValue::Null,
-    ///         IpldValue::Bool(true),
-    ///         IpldValue::Integer(123.into()),
-    ///         IpldValue::Float(123.0),
-    ///         IpldValue::String("string".into()),
-    ///         IpldValue::Bytes(vec![1, 255].into()),
-    ///         IpldValue::List(vec![]),
-    ///         IpldValue::Map(BTreeMap::new()),
-    ///         IpldValue::Link("QmRgutAxd8t7oGkSm4wmeuByG6M51wcTso6cubDdQtuEfL".parse::<Cid>().unwrap()),
+    ///     Value::List(vec![
+    ///         Value::Null,
+    ///         Value::Bool(true),
+    ///         Value::Integer(123.into()),
+    ///         Value::Float(123.0),
+    ///         Value::String("string".into()),
+    ///         Value::Bytes(vec![1, 255].into()),
+    ///         Value::List(vec![]),
+    ///         Value::Map(BTreeMap::new()),
+    ///         Value::Link("QmRgutAxd8t7oGkSm4wmeuByG6M51wcTso6cubDdQtuEfL".parse::<Cid>().unwrap()),
     ///     ]),
     ///     ipld!([null, true, 123, 123.0, "string", bytes![1, 255], [], {}, link!("QmRgutAxd8t7oGkSm4wmeuByG6M51wcTso6cubDdQtuEfL")]),
     /// );
     /// ```
-    List(Vec<IpldValue>),
+    List(Vec<Value>),
     /// Map value.
     ///
     /// ```
     /// # use cid::Cid;
-    /// # use ipld::{ipld, IpldValue, MapKey};
+    /// # use ipld::{ipld, Value, MapKey};
     /// # use std::collections::BTreeMap;
-    /// let mut map = BTreeMap::<MapKey, IpldValue>::new();
-    /// map.insert("null".into(), IpldValue::Null);
-    /// map.insert("bool".into(), IpldValue::Bool(true));
-    /// map.insert("integer".into(), IpldValue::Integer(123.into()));
-    /// map.insert("float".into(), IpldValue::Float(123.0));
-    /// map.insert("string".into(), IpldValue::String("string".into()));
-    /// map.insert("bytes".into(), IpldValue::Bytes(vec![1, 255].into()));
-    /// map.insert("list".into(), IpldValue::List(vec![]));
-    /// map.insert("map".into(), IpldValue::Map(BTreeMap::new()));
-    /// map.insert("link".into(), IpldValue::Link("QmRgutAxd8t7oGkSm4wmeuByG6M51wcTso6cubDdQtuEfL".parse::<Cid>().unwrap()));
+    /// let mut map = BTreeMap::<MapKey, Value>::new();
+    /// map.insert("null".into(), Value::Null);
+    /// map.insert("bool".into(), Value::Bool(true));
+    /// map.insert("integer".into(), Value::Integer(123.into()));
+    /// map.insert("float".into(), Value::Float(123.0));
+    /// map.insert("string".into(), Value::String("string".into()));
+    /// map.insert("bytes".into(), Value::Bytes(vec![1, 255].into()));
+    /// map.insert("list".into(), Value::List(vec![]));
+    /// map.insert("map".into(), Value::Map(BTreeMap::new()));
+    /// map.insert("link".into(), Value::Link("QmRgutAxd8t7oGkSm4wmeuByG6M51wcTso6cubDdQtuEfL".parse::<Cid>().unwrap()));
     /// assert_eq!(
-    ///     IpldValue::Map(map),
+    ///     Value::Map(map),
     ///     ipld!({
     ///         "null":null,
     ///         "bool":true,
@@ -120,62 +120,62 @@ pub enum IpldValue {
     ///     }),
     /// );
     /// ```
-    Map(BTreeMap<MapKey, IpldValue>),
+    Map(BTreeMap<MapKey, Value>),
     /// Link value.
     ///
     /// ```
     /// # use cid::Cid;
-    /// # use ipld::{ipld, IpldValue};
+    /// # use ipld::{ipld, Value};
     /// let cid = "QmRgutAxd8t7oGkSm4wmeuByG6M51wcTso6cubDdQtuEfL".parse::<Cid>().unwrap();
-    /// assert_eq!(IpldValue::Link(cid), ipld!(link!("QmRgutAxd8t7oGkSm4wmeuByG6M51wcTso6cubDdQtuEfL")));
+    /// assert_eq!(Value::Link(cid), ipld!(link!("QmRgutAxd8t7oGkSm4wmeuByG6M51wcTso6cubDdQtuEfL")));
     /// ```
     Link(Cid),
 }
 
 // See [DAG-CBOR](https://github.com/ipld/specs/blob/master/block-layer/codecs/dag-cbor.md) for details.
-// Implement CBOR serialization for IpldValue.
-impl encode::Encode for IpldValue {
+// Implement CBOR serialization for Value.
+impl encode::Encode for Value {
     fn encode<W: encode::Write>(&self, e: &mut Encoder<W>) -> Result<(), encode::Error<W::Error>> {
         match self {
-            IpldValue::Null => e.null()?.ok(),
-            IpldValue::Bool(bool) => e.bool(*bool)?.ok(),
+            Value::Null => e.null()?.ok(),
+            Value::Bool(bool) => e.bool(*bool)?.ok(),
             // Integer encoding must be as short as possible.
-            IpldValue::Integer(integer) => e.encode(integer)?.ok(),
+            Value::Integer(integer) => e.encode(integer)?.ok(),
             // FIXME: Strict floating point encoding rules need to be resolved.
             // Current CBOR encoding implementations used by IPLD libraries are not unified in their approach.
-            IpldValue::Float(f64) => e.f64(*f64)?.ok(),
-            IpldValue::Bytes(bytes) => e.encode(bytes)?.ok(),
-            IpldValue::String(string) => e.str(string)?.ok(),
-            IpldValue::List(list) => e.encode(list)?.ok(),
-            IpldValue::Map(map) => e.encode(map)?.ok(),
-            IpldValue::Link(cid) => e.encode(cid)?.ok(),
+            Value::Float(f64) => e.f64(*f64)?.ok(),
+            Value::Bytes(bytes) => e.encode(bytes)?.ok(),
+            Value::String(string) => e.str(string)?.ok(),
+            Value::List(list) => e.encode(list)?.ok(),
+            Value::Map(map) => e.encode(map)?.ok(),
+            Value::Link(cid) => e.encode(cid)?.ok(),
         }
     }
 }
 
-// Implement CBOR deserialization for IpldValue.
-impl<'b> decode::Decode<'b> for IpldValue {
+// Implement CBOR deserialization for Value.
+impl<'b> decode::Decode<'b> for Value {
     fn decode(d: &mut Decoder<'b>) -> Result<Self, decode::Error> {
         match d.datatype()? {
             Type::Null => {
                 d.skip()?;
-                Ok(IpldValue::Null)
+                Ok(Value::Null)
             }
-            Type::Bool => Ok(IpldValue::Bool(d.bool()?)),
+            Type::Bool => Ok(Value::Bool(d.bool()?)),
             Type::U8 | Type::U16 | Type::U32 | Type::U64 => {
-                Ok(IpldValue::Integer(d.decode::<Integer>()?))
+                Ok(Value::Integer(d.decode::<Integer>()?))
             }
             Type::I8 | Type::I16 | Type::I32 | Type::I64 => {
-                Ok(IpldValue::Integer(d.decode::<Integer>()?))
+                Ok(Value::Integer(d.decode::<Integer>()?))
             }
-            Type::F16 => Ok(IpldValue::Float(f64::from(d.f16()?))),
-            Type::F32 => Ok(IpldValue::Float(f64::from(d.f32()?))),
-            Type::F64 => Ok(IpldValue::Float(d.f64()?)),
-            Type::Bytes => Ok(IpldValue::Bytes(d.decode::<Bytes>()?)),
-            Type::String => Ok(IpldValue::String(d.str()?.to_owned())),
-            Type::Array => Ok(IpldValue::List(d.decode::<Vec<IpldValue>>()?)),
-            Type::Map => Ok(IpldValue::Map(d.decode::<BTreeMap<MapKey, IpldValue>>()?)),
-            Type::Tag => Ok(IpldValue::Link(d.decode::<Cid>()?)),
+            Type::F16 => Ok(Value::Float(f64::from(d.f16()?))),
+            Type::F32 => Ok(Value::Float(f64::from(d.f32()?))),
+            Type::F64 => Ok(Value::Float(d.f64()?)),
+            Type::Bytes => Ok(Value::Bytes(d.decode::<Bytes>()?)),
+            Type::String => Ok(Value::String(d.str()?.to_owned())),
+            Type::Array => Ok(Value::List(d.decode::<Vec<Value>>()?)),
+            Type::Map => Ok(Value::Map(d.decode::<BTreeMap<MapKey, Value>>()?)),
+            Type::Tag => Ok(Value::Link(d.decode::<Cid>()?)),
             Type::Break | Type::Unknown(_) | Type::Undefined | Type::Simple => {
                 Err(decode::Error::Message("unexpected type"))
             }
@@ -184,29 +184,29 @@ impl<'b> decode::Decode<'b> for IpldValue {
 }
 
 // See [DAG-JSON](https://github.com/ipld/specs/blob/master/block-layer/codecs/dag-json.md) for details.
-// Implement JSON serialization for IpldValue.
-impl ser::Serialize for IpldValue {
+// Implement JSON serialization for Value.
+impl ser::Serialize for Value {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
         match self {
-            IpldValue::Null => serializer.serialize_none(),
-            IpldValue::Bool(bool) => serializer.serialize_bool(*bool),
-            IpldValue::Integer(integer) => integer.serialize(serializer),
-            IpldValue::Float(f64) => serializer.serialize_f64(*f64),
-            IpldValue::String(string) => serializer.serialize_str(string),
+            Value::Null => serializer.serialize_none(),
+            Value::Bool(bool) => serializer.serialize_bool(*bool),
+            Value::Integer(integer) => integer.serialize(serializer),
+            Value::Float(f64) => serializer.serialize_f64(*f64),
+            Value::String(string) => serializer.serialize_str(string),
             // The Bytes kind is represented as an object with "bytes" as key and a Multibase Base64 encoded string as value.
-            IpldValue::Bytes(bytes) => bytes.serialize(serializer),
-            IpldValue::List(list) => list.serialize(serializer),
-            IpldValue::Map(map) => map.serialize(serializer),
-            IpldValue::Link(link) => link.serialize(serializer),
+            Value::Bytes(bytes) => bytes.serialize(serializer),
+            Value::List(list) => list.serialize(serializer),
+            Value::Map(map) => map.serialize(serializer),
+            Value::Link(link) => link.serialize(serializer),
         }
     }
 }
 
-// Implement JSON deserialization for IpldValue.
-impl<'de> de::Deserialize<'de> for IpldValue {
+// Implement JSON deserialization for Value.
+impl<'de> de::Deserialize<'de> for Value {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: de::Deserializer<'de>,
@@ -217,7 +217,7 @@ impl<'de> de::Deserialize<'de> for IpldValue {
 
 struct JsonVisitor;
 impl<'de> de::Visitor<'de> for JsonVisitor {
-    type Value = IpldValue;
+    type Value = Value;
 
     fn expecting(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         fmt.write_str("any valid JSON value")
@@ -228,7 +228,7 @@ impl<'de> de::Visitor<'de> for JsonVisitor {
     where
         E: de::Error,
     {
-        Ok(IpldValue::Bool(v))
+        Ok(Value::Bool(v))
     }
 
     #[inline]
@@ -236,7 +236,7 @@ impl<'de> de::Visitor<'de> for JsonVisitor {
     where
         E: de::Error,
     {
-        Ok(IpldValue::Integer(v.into()))
+        Ok(Value::Integer(v.into()))
     }
 
     #[inline]
@@ -244,7 +244,7 @@ impl<'de> de::Visitor<'de> for JsonVisitor {
     where
         E: de::Error,
     {
-        Ok(IpldValue::Integer(v.into()))
+        Ok(Value::Integer(v.into()))
     }
 
     #[inline]
@@ -252,7 +252,7 @@ impl<'de> de::Visitor<'de> for JsonVisitor {
     where
         E: de::Error,
     {
-        Ok(IpldValue::Integer(v.into()))
+        Ok(Value::Integer(v.into()))
     }
 
     #[inline]
@@ -260,7 +260,7 @@ impl<'de> de::Visitor<'de> for JsonVisitor {
     where
         E: de::Error,
     {
-        Ok(IpldValue::Float(v))
+        Ok(Value::Float(v))
     }
 
     #[inline]
@@ -276,7 +276,7 @@ impl<'de> de::Visitor<'de> for JsonVisitor {
     where
         E: de::Error,
     {
-        Ok(IpldValue::String(value))
+        Ok(Value::String(value))
     }
 
     #[inline]
@@ -292,7 +292,7 @@ impl<'de> de::Visitor<'de> for JsonVisitor {
     where
         E: de::Error,
     {
-        Ok(IpldValue::Null)
+        Ok(Value::Null)
     }
 
     #[inline]
@@ -306,7 +306,7 @@ impl<'de> de::Visitor<'de> for JsonVisitor {
             vec.push(elem);
         }
 
-        Ok(IpldValue::List(vec))
+        Ok(Value::List(vec))
     }
 
     #[inline]
@@ -327,13 +327,13 @@ impl<'de> de::Visitor<'de> for JsonVisitor {
             if let Some(value) = map.get(SLASH) {
                 match value {
                     // JSON Object represents IPLD Link if it is `{ "/": "..." }`
-                    IpldValue::String(string) => {
-                        return Ok(IpldValue::Link(string.parse().map_err(de::Error::custom)?));
+                    Value::String(string) => {
+                        return Ok(Value::Link(string.parse().map_err(de::Error::custom)?));
                     }
                     // JSON Object represents IPLD Bytes if it is `{ "/": { "bytes": "..." } }`
-                    IpldValue::Map(map) => {
+                    Value::Map(map) => {
                         if map.len() == 1 {
-                            if let Some(IpldValue::String(string)) = map.get(BYTES) {
+                            if let Some(Value::String(string)) = map.get(BYTES) {
                                 let (base, bytes) = multibase::decode(string)
                                     .map_err(|e| de::Error::custom(e.to_string()))?;
                                 if base != multibase::Base::Base64 {
@@ -341,7 +341,7 @@ impl<'de> de::Visitor<'de> for JsonVisitor {
                                         "unexpected multibase algorithm",
                                     ));
                                 }
-                                return Ok(IpldValue::Bytes(bytes.into()));
+                                return Ok(Value::Bytes(bytes.into()));
                             }
                         }
                     }
@@ -350,7 +350,7 @@ impl<'de> de::Visitor<'de> for JsonVisitor {
             }
         }
 
-        Ok(IpldValue::Map(map))
+        Ok(Value::Map(map))
     }
 }
 
@@ -359,16 +359,16 @@ fn test_ipld_value_cbor_and_json() {
     const TEST_OBJ_ROOT: &str = "tests/test_objects/";
 
     let content = std::fs::read_to_string(format!("{}expected.json", TEST_OBJ_ROOT)).unwrap();
-    let value = serde_json::from_str::<IpldValue>(&content).unwrap();
+    let value = serde_json::from_str::<Value>(&content).unwrap();
     match value {
-        IpldValue::Map(map) => {
+        Value::Map(map) => {
             for (key, _value) in map {
                 let json_file_name = format!("{}{}.json", TEST_OBJ_ROOT, key);
                 let json = std::fs::read_to_string(json_file_name).unwrap();
-                let json_value = serde_json::from_str::<IpldValue>(&json).unwrap();
+                let json_value = serde_json::from_str::<Value>(&json).unwrap();
                 let cbor_file_name = format!("{}{}.cbor", TEST_OBJ_ROOT, key);
                 let cbor = std::fs::read(cbor_file_name).unwrap();
-                let cbor_value = minicbor::decode::<IpldValue>(&cbor).unwrap();
+                let cbor_value = minicbor::decode::<Value>(&cbor).unwrap();
                 assert_eq!(json_value, cbor_value);
             }
         }

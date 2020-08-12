@@ -1,13 +1,13 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use std::io::Result;
+use std::io;
 
 use crate::store::{BatchDataStore, DataStore, TxnDataStore};
 
 /// An interface that free disk space.
 pub trait Gc {
     /// Free disk space.
-    fn collect_garbage(&self) -> Result<()>;
+    fn collect_garbage(&self) -> io::Result<()>;
 }
 
 /// GcDataStore is an interface that should be implemented by data stores

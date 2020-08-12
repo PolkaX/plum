@@ -1,7 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
-use std::io::Result;
+use std::io;
 
 use crate::key::Key;
 use crate::store::{BatchDataStore, ToBatch, ToTxn, TxnDataStore};
@@ -14,7 +14,7 @@ use crate::store::{
 use crate::store::{Scrub, ScrubbedBatchDataStore, ScrubbedDataStore, ScrubbedTxnDataStore};
 
 /// The user-provided fail function.
-pub trait FailFn: Fn(&str) -> Result<()> + Clone + Sync + Send + 'static {}
+pub trait FailFn: Fn(&str) -> io::Result<()> + Clone + Sync + Send + 'static {}
 
 /// FailDataStore is a datastore which fails according to a user-provided function.
 #[derive(Clone)]
@@ -32,7 +32,7 @@ impl<F: FailFn, DS: DataStore> FailDataStore<F, DS> {
 }
 
 impl<F: FailFn, DS: DataStore> DataStore for FailDataStore<F, DS> {
-    fn sync<K>(&mut self, prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -40,13 +40,13 @@ impl<F: FailFn, DS: DataStore> DataStore for FailDataStore<F, DS> {
         self.datastore.sync(prefix)
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> io::Result<()> {
         self.datastore.close()
     }
 }
 
 impl<F: FailFn, DS: DataStore> DataStoreRead for FailDataStore<F, DS> {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -54,7 +54,7 @@ impl<F: FailFn, DS: DataStore> DataStoreRead for FailDataStore<F, DS> {
         self.datastore.get(key)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -64,7 +64,7 @@ impl<F: FailFn, DS: DataStore> DataStoreRead for FailDataStore<F, DS> {
 }
 
 impl<F: FailFn, DS: DataStore> DataStoreWrite for FailDataStore<F, DS> {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -73,7 +73,7 @@ impl<F: FailFn, DS: DataStore> DataStoreWrite for FailDataStore<F, DS> {
         self.datastore.put(key, value)
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -83,28 +83,28 @@ impl<F: FailFn, DS: DataStore> DataStoreWrite for FailDataStore<F, DS> {
 }
 
 impl<F: FailFn, DS: CheckedDataStore> Check for FailDataStore<F, DS> {
-    fn check(&self) -> Result<()> {
+    fn check(&self) -> io::Result<()> {
         (self.fail_fn)("check")?;
         self.datastore.check()
     }
 }
 
 impl<F: FailFn, DS: GcDataStore> Gc for FailDataStore<F, DS> {
-    fn collect_garbage(&self) -> Result<()> {
+    fn collect_garbage(&self) -> io::Result<()> {
         (self.fail_fn)("collect-garbage")?;
         self.datastore.collect_garbage()
     }
 }
 
 impl<F: FailFn, DS: PersistentDataStore> Persistent for FailDataStore<F, DS> {
-    fn disk_usage(&self) -> Result<u64> {
+    fn disk_usage(&self) -> io::Result<u64> {
         (self.fail_fn)("disk-usage")?;
         self.datastore.disk_usage()
     }
 }
 
 impl<F: FailFn, DS: ScrubbedDataStore> Scrub for FailDataStore<F, DS> {
-    fn scrub(&self) -> Result<()> {
+    fn scrub(&self) -> io::Result<()> {
         (self.fail_fn)("scrub")?;
         self.datastore.scrub()
     }
@@ -113,7 +113,7 @@ impl<F: FailFn, DS: ScrubbedDataStore> Scrub for FailDataStore<F, DS> {
 impl<F: FailFn, BDS: BatchDataStore> ToBatch for FailDataStore<F, BDS> {
     type Batch = FailBatchDataStore<F, BDS>;
 
-    fn batch(&self) -> Result<Self::Batch> {
+    fn batch(&self) -> io::Result<Self::Batch> {
         Ok(FailBatchDataStore::new(
             self.fail_fn.clone(),
             self.datastore.clone(),
@@ -124,7 +124,7 @@ impl<F: FailFn, BDS: BatchDataStore> ToBatch for FailDataStore<F, BDS> {
 impl<F: FailFn, TDS: TxnDataStore> ToTxn for FailDataStore<F, TDS> {
     type Txn = FailTxnDataStore<F, TDS>;
 
-    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+    fn txn(&self, _read_only: bool) -> io::Result<Self::Txn> {
         Ok(FailTxnDataStore::new(
             self.fail_fn.clone(),
             self.datastore.clone(),
@@ -150,7 +150,7 @@ impl<F: FailFn, BDS: BatchDataStore> FailBatchDataStore<F, BDS> {
 }
 
 impl<F: FailFn, BDS: BatchDataStore> DataStore for FailBatchDataStore<F, BDS> {
-    fn sync<K>(&mut self, prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -158,13 +158,13 @@ impl<F: FailFn, BDS: BatchDataStore> DataStore for FailBatchDataStore<F, BDS> {
         self.datastore.sync(prefix)
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> io::Result<()> {
         self.datastore.close()
     }
 }
 
 impl<F: FailFn, BDS: BatchDataStore> DataStoreRead for FailBatchDataStore<F, BDS> {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -172,7 +172,7 @@ impl<F: FailFn, BDS: BatchDataStore> DataStoreRead for FailBatchDataStore<F, BDS
         self.datastore.get(key)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -182,7 +182,7 @@ impl<F: FailFn, BDS: BatchDataStore> DataStoreRead for FailBatchDataStore<F, BDS
 }
 
 impl<F: FailFn, BDS: BatchDataStore> DataStoreWrite for FailBatchDataStore<F, BDS> {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -191,7 +191,7 @@ impl<F: FailFn, BDS: BatchDataStore> DataStoreWrite for FailBatchDataStore<F, BD
         self.datastore.put(key, value)
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -201,35 +201,35 @@ impl<F: FailFn, BDS: BatchDataStore> DataStoreWrite for FailBatchDataStore<F, BD
 }
 
 impl<F: FailFn, BDS: BatchDataStore> DataStoreBatch for FailBatchDataStore<F, BDS> {
-    fn commit(&mut self) -> Result<()> {
+    fn commit(&mut self) -> io::Result<()> {
         (self.fail_fn)("batch-commit")?;
         self.datastore.commit()
     }
 }
 
 impl<F: FailFn, BDS: CheckedBatchDataStore> Check for FailBatchDataStore<F, BDS> {
-    fn check(&self) -> Result<()> {
+    fn check(&self) -> io::Result<()> {
         (self.fail_fn)("check")?;
         self.datastore.check()
     }
 }
 
 impl<F: FailFn, BDS: GcBatchDataStore> Gc for FailBatchDataStore<F, BDS> {
-    fn collect_garbage(&self) -> Result<()> {
+    fn collect_garbage(&self) -> io::Result<()> {
         (self.fail_fn)("collect-garbage")?;
         self.datastore.collect_garbage()
     }
 }
 
 impl<F: FailFn, BDS: PersistentBatchDataStore> Persistent for FailBatchDataStore<F, BDS> {
-    fn disk_usage(&self) -> Result<u64> {
+    fn disk_usage(&self) -> io::Result<u64> {
         (self.fail_fn)("disk-usage")?;
         self.datastore.disk_usage()
     }
 }
 
 impl<F: FailFn, BDS: ScrubbedBatchDataStore> Scrub for FailBatchDataStore<F, BDS> {
-    fn scrub(&self) -> Result<()> {
+    fn scrub(&self) -> io::Result<()> {
         (self.fail_fn)("scrub")?;
         self.datastore.scrub()
     }
@@ -238,7 +238,7 @@ impl<F: FailFn, BDS: ScrubbedBatchDataStore> Scrub for FailBatchDataStore<F, BDS
 impl<F: FailFn, TDS: TxnDataStore> ToTxn for FailBatchDataStore<F, TDS> {
     type Txn = FailTxnDataStore<F, TDS>;
 
-    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+    fn txn(&self, _read_only: bool) -> io::Result<Self::Txn> {
         Ok(FailTxnDataStore::new(
             self.fail_fn.clone(),
             self.datastore.clone(),
@@ -264,7 +264,7 @@ impl<F: FailFn, TDS: TxnDataStore> FailTxnDataStore<F, TDS> {
 }
 
 impl<F: FailFn, TDS: TxnDataStore> DataStore for FailTxnDataStore<F, TDS> {
-    fn sync<K>(&mut self, prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -272,13 +272,13 @@ impl<F: FailFn, TDS: TxnDataStore> DataStore for FailTxnDataStore<F, TDS> {
         self.datastore.sync(prefix)
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> io::Result<()> {
         self.datastore.close()
     }
 }
 
 impl<F: FailFn, TDS: TxnDataStore> DataStoreRead for FailTxnDataStore<F, TDS> {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -286,7 +286,7 @@ impl<F: FailFn, TDS: TxnDataStore> DataStoreRead for FailTxnDataStore<F, TDS> {
         self.datastore.get(key)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -296,7 +296,7 @@ impl<F: FailFn, TDS: TxnDataStore> DataStoreRead for FailTxnDataStore<F, TDS> {
 }
 
 impl<F: FailFn, TDS: TxnDataStore> DataStoreWrite for FailTxnDataStore<F, TDS> {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -305,7 +305,7 @@ impl<F: FailFn, TDS: TxnDataStore> DataStoreWrite for FailTxnDataStore<F, TDS> {
         self.datastore.put(key, value)
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -315,42 +315,42 @@ impl<F: FailFn, TDS: TxnDataStore> DataStoreWrite for FailTxnDataStore<F, TDS> {
 }
 
 impl<F: FailFn, TDS: TxnDataStore> DataStoreBatch for FailTxnDataStore<F, TDS> {
-    fn commit(&mut self) -> Result<()> {
+    fn commit(&mut self) -> io::Result<()> {
         (self.fail_fn)("txn-commit")?;
         self.datastore.commit()
     }
 }
 
 impl<F: FailFn, TDS: TxnDataStore> DataStoreTxn for FailTxnDataStore<F, TDS> {
-    fn discard(&mut self) -> Result<()> {
+    fn discard(&mut self) -> io::Result<()> {
         (self.fail_fn)("txn-discard")?;
         self.datastore.discard()
     }
 }
 
 impl<F: FailFn, TDS: CheckedTxnDataStore> Check for FailTxnDataStore<F, TDS> {
-    fn check(&self) -> Result<()> {
+    fn check(&self) -> io::Result<()> {
         (self.fail_fn)("check")?;
         self.datastore.check()
     }
 }
 
 impl<F: FailFn, TDS: GcTxnDataStore> Gc for FailTxnDataStore<F, TDS> {
-    fn collect_garbage(&self) -> Result<()> {
+    fn collect_garbage(&self) -> io::Result<()> {
         (self.fail_fn)("collect-garbage")?;
         self.datastore.collect_garbage()
     }
 }
 
 impl<F: FailFn, TDS: PersistentTxnDataStore> Persistent for FailTxnDataStore<F, TDS> {
-    fn disk_usage(&self) -> Result<u64> {
+    fn disk_usage(&self) -> io::Result<u64> {
         (self.fail_fn)("disk-usage")?;
         self.datastore.disk_usage()
     }
 }
 
 impl<F: FailFn, TDS: ScrubbedTxnDataStore> Scrub for FailTxnDataStore<F, TDS> {
-    fn scrub(&self) -> Result<()> {
+    fn scrub(&self) -> io::Result<()> {
         (self.fail_fn)("scrub")?;
         self.datastore.scrub()
     }

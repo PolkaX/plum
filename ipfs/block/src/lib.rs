@@ -8,15 +8,6 @@ use std::fmt;
 
 use cid::{Cid, Codec};
 
-/// Block provides abstraction for IPFS blocks implementations.
-pub trait Block: fmt::Display {
-    /// Return the Cid of the IPFS(IPLD) block.
-    fn data(&self) -> &[u8];
-
-    /// Return the Cid of the IPFS(IPLD) block.
-    fn cid(&self) -> &Cid;
-}
-
 /// A IPFS(IPLD) Block is a CID and the binary data value for that CID.
 ///
 /// +-----+--------------------------------+
@@ -25,15 +16,15 @@ pub trait Block: fmt::Display {
 ///
 /// See [Concept: Block](https://github.com/ipld/specs/blob/master/block-layer/block.md) for details.
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct IpfsBlock {
+pub struct Block {
     cid: Cid,
     data: Vec<u8>,
 }
 
-impl IpfsBlock {
+impl Block {
     /// Create IPFS(IPLD) block from supported entity
     pub fn new<T: minicbor::Encode>(entity: T) -> Self {
-        let data = minicbor::to_vec(&entity).unwrap();
+        let data = minicbor::to_vec(&entity).expect("`entity` must be a CBOR encoded object; qed");
         let hash = multihash::Blake2b256::digest(&data);
         let cid = Cid::new_v1(Codec::DagCBOR, hash);
         Self { cid, data }
@@ -64,18 +55,8 @@ impl IpfsBlock {
     }
 }
 
-impl fmt::Display for IpfsBlock {
+impl fmt::Display for Block {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[Block {}]", self.cid)
-    }
-}
-
-impl Block for IpfsBlock {
-    fn data(&self) -> &[u8] {
-        self.data()
-    }
-
-    fn cid(&self) -> &Cid {
-        self.cid()
     }
 }

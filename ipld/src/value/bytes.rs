@@ -84,9 +84,6 @@ impl<'de> de::Deserialize<'de> for Bytes {
     {
         use serde_json::{Map, Value};
 
-        const SLASH: &str = "/";
-        const BYTES: &str = "bytes";
-
         // JSON Object represents IPLD Bytes if it is `{ "/": {"bytes": "..."} }`
         let map = Map::<String, Value>::deserialize(deserializer)?;
 
