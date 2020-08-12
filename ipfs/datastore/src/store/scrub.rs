@@ -1,13 +1,13 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use std::io::Result;
+use std::io;
 
 use crate::store::{BatchDataStore, DataStore, TxnDataStore};
 
 /// An interface that check data integrity and/or error correction.
 pub trait Scrub {
     /// Check data integrity and/or error correction.
-    fn scrub(&self) -> Result<()>;
+    fn scrub(&self) -> io::Result<()>;
 }
 
 /// ScrubbedDataStore is an interface that should be implemented by data stores

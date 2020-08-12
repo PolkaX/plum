@@ -2,7 +2,7 @@
 
 use std::borrow::Borrow;
 use std::collections::HashMap;
-use std::io::Result;
+use std::io;
 
 use crate::key::Key;
 use crate::store::{DataStore, DataStoreRead, DataStoreWrite};
@@ -21,27 +21,27 @@ impl MapDataStore {
 }
 
 impl DataStore for MapDataStore {
-    fn sync<K>(&mut self, _prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, _prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
         Ok(())
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> io::Result<()> {
         Ok(())
     }
 }
 
 impl DataStoreRead for MapDataStore {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
         Ok(self.values.get(key.borrow()).cloned())
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -50,7 +50,7 @@ impl DataStoreRead for MapDataStore {
 }
 
 impl DataStoreWrite for MapDataStore {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -59,7 +59,7 @@ impl DataStoreWrite for MapDataStore {
         Ok(())
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {

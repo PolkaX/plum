@@ -18,13 +18,13 @@ dyn_clone::clone_trait_object!(Order);
 pub struct OrderByKey;
 
 impl fmt::Debug for OrderByKey {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         write!(f, "OrderByKey: {:p}", &entry_key_ascending)
     }
 }
 
 impl fmt::Display for OrderByKey {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         f.write_str("KEY")
     }
 }
@@ -44,13 +44,13 @@ fn entry_key_ascending(lhs: &Entry, rhs: &Entry) -> Ordering {
 pub struct OrderByKeyDescending;
 
 impl fmt::Debug for OrderByKeyDescending {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         write!(f, "OrderByKeyDescending: {:p}", &entry_key_descending)
     }
 }
 
 impl fmt::Display for OrderByKeyDescending {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         f.write_str("desc(KEY)")
     }
 }
@@ -70,13 +70,13 @@ fn entry_key_descending(lhs: &Entry, rhs: &Entry) -> Ordering {
 pub struct OrderByValue;
 
 impl fmt::Debug for OrderByValue {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         write!(f, "OrderByValue: {:p}", &entry_value_ascending)
     }
 }
 
 impl fmt::Display for OrderByValue {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         f.write_str("VALUE")
     }
 }
@@ -96,13 +96,13 @@ fn entry_value_ascending(lhs: &Entry, rhs: &Entry) -> Ordering {
 pub struct OrderByValueDescending;
 
 impl fmt::Debug for OrderByValueDescending {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         write!(f, "OrderByValueDescending: {:p}", &entry_value_descending)
     }
 }
 
 impl fmt::Display for OrderByValueDescending {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         f.write_str("desc(VALUE)")
     }
 }
@@ -122,7 +122,7 @@ fn entry_value_descending(lhs: &Entry, rhs: &Entry) -> Ordering {
 pub struct OrderByFunction(fn(&Entry, &Entry) -> Ordering);
 
 impl fmt::Debug for OrderByFunction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         write!(f, "OrderByFunction: {:p}", &self.0)
     }
 }
@@ -135,7 +135,7 @@ impl OrderByFunction {
 }
 
 impl fmt::Display for OrderByFunction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         f.write_str("FN")
     }
 }

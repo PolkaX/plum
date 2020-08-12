@@ -4,16 +4,13 @@
 
 #![deny(missing_docs)]
 
-// mod error;
 mod impls;
 mod key;
-// TODO: mount
-// mod mount;
-mod query;
+// mod query;
 mod store;
 
 pub use self::key::{namespace_type, namespace_value, Key};
-pub use self::query::*;
+// pub use self::query::*;
 
 pub use self::store::{DataStore, DataStoreBatch, DataStoreRead, DataStoreTxn, DataStoreWrite};
 

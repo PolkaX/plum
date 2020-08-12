@@ -13,7 +13,7 @@ pub use self::rocks::{
 
 use std::borrow::Borrow;
 use std::collections::HashMap;
-use std::io::Result;
+use std::io;
 use std::sync::Arc;
 
 use ipfs_datastore::{
@@ -28,7 +28,7 @@ pub struct RocksDBDataStore {
 
 impl RocksDBDataStore {
     /// Create a new rocksdb data store.
-    pub fn new(config: &DatabaseConfig, path: &str) -> Result<Self> {
+    pub fn new(config: &DatabaseConfig, path: &str) -> io::Result<Self> {
         let db = Database::open(config, path)?;
         Ok(Self { db: Arc::new(db) })
     }
@@ -39,12 +39,12 @@ impl RocksDBDataStore {
     }
 
     /// Add a new column family into rocksdb.
-    pub fn add_column(&self, col: String) -> Result<()> {
+    pub fn add_column(&self, col: String) -> io::Result<()> {
         Ok(self.db.add_column(col)?)
     }
 
     /// Remove a column family from rocksdb.
-    pub fn remove_column(&self, col: &str) -> Result<()> {
+    pub fn remove_column(&self, col: &str) -> io::Result<()> {
         Ok(self.db.remove_column(col)?)
     }
 
@@ -54,7 +54,7 @@ impl RocksDBDataStore {
     }
 
     /// The number of keys in a column (estimated).
-    pub fn num_keys(&self, col: &str) -> Result<u64> {
+    pub fn num_keys(&self, col: &str) -> io::Result<u64> {
         Ok(self.db.num_keys(col)?)
     }
 
@@ -71,21 +71,21 @@ impl RocksDBDataStore {
 }
 
 impl DataStore for RocksDBDataStore {
-    fn sync<K>(&mut self, _prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, _prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
         Ok(())
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> io::Result<()> {
         self.db.close();
         Ok(())
     }
 }
 
 impl DataStoreRead for RocksDBDataStore {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -95,7 +95,7 @@ impl DataStoreRead for RocksDBDataStore {
         Ok(self.db.get(&col, key.as_bytes())?)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -107,7 +107,7 @@ impl DataStoreRead for RocksDBDataStore {
 }
 
 impl DataStoreWrite for RocksDBDataStore {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -122,7 +122,7 @@ impl DataStoreWrite for RocksDBDataStore {
         Ok(())
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -139,7 +139,7 @@ impl DataStoreWrite for RocksDBDataStore {
 impl ToBatch for RocksDBDataStore {
     type Batch = RocksDBBatchDataStore;
 
-    fn batch(&self) -> Result<Self::Batch> {
+    fn batch(&self) -> io::Result<Self::Batch> {
         let db = self.db.clone();
         let txn = db.transaction();
         Ok(RocksDBBatchDataStore { db, txn })
@@ -149,7 +149,7 @@ impl ToBatch for RocksDBDataStore {
 impl ToTxn for RocksDBDataStore {
     type Txn = RocksDBTxnDataStore;
 
-    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+    fn txn(&self, _read_only: bool) -> io::Result<Self::Txn> {
         let db = self.db.clone();
         let txn = db.transaction();
         Ok(RocksDBTxnDataStore { db, txn })
@@ -167,7 +167,7 @@ pub struct RocksDBBatchDataStore {
 
 impl RocksDBBatchDataStore {
     /// Create a new rocksdb batch data store.
-    pub fn new(config: &DatabaseConfig, path: &str) -> Result<Self> {
+    pub fn new(config: &DatabaseConfig, path: &str) -> io::Result<Self> {
         let db = Database::open(config, path)?;
         let txn = db.transaction();
         Ok(Self {
@@ -183,7 +183,7 @@ impl RocksDBBatchDataStore {
 }
 
 impl DataStoreRead for RocksDBBatchDataStore {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -193,7 +193,7 @@ impl DataStoreRead for RocksDBBatchDataStore {
         Ok(self.db.get(&col, key.as_bytes())?)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -205,7 +205,7 @@ impl DataStoreRead for RocksDBBatchDataStore {
 }
 
 impl DataStoreWrite for RocksDBBatchDataStore {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -218,7 +218,7 @@ impl DataStoreWrite for RocksDBBatchDataStore {
         Ok(())
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -231,7 +231,7 @@ impl DataStoreWrite for RocksDBBatchDataStore {
 }
 
 impl DataStoreBatch for RocksDBBatchDataStore {
-    fn commit(&mut self) -> Result<()> {
+    fn commit(&mut self) -> io::Result<()> {
         self.db.write(&self.txn)?;
         self.txn.clear();
         Ok(())
@@ -241,7 +241,7 @@ impl DataStoreBatch for RocksDBBatchDataStore {
 impl ToTxn for RocksDBBatchDataStore {
     type Txn = RocksDBTxnDataStore;
 
-    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+    fn txn(&self, _read_only: bool) -> io::Result<Self::Txn> {
         Ok(RocksDBTxnDataStore {
             db: self.db.clone(),
             txn: self.txn.clone(),
@@ -260,7 +260,7 @@ pub struct RocksDBTxnDataStore {
 
 impl RocksDBTxnDataStore {
     /// Create a new rocksdb batch data store.
-    pub fn new(config: &DatabaseConfig, path: &str) -> Result<Self> {
+    pub fn new(config: &DatabaseConfig, path: &str) -> io::Result<Self> {
         let db = Database::open(config, path)?;
         let txn = db.transaction();
         Ok(Self {
@@ -276,7 +276,7 @@ impl RocksDBTxnDataStore {
 }
 
 impl DataStoreRead for RocksDBTxnDataStore {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -286,7 +286,7 @@ impl DataStoreRead for RocksDBTxnDataStore {
         Ok(self.db.get(&col, key.as_bytes())?)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -298,7 +298,7 @@ impl DataStoreRead for RocksDBTxnDataStore {
 }
 
 impl DataStoreWrite for RocksDBTxnDataStore {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -311,7 +311,7 @@ impl DataStoreWrite for RocksDBTxnDataStore {
         Ok(())
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -324,7 +324,7 @@ impl DataStoreWrite for RocksDBTxnDataStore {
 }
 
 impl DataStoreBatch for RocksDBTxnDataStore {
-    fn commit(&mut self) -> Result<()> {
+    fn commit(&mut self) -> io::Result<()> {
         self.db.write(&self.txn)?;
         self.txn.clear();
         Ok(())
@@ -332,7 +332,7 @@ impl DataStoreBatch for RocksDBTxnDataStore {
 }
 
 impl DataStoreTxn for RocksDBTxnDataStore {
-    fn discard(&mut self) -> Result<()> {
+    fn discard(&mut self) -> io::Result<()> {
         self.txn.ops.clear();
         Ok(())
     }

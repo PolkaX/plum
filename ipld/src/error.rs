@@ -1,12 +1,18 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
+/// Alias for a `Result` with the default error type `IpldError`.
+pub type Result<T, E = IpldError> = std::result::Result<T, E>;
+
 /// The IPLD error.
-#[derive(Debug, PartialEq, thiserror::Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum IpldError {
-    /// Codec error.
+    /// IO error.
     #[error("{0}")]
-    Codec(String),
-    /// Custom error.
+    Io(#[from] std::io::Error),
+    /// CBOR decode error.
     #[error("{0}")]
-    Custom(String),
+    CborDecode(#[from] minicbor::decode::Error),
+    /// JSON Codec error.
+    #[error("{0}")]
+    JsonCodec(#[from] serde_json::Error),
 }

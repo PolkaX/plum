@@ -2,7 +2,7 @@
 
 use std::borrow::Borrow;
 use std::collections::HashMap;
-use std::io::Result;
+use std::io;
 
 use crate::key::Key;
 use crate::store::ToTxn;
@@ -37,14 +37,14 @@ impl<DS: DataStore> BasicBatchDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStoreRead for BasicBatchDataStore<DS> {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
         self.datastore.get(key)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -53,7 +53,7 @@ impl<DS: DataStore> DataStoreRead for BasicBatchDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStoreWrite for BasicBatchDataStore<DS> {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -62,7 +62,7 @@ impl<DS: DataStore> DataStoreWrite for BasicBatchDataStore<DS> {
         Ok(())
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -72,7 +72,7 @@ impl<DS: DataStore> DataStoreWrite for BasicBatchDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStoreBatch for BasicBatchDataStore<DS> {
-    fn commit(&mut self) -> Result<()> {
+    fn commit(&mut self) -> io::Result<()> {
         for (key, op) in &self.ops {
             match op {
                 Op::Put(value) => self.datastore.put(key, value.to_owned())?,
@@ -85,25 +85,25 @@ impl<DS: DataStore> DataStoreBatch for BasicBatchDataStore<DS> {
 }
 
 impl<DS: CheckedDataStore> Check for BasicBatchDataStore<DS> {
-    fn check(&self) -> Result<()> {
+    fn check(&self) -> io::Result<()> {
         self.datastore.check()
     }
 }
 
 impl<DS: GcDataStore> Gc for BasicBatchDataStore<DS> {
-    fn collect_garbage(&self) -> Result<()> {
+    fn collect_garbage(&self) -> io::Result<()> {
         self.datastore.collect_garbage()
     }
 }
 
 impl<DS: PersistentDataStore> Persistent for BasicBatchDataStore<DS> {
-    fn disk_usage(&self) -> Result<u64> {
+    fn disk_usage(&self) -> io::Result<u64> {
         self.datastore.disk_usage()
     }
 }
 
 impl<DS: ScrubbedDataStore> Scrub for BasicBatchDataStore<DS> {
-    fn scrub(&self) -> Result<()> {
+    fn scrub(&self) -> io::Result<()> {
         self.datastore.scrub()
     }
 }
@@ -111,7 +111,7 @@ impl<DS: ScrubbedDataStore> Scrub for BasicBatchDataStore<DS> {
 impl<DS: DataStore> ToTxn for BasicBatchDataStore<DS> {
     type Txn = BasicTxnDataStore<DS>;
 
-    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+    fn txn(&self, _read_only: bool) -> io::Result<Self::Txn> {
         Ok(BasicTxnDataStore {
             datastore: self.datastore.clone(),
             ops: self.ops.clone(),
@@ -140,14 +140,14 @@ impl<DS: DataStore> BasicTxnDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStoreRead for BasicTxnDataStore<DS> {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
         self.datastore.get(key)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -156,7 +156,7 @@ impl<DS: DataStore> DataStoreRead for BasicTxnDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStoreWrite for BasicTxnDataStore<DS> {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -165,7 +165,7 @@ impl<DS: DataStore> DataStoreWrite for BasicTxnDataStore<DS> {
         Ok(())
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -175,7 +175,7 @@ impl<DS: DataStore> DataStoreWrite for BasicTxnDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStoreBatch for BasicTxnDataStore<DS> {
-    fn commit(&mut self) -> Result<()> {
+    fn commit(&mut self) -> io::Result<()> {
         for (key, op) in &self.ops {
             match op {
                 Op::Put(value) => self.datastore.put(key, value.to_owned())?,
@@ -188,32 +188,32 @@ impl<DS: DataStore> DataStoreBatch for BasicTxnDataStore<DS> {
 }
 
 impl<DS: DataStore> DataStoreTxn for BasicTxnDataStore<DS> {
-    fn discard(&mut self) -> Result<()> {
+    fn discard(&mut self) -> io::Result<()> {
         self.ops.clear();
         Ok(())
     }
 }
 
 impl<DS: CheckedDataStore> Check for BasicTxnDataStore<DS> {
-    fn check(&self) -> Result<()> {
+    fn check(&self) -> io::Result<()> {
         self.datastore.check()
     }
 }
 
 impl<DS: GcDataStore> Gc for BasicTxnDataStore<DS> {
-    fn collect_garbage(&self) -> Result<()> {
+    fn collect_garbage(&self) -> io::Result<()> {
         self.datastore.collect_garbage()
     }
 }
 
 impl<DS: PersistentDataStore> Persistent for BasicTxnDataStore<DS> {
-    fn disk_usage(&self) -> Result<u64> {
+    fn disk_usage(&self) -> io::Result<u64> {
         self.datastore.disk_usage()
     }
 }
 
 impl<DS: ScrubbedDataStore> Scrub for BasicTxnDataStore<DS> {
-    fn scrub(&self) -> Result<()> {
+    fn scrub(&self) -> io::Result<()> {
         self.datastore.scrub()
     }
 }

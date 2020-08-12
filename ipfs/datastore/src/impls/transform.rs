@@ -1,7 +1,7 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
 use std::borrow::Borrow;
-use std::io::Result;
+use std::io;
 
 use crate::key::Key;
 use crate::store::{BatchDataStore, ToBatch, ToTxn, TxnDataStore};
@@ -40,7 +40,7 @@ impl<KT: KeyTransform, DS: DataStore> TransformDataStore<KT, DS> {
 }
 
 impl<KT: KeyTransform, DS: DataStore> DataStore for TransformDataStore<KT, DS> {
-    fn sync<K>(&mut self, prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -48,13 +48,13 @@ impl<KT: KeyTransform, DS: DataStore> DataStore for TransformDataStore<KT, DS> {
         self.datastore.sync(&key)
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> io::Result<()> {
         self.datastore.close()
     }
 }
 
 impl<KT: KeyTransform, DS: DataStore> DataStoreRead for TransformDataStore<KT, DS> {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -62,7 +62,7 @@ impl<KT: KeyTransform, DS: DataStore> DataStoreRead for TransformDataStore<KT, D
         self.datastore.get(&key)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -72,7 +72,7 @@ impl<KT: KeyTransform, DS: DataStore> DataStoreRead for TransformDataStore<KT, D
 }
 
 impl<KT: KeyTransform, DS: DataStore> DataStoreWrite for TransformDataStore<KT, DS> {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -81,7 +81,7 @@ impl<KT: KeyTransform, DS: DataStore> DataStoreWrite for TransformDataStore<KT, 
         self.datastore.put(key, value)
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -91,25 +91,25 @@ impl<KT: KeyTransform, DS: DataStore> DataStoreWrite for TransformDataStore<KT, 
 }
 
 impl<KT: KeyTransform, DS: CheckedDataStore> Check for TransformDataStore<KT, DS> {
-    fn check(&self) -> Result<()> {
+    fn check(&self) -> io::Result<()> {
         self.datastore.check()
     }
 }
 
 impl<KT: KeyTransform, DS: GcDataStore> Gc for TransformDataStore<KT, DS> {
-    fn collect_garbage(&self) -> Result<()> {
+    fn collect_garbage(&self) -> io::Result<()> {
         self.datastore.collect_garbage()
     }
 }
 
 impl<KT: KeyTransform, DS: PersistentDataStore> Persistent for TransformDataStore<KT, DS> {
-    fn disk_usage(&self) -> Result<u64> {
+    fn disk_usage(&self) -> io::Result<u64> {
         self.datastore.disk_usage()
     }
 }
 
 impl<KT: KeyTransform, DS: ScrubbedDataStore> Scrub for TransformDataStore<KT, DS> {
-    fn scrub(&self) -> Result<()> {
+    fn scrub(&self) -> io::Result<()> {
         self.datastore.scrub()
     }
 }
@@ -117,7 +117,7 @@ impl<KT: KeyTransform, DS: ScrubbedDataStore> Scrub for TransformDataStore<KT, D
 impl<KT: KeyTransform, BDS: BatchDataStore> ToBatch for TransformDataStore<KT, BDS> {
     type Batch = TransformBatchDataStore<KT, BDS>;
 
-    fn batch(&self) -> Result<Self::Batch> {
+    fn batch(&self) -> io::Result<Self::Batch> {
         Ok(TransformBatchDataStore::new(
             self.transform.clone(),
             self.datastore.clone(),
@@ -128,7 +128,7 @@ impl<KT: KeyTransform, BDS: BatchDataStore> ToBatch for TransformDataStore<KT, B
 impl<KT: KeyTransform, TDS: TxnDataStore> ToTxn for TransformTxnDataStore<KT, TDS> {
     type Txn = TransformTxnDataStore<KT, TDS>;
 
-    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+    fn txn(&self, _read_only: bool) -> io::Result<Self::Txn> {
         Ok(TransformTxnDataStore::new(
             self.transform.clone(),
             self.datastore.clone(),
@@ -156,7 +156,7 @@ impl<KT: KeyTransform, BDS: BatchDataStore> TransformBatchDataStore<KT, BDS> {
 }
 
 impl<KT: KeyTransform, BDS: BatchDataStore> DataStore for TransformBatchDataStore<KT, BDS> {
-    fn sync<K>(&mut self, prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -164,13 +164,13 @@ impl<KT: KeyTransform, BDS: BatchDataStore> DataStore for TransformBatchDataStor
         self.datastore.sync(&key)
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> io::Result<()> {
         self.datastore.close()
     }
 }
 
 impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreRead for TransformBatchDataStore<KT, BDS> {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -178,7 +178,7 @@ impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreRead for TransformBatchData
         self.datastore.get(&key)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -188,7 +188,7 @@ impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreRead for TransformBatchData
 }
 
 impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreWrite for TransformBatchDataStore<KT, BDS> {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -197,7 +197,7 @@ impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreWrite for TransformBatchDat
         self.datastore.put(key, value)
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -207,19 +207,19 @@ impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreWrite for TransformBatchDat
 }
 
 impl<KT: KeyTransform, BDS: BatchDataStore> DataStoreBatch for TransformBatchDataStore<KT, BDS> {
-    fn commit(&mut self) -> Result<()> {
+    fn commit(&mut self) -> io::Result<()> {
         self.datastore.commit()
     }
 }
 
 impl<KT: KeyTransform, BDS: CheckedBatchDataStore> Check for TransformBatchDataStore<KT, BDS> {
-    fn check(&self) -> Result<()> {
+    fn check(&self) -> io::Result<()> {
         self.datastore.check()
     }
 }
 
 impl<KT: KeyTransform, BDS: GcBatchDataStore> Gc for TransformBatchDataStore<KT, BDS> {
-    fn collect_garbage(&self) -> Result<()> {
+    fn collect_garbage(&self) -> io::Result<()> {
         self.datastore.collect_garbage()
     }
 }
@@ -227,13 +227,13 @@ impl<KT: KeyTransform, BDS: GcBatchDataStore> Gc for TransformBatchDataStore<KT,
 impl<KT: KeyTransform, BDS: PersistentBatchDataStore> Persistent
     for TransformBatchDataStore<KT, BDS>
 {
-    fn disk_usage(&self) -> Result<u64> {
+    fn disk_usage(&self) -> io::Result<u64> {
         self.datastore.disk_usage()
     }
 }
 
 impl<KT: KeyTransform, BDS: ScrubbedBatchDataStore> Scrub for TransformBatchDataStore<KT, BDS> {
-    fn scrub(&self) -> Result<()> {
+    fn scrub(&self) -> io::Result<()> {
         self.datastore.scrub()
     }
 }
@@ -241,7 +241,7 @@ impl<KT: KeyTransform, BDS: ScrubbedBatchDataStore> Scrub for TransformBatchData
 impl<KT: KeyTransform, TDS: TxnDataStore> ToTxn for TransformBatchDataStore<KT, TDS> {
     type Txn = TransformTxnDataStore<KT, TDS>;
 
-    fn txn(&self, _read_only: bool) -> Result<Self::Txn> {
+    fn txn(&self, _read_only: bool) -> io::Result<Self::Txn> {
         Ok(TransformTxnDataStore::new(
             self.transform.clone(),
             self.datastore.clone(),
@@ -269,7 +269,7 @@ impl<KT: KeyTransform, TDS: TxnDataStore> TransformTxnDataStore<KT, TDS> {
 }
 
 impl<KT: KeyTransform, TDS: TxnDataStore> DataStore for TransformTxnDataStore<KT, TDS> {
-    fn sync<K>(&mut self, prefix: &K) -> Result<()>
+    fn sync<K>(&mut self, prefix: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -277,13 +277,13 @@ impl<KT: KeyTransform, TDS: TxnDataStore> DataStore for TransformTxnDataStore<KT
         self.datastore.sync(&key)
     }
 
-    fn close(&mut self) -> Result<()> {
+    fn close(&mut self) -> io::Result<()> {
         self.datastore.close()
     }
 }
 
 impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreRead for TransformTxnDataStore<KT, TDS> {
-    fn get<K>(&self, key: &K) -> Result<Option<Vec<u8>>>
+    fn get<K>(&self, key: &K) -> io::Result<Option<Vec<u8>>>
     where
         K: Borrow<Key>,
     {
@@ -291,7 +291,7 @@ impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreRead for TransformTxnDataStor
         self.datastore.get(&key)
     }
 
-    fn has<K>(&self, key: &K) -> Result<bool>
+    fn has<K>(&self, key: &K) -> io::Result<bool>
     where
         K: Borrow<Key>,
     {
@@ -301,7 +301,7 @@ impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreRead for TransformTxnDataStor
 }
 
 impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreWrite for TransformTxnDataStore<KT, TDS> {
-    fn put<K, V>(&mut self, key: K, value: V) -> Result<()>
+    fn put<K, V>(&mut self, key: K, value: V) -> io::Result<()>
     where
         K: Into<Key>,
         V: Into<Vec<u8>>,
@@ -310,7 +310,7 @@ impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreWrite for TransformTxnDataSto
         self.datastore.put(key, value)
     }
 
-    fn delete<K>(&mut self, key: &K) -> Result<()>
+    fn delete<K>(&mut self, key: &K) -> io::Result<()>
     where
         K: Borrow<Key>,
     {
@@ -320,37 +320,37 @@ impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreWrite for TransformTxnDataSto
 }
 
 impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreBatch for TransformTxnDataStore<KT, TDS> {
-    fn commit(&mut self) -> Result<()> {
+    fn commit(&mut self) -> io::Result<()> {
         self.datastore.commit()
     }
 }
 
 impl<KT: KeyTransform, TDS: TxnDataStore> DataStoreTxn for TransformTxnDataStore<KT, TDS> {
-    fn discard(&mut self) -> Result<()> {
+    fn discard(&mut self) -> io::Result<()> {
         self.datastore.discard()
     }
 }
 
 impl<KT: KeyTransform, TDS: CheckedTxnDataStore> Check for TransformTxnDataStore<KT, TDS> {
-    fn check(&self) -> Result<()> {
+    fn check(&self) -> io::Result<()> {
         self.datastore.check()
     }
 }
 
 impl<KT: KeyTransform, TDS: GcTxnDataStore> Gc for TransformTxnDataStore<KT, TDS> {
-    fn collect_garbage(&self) -> Result<()> {
+    fn collect_garbage(&self) -> io::Result<()> {
         self.datastore.collect_garbage()
     }
 }
 
 impl<KT: KeyTransform, TDS: PersistentTxnDataStore> Persistent for TransformTxnDataStore<KT, TDS> {
-    fn disk_usage(&self) -> Result<u64> {
+    fn disk_usage(&self) -> io::Result<u64> {
         self.datastore.disk_usage()
     }
 }
 
 impl<KT: KeyTransform, TDS: ScrubbedTxnDataStore> Scrub for TransformTxnDataStore<KT, TDS> {
-    fn scrub(&self) -> Result<()> {
+    fn scrub(&self) -> io::Result<()> {
         self.datastore.scrub()
     }
 }

@@ -1,13 +1,13 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use std::io::Result;
+use std::io;
 
 use crate::store::{BatchDataStore, DataStore, TxnDataStore};
 
 /// An interface that report disk usage.
 pub trait Persistent {
     /// Report disk usage, return the space used by a datastore, in bytes.
-    fn disk_usage(&self) -> Result<u64>;
+    fn disk_usage(&self) -> io::Result<u64>;
 }
 
 /// PersistentDataStore is an interface that should be implemented by data stores

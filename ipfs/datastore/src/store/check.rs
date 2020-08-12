@@ -1,13 +1,13 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-use std::io::Result;
+use std::io;
 
 use crate::store::{BatchDataStore, DataStore, TxnDataStore};
 
 /// An interface check on-disk data integrity.
 pub trait Check {
     /// Check on-disk data integrity.
-    fn check(&self) -> Result<()>;
+    fn check(&self) -> io::Result<()>;
 }
 
 /// CheckedDataStore is an interface that should be implemented by data stores

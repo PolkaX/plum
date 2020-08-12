@@ -51,7 +51,7 @@ use crate::key::Key;
 /// * Prefix: When a query filters by prefix, it selects keys that are strict
 ///   children of the prefix. For example, a prefix "/foo" would select "/foo/bar"
 ///   but not "/foobar" or "/foo",
-/// * Orders: Orders are applied hierarchically. Results are sorted by the first
+/// * Orders: Orders are applied hierarchically. io::Results are sorted by the first
 ///   ordering, then entries equal under the first ordering are sorted with the
 ///   second ordering, etc.
 /// * Limits & Offset: Limits and offsets are applied after everything else.
@@ -69,7 +69,7 @@ pub struct Query {
 }
 
 impl fmt::Display for Query {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::io::Result {
         let mut result = String::with_capacity(128);
 
         result.push_str("SELECT keys");
@@ -120,22 +120,22 @@ pub struct Entry {
 }
 
 /// The query result.
-pub type QueryResult = Result<Entry, Box<dyn error::Error>>;
+pub type Queryio::Result = io::Result<Entry, Box<dyn error::Error>>;
 
 ///
-pub trait QueryResults {
+pub trait Queryio::Results {
     ///
     fn query(&self) -> Query;
 
     ///
-    fn next(&self) -> Box<dyn Future<Output = QueryResult>>;
+    fn next(&self) -> Box<dyn Future<Output = Queryio::Result>>;
 
     ///
-    fn next_sync(&self) -> (QueryResult, bool);
+    fn next_sync(&self) -> (Queryio::Result, bool);
 
     ///
-    fn reset(&self) -> Result<Vec<Entry>, Box<dyn error::Error>>;
+    fn reset(&self) -> io::Result<Vec<Entry>, Box<dyn error::Error>>;
 
     ///
-    fn close(&self) -> Result<(), Box<dyn error::Error>>;
+    fn close(&self) -> io::Result<(), Box<dyn error::Error>>;
 }

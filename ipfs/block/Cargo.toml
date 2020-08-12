@@ -6,6 +6,6 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-cid = { version = "0.5", features = ["cbor", "json"] }
+cid = "0.5"
 minicbor = { version = "0.4", features = ["std"] }
 multihash = "0.11"

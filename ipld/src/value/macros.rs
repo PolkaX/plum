@@ -1,6 +1,6 @@
 // Copyright 2019-2020 PolkaX Authors. Licensed under GPL-3.0.
 
-/// Construct a `ipld::IpldValue` from a JSON-like literal.
+/// Construct a `ipld::Value` from a JSON-like literal.
 /// The macro is a modified version of `serde_json::json` macro, with extensions
 /// for representing Ipld links and Ipld bytes.
 #[macro_export(local_inner_macros)]
@@ -202,45 +202,45 @@ macro_rules! ipld_internal {
     //////////////////////////////////////////////////////////////////////////
 
     (null) => {
-        $crate::IpldValue::Null
+        $crate::Value::Null
     };
 
     (true) => {
-        $crate::IpldValue::Bool(true)
+        $crate::Value::Bool(true)
     };
 
     (false) => {
-        $crate::IpldValue::Bool(false)
+        $crate::Value::Bool(false)
     };
 
     (bytes![ $byte:expr; $n:expr ]) => {
-        $crate::IpldValue::Bytes(ipld_internal_vec![$byte; $n].into())
+        $crate::Value::Bytes(ipld_internal_vec![$byte; $n].into())
     };
     (bytes![ $($byte:expr),* ]) => {
-        $crate::IpldValue::Bytes(ipld_internal_vec![$($byte),*].into())
+        $crate::Value::Bytes(ipld_internal_vec![$($byte),*].into())
     };
     (bytes![ $($byte:expr,)* ]) => {
-        $crate::IpldValue::Bytes(ipld_internal_vec![$($byte,)*].into())
+        $crate::Value::Bytes(ipld_internal_vec![$($byte,)*].into())
     };
 
     (link!( $cid:expr )) => {
-        $crate::IpldValue::Link($cid.parse().unwrap())
+        $crate::Value::Link($cid.parse().unwrap())
     };
 
     ([]) => {
-        $crate::IpldValue::List(ipld_internal_vec![])
+        $crate::Value::List(ipld_internal_vec![])
     };
 
     ([ $($tt:tt)+ ]) => {
-        $crate::IpldValue::List(ipld_internal!(@list [] $($tt)+))
+        $crate::Value::List(ipld_internal!(@list [] $($tt)+))
     };
 
     ({}) => {
-        $crate::IpldValue::Map($crate::Map::new())
+        $crate::Value::Map($crate::Map::new())
     };
 
     ({ $($tt:tt)+ }) => {
-        $crate::IpldValue::Map({
+        $crate::Value::Map({
             let mut map = $crate::Map::new();
             ipld_internal!(@map map () ($($tt)+) ($($tt)+));
             map
