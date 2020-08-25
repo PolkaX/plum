@@ -10,7 +10,7 @@ async-trait = "0.1"
 cid = { version = "0.5" , features = ["cbor", "json"] }
 futures = "0.3"
 log = "0.4"
-minicbor = { version = "0.4", features = ["std"] }
+minicbor = { version = "0.5", features = ["std"] }
 multihash = "0.11"
 
 plum_bigint = { path = "../../primitives/bigint" }
@@ -19,14 +19,14 @@ plum_message = { path = "../../primitives/message" }
 plum_types = { path = "../../primitives/types" }
 
 [dependencies.libp2p]
-version = "0.21"
+version = "0.24"
 default-features = false
 features = [
     "dns",
     "identify",
     "kad",
     "gossipsub",
-    "mdns",
+    "mdns-async-std",
     "mplex",
     "ping",
     "request-response",

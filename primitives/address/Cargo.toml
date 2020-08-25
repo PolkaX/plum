@@ -8,7 +8,7 @@ license = "GPL-3.0"
 [dependencies]
 data-encoding = "2.1"
 lazy_static = "1.4"
-minicbor = { version = "0.4", features = ["std"] }
+minicbor = { version = "0.5", features = ["std"] }
 serde = "1.0"
 thiserror = "1.0"
 unsigned-varint = "0.4"
