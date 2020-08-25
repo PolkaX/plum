@@ -50,7 +50,7 @@ where
     }
 
     if !prev.is_zero() {
-        periods.push(prev.clone());
+        periods.push(prev);
     }
 
     periods.push(Item::one());
