@@ -16,7 +16,7 @@ path = "src/bin/main.rs"
 
 [replace]
 "cid:0.5.1" = { git = "https://github.com/PolkaX/rust-cid", branch = "impl-cbor-and-json" }
-"multihash:0.11.2" = { git = "https://github.com/PolkaX/rust-multihash", branch = "add-filecoin-code" }
+"multihash:0.11.3" = { git = "https://github.com/PolkaX/rust-multihash", branch = "add-filecoin-code" }
 
 [workspace]
 members = [

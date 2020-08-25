@@ -6,6 +6,6 @@ edition = "2018"
 license = "GPL-3.0"
 
 [dependencies]
-libp2p-core = "0.20"
-minicbor = { version = "0.4", features = ["std"] }
+libp2p-core = "0.21"
+minicbor = { version = "0.5", features = ["std"] }
 serde = "1.0"

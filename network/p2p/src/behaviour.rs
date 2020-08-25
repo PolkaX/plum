@@ -5,7 +5,10 @@ use std::task::{Context, Poll};
 
 use libp2p::{
     core::{identity::Keypair, PeerId},
-    gossipsub::{Gossipsub, GossipsubConfig, GossipsubEvent, Topic, TopicHash},
+    gossipsub::{
+        error::PublishError, Gossipsub, GossipsubConfig, GossipsubEvent, MessageAuthenticity,
+        Topic, TopicHash,
+    },
     identify::{Identify, IdentifyEvent},
     kad::{record::store::MemoryStore, Kademlia, KademliaEvent},
     mdns::{Mdns, MdnsEvent},
@@ -48,7 +51,7 @@ pub enum BehaviourEvent {
     MdnsDiscoveredPeer(PeerId),
     MdnsExpiredPeer(PeerId),
     GossipsubMessage {
-        source: PeerId,
+        source: Option<PeerId>,
         data: Vec<u8>,
         topics: Vec<TopicHash>,
     },
@@ -315,12 +318,12 @@ impl Behaviour {
 
 impl Behaviour {
     /// Create a new network behaviour.
-    pub fn new(local_key_pair: &Keypair, config: &Libp2pConfig) -> Self {
+    pub fn new(local_key_pair: Keypair, config: &Libp2pConfig) -> Self {
         let local_public = local_key_pair.public();
         let local_peer_id = local_public.clone().into_peer_id();
 
         // Create the Kademlia DHT service with the bootnodes from the config.
-        let mut kademlia = config.build_kademlia(local_peer_id.clone(), &config.network_name);
+        let mut kademlia = config.build_kademlia(local_peer_id, &config.network_name);
         if let Err(err) = kademlia.bootstrap() {
             warn!("Kademlia bootstrap error: {}", err);
         }
@@ -344,7 +347,10 @@ impl Behaviour {
             identify: Identify::new("ipfs/0.1.0".into(), "plum/0.1.0".into(), local_public),
             mdns: Mdns::new().expect("Failed to create mDNS service"),
             kademlia,
-            gossipsub: Gossipsub::new(local_peer_id, GossipsubConfig::default()),
+            gossipsub: Gossipsub::new(
+                MessageAuthenticity::Signed(local_key_pair),
+                GossipsubConfig::default(),
+            ),
             hello,
             blocksync,
             events: vec![],
@@ -353,8 +359,8 @@ impl Behaviour {
     }
 
     /// Publish message to the network over gossipsub protocol.
-    pub fn publish(&mut self, topic: &Topic, data: impl Into<Vec<u8>>) {
-        self.gossipsub.publish(topic, data);
+    pub fn publish(&mut self, topic: &Topic, data: impl Into<Vec<u8>>) -> Result<(), PublishError> {
+        self.gossipsub.publish(topic, data)
     }
 
     /// Subscribe to a topic.

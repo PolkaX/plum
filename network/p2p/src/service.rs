@@ -48,7 +48,7 @@ impl Libp2pService {
 
         let mut swarm = {
             let transport = build_transport(local_key_pair.clone());
-            let behaviour = Behaviour::new(&local_key_pair, &config);
+            let behaviour = Behaviour::new(local_key_pair, &config);
             Swarm::new(transport, behaviour, local_peer_id)
         };
 
@@ -120,7 +120,7 @@ impl Libp2pService {
                     cause,
                 } => {
                     debug!(
-                        "Connection closed (peer: {}, endpoint: {:?}, num_established: {}): {}",
+                        "Connection closed (peer: {}, endpoint: {:?}, num_established: {}): {:?}",
                         peer_id, endpoint, num_established, cause
                     );
                 }

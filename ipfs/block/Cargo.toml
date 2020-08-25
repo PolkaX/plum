@@ -7,5 +7,5 @@ license = "GPL-3.0"
 
 [dependencies]
 cid = "0.5"
-minicbor = { version = "0.4", features = ["std"] }
+minicbor = { version = "0.5", features = ["std"] }
 multihash = "0.11"

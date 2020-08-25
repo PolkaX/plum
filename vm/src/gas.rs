@@ -101,8 +101,7 @@ pub fn pricelist_by_epoch(epoch: ChainEpoch) -> &'static PricelistV0 {
         .max()
         .unwrap_or(&0);
 
-    PRICES.get(best_epoch).expect(&format!(
-        "bad setup: no gas prices available for epoch {}",
-        epoch
-    ))
+    PRICES
+        .get(best_epoch)
+        .unwrap_or_else(|| panic!("bad setup: no gas prices available for epoch {}", epoch))
 }
