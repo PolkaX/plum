@@ -45,7 +45,7 @@ members = [
   "primitives/address",
   "primitives/bigint",
   "primitives/bitfield",
-  "primitives/bitfield/rle",
+  "primitives/bitfield/rleplus",
   "primitives/block",
   "primitives/bytes",
   "primitives/crypto",

@@ -1,0 +1,10 @@
+[package]
+name = "rleplus"
+version = "0.1.0"
+authors = ["The PolkaX Authors"]
+edition = "2018"
+license = "GPL-3.0"
+
+[dependencies]
+serde = "1.0"
+unsigned-varint = "0.4"
